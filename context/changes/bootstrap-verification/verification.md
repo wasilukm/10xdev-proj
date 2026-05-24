@@ -61,15 +61,16 @@ Note: `{name}` was substituted with the project name (`envbooker`) rather than t
 ## Post-scaffold audit
 
 **Tool**: pip-audit
-**Status**: failed to run
-**Reason**: `pip-audit` is not installed in the active environment (`command not found`, exit 127).
-**Partial output (if any)**:
+**Status**: passed
+**Command**: `uv export --no-hashes | grep -v '^#' | pip-audit -r /dev/stdin`
+**Run date**: 2026-05-24
+**Packages audited**: asgiref==3.11.1, django==6.0.5, sqlparse==0.5.5, tzdata==2026.2 (5 resolved)
 
 ```
-/bin/bash: linia 1: pip-audit: nie znaleziono polecenia
+No known vulnerabilities found
 ```
 
-The dependency audit was skipped. `django-admin startproject` generates project files only — it does not install dependencies or create a lockfile, so there is no resolved dependency tree to audit yet. Once dependencies are declared and installed (e.g. `uv add django`, then `uv tool install pip-audit` or `uv pip install pip-audit`), run `pip-audit` manually to scan the tree.
+**Note**: uv-managed venvs do not include pip, so `PIPAPI_PYTHON_LOCATION` cannot be used. Dependencies were exported via `uv export` and piped to `pip-audit -r /dev/stdin` to audit the resolved lockfile tree.
 
 ## Hints recorded but not acted on
 
