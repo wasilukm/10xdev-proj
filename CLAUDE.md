@@ -2,6 +2,28 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project: EnvBooker
+
+Django 6.0.5 web app on **Python 3.14** (see `.python-version`), managed with **uv** (not pip/poetry). Single Django config package at `envbooker/`; no domain apps yet — they'll be added as the PRD ships. SQLite (`db.sqlite3`) for dev; Fly.io is the locked deploy target. Product & stack rationale live in `context/foundation/` (see the "Foundation paths" section below).
+
+### Common commands
+
+```bash
+uv sync                              # install/refresh dependencies from uv.lock
+uv add <pkg>                         # add a runtime dependency
+uv run python manage.py runserver    # dev server at http://127.0.0.1:8000
+uv run python manage.py migrate      # apply pending migrations
+uv run python manage.py makemigrations <app>  # generate migrations after model changes
+uv run python manage.py createsuperuser       # bootstrap an admin user
+uv run python manage.py test                  # run the Django test suite
+```
+
+### Project-specific tripwires
+
+- **The uv-managed `.venv` has no `pip`**, so `pip-audit` cannot use `PIPAPI_PYTHON_LOCATION`. Audit via:
+  `uv export --no-hashes | grep -v '^#' | pip-audit -r /dev/stdin`
+- **`envbooker/settings.py` ships with `DEBUG=True` and an `insecure` SECRET_KEY** — django-admin defaults. Must be moved to env vars before any Fly.io deploy.
+
 ## Course context
 
 This is a **10xDevs 3.0** course project (`10xdevs3`), configured for Claude Code via `@przeprogramowani/10x-cli` (v1.6.0). Lesson artifacts (prompts, skills, rules, configs) are fetched from the course platform and written into `.claude/`.
