@@ -16,9 +16,19 @@ local_settings.py
 # Environment / secrets
 .env
 .env.*
+!.env.example
+
+# Railway local state
+.railway/
 
 # IDE
 .idea/
+.vscode/
 
 # Logs
 *.log
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
