@@ -113,15 +113,16 @@ Goal: make the repo deployable without changing app behaviour. All Phase A steps
 
 ## Phase D — Post-deploy hardening
 
-- [ ] **D.1 [Agent] Create the superuser.** `railway run uv run python manage.py createsuperuser` runs the command locally with the production env injected (incl. `DATABASE_URL`), so the user lands in the Railway Postgres. For an in-container shell instead: `railway ssh` then the same command.
+- [x] **D.1 [Agent] Create the superuser.** `railway run uv run python manage.py createsuperuser` runs the command locally with the production env injected (incl. `DATABASE_URL`), so the user lands in the Railway Postgres. For an in-container shell instead: `railway ssh` then the same command.
 
-- [ ] **D.2 [Human] Log in to `/admin/`** with the new credentials. Visual confirmation the DB write path works end-to-end.
+- [x] **D.2 [Human] Log in to `/admin/`** with the new credentials. Visual confirmation the DB write path works end-to-end.
 
-- [ ] **D.3 [Human] Set budget alerts.** Railway dashboard → project → Usage → Alerts. Soft alert at **$4** (80% of trial), hard alert at **$4.80**. This is the single biggest mitigation for the pre-mortem "bill silently drifted from $12 to $34" scenario.
+- [~] **D.3 [Human] Set budget alerts.** Railway dashboard → project → Usage → Alerts. Soft alert at **$4** (80% of trial), hard alert at **$4.80**. This is the single biggest mitigation for the pre-mortem "bill silently drifted from $12 to $34" scenario.
+  **Execution finding (2026-05-26):** Budget alerts are gated behind the **Hobby plan** — the Free Trial does NOT expose Usage → Alerts. Deferred until the project upgrades. Interim mitigation: the $5 trial credit itself acts as a hard cap (service suspends, doesn't overcharge), and the pre-mortem "drift" scenario only applies *after* upgrading to Hobby where pay-as-you-go kicks in. Set the alerts as the **first action on the day of the Hobby upgrade**.
 
-- [ ] **D.4 [Human] Mark the calendar.** Day 21 of trial = ~2026-06-16 (trial started ≈2026-05-26): decide upgrade-to-Hobby vs teardown. Per `infrastructure.md` risk register row 1.
+- [x] **D.4 [Human] Mark the calendar.** Day 21 of trial = ~2026-06-16 (trial started ≈2026-05-26): decide upgrade-to-Hobby vs teardown. Per `infrastructure.md` risk register row 1.
 
-- [ ] **D.5 [Agent] Save the approved plan.** Copy this file's content to `context/deployment/deploy-plan.md` (create the `context/deployment/` directory first). This file becomes the lesson hand-off audit trail.
+- [x] **D.5 [Agent] Save the approved plan.** Copy this file's content to `context/deployment/deploy-plan.md` (create the `context/deployment/` directory first). This file becomes the lesson hand-off audit trail.
 
 ---
 
@@ -214,7 +215,7 @@ After Phase D completes the following must all be green. If any one fails, the d
 3. Browser login to `/admin/` with superuser → reaches the admin index.
 4. `railway logs --service envbooker -n 50` shows gunicorn `Listening at: http://0.0.0.0:$PORT`, no tracebacks since boot.
 5. `railway variables` lists `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=False`, `DATABASE_URL` (template ref).
-6. Railway dashboard → Usage → Alerts shows two alerts ($4 soft, $4.80 hard).
+6. ~~Railway dashboard → Usage → Alerts shows two alerts ($4 soft, $4.80 hard).~~ **Deferred (2026-05-26): alerts UI is gated behind the Hobby plan; not available on Free Trial.** Revisit on the day of Hobby upgrade.
 7. `context/deployment/deploy-plan.md` exists and matches this file.
 
 ## Critical files (modify or create)
@@ -225,3 +226,44 @@ After Phase D completes the following must all be green. If any one fails, the d
 - `.gitignore` — **new**, A.5 (include `.env`, `staticfiles/`, `.railway/`).
 - `Dockerfile` + `.dockerignore` — **conditional**, only if E1 fires (both must land together).
 - `context/deployment/deploy-plan.md` — **new**, D.5 (copy of this file).
+
+---
+
+## Execution log — 2026-05-26
+
+First deploy executed in a single session. All checkboxes in Phases A, B, C, D resolved (D.3 deferred — see below). Repo commit kicking off the deploy: `e747758` ("prep envbooker for first Railway deploy").
+
+### Live state
+
+| Item | Value |
+|---|---|
+| Public URL | https://envbooker-production.up.railway.app |
+| Project ID | `1245af82-f8db-4c8e-a209-111e3ea56c12` |
+| Environment | `production` (`7781f08e-17ab-4e22-8184-8d4393eb8489`) |
+| Web service | `envbooker` (`b4126d36-fc99-4eb2-ad39-31c493087e86`) |
+| Database service | `Postgres` (`adfaa199-963c-462d-bce0-b1c0cf87813d`) |
+| Internal Postgres host | `postgres.railway.internal:5432/railway` |
+| Builder used | `RAILPACK` (auto-detected Python 3.14.5 + uv — Dockerfile fallback NOT needed) |
+| Deploy time | ~3 minutes (build) + ~30s (migrate + boot) |
+
+### Deviations from the plan
+
+1. **B.3 `railway init` auto-linked the cwd to the Postgres service** after B.4, leaving no web service to deploy to. Fix: explicit `railway add --service envbooker` then `railway service link envbooker` before B.5. **Plan update suggested for next time:** insert "B.3a — `railway add --service envbooker` + `railway service link envbooker`" before B.4 to avoid the auto-link ambiguity.
+2. **`RAILWAY_PUBLIC_DOMAIN` is not auto-injected** until a domain is generated. The plan assumed it would be present. Fix added: `railway domain --service envbooker --json` between B.5 and C.1. Without this, `ALLOWED_HOSTS` would fall back to `["localhost", "127.0.0.1"]` and every request would 400.
+3. **D.3 budget alerts not available on Free Trial.** Documented inline in D.3 and in the verification checklist. Defer to Hobby upgrade.
+4. **`railway login` requires a real TTY** — the `curl … | sh` installer also failed its PATH-update step under `dash` ("bad substitution"). Workarounds: symlink `~/.railway/bin/railway` into `~/.local/bin`, and run `railway login` from a real interactive terminal (not from a non-interactive subshell). Worth surfacing if this plan is reused on a fresh machine.
+5. **D.1 `createsuperuser` doesn't work via `railway run` in a non-interactive shell** — solved with `railway ssh` (gives a real TTY inside the running container, with venv and `DATABASE_URL` already set up).
+
+### Verification results
+
+| # | Check | Result |
+|---|---|---|
+| 1 | `/admin/login/` returns 200 | ✅ |
+| 2 | `/__missing__/` shows no DEBUG page | ✅ (`grep -ci "DEBUG = True"` → 0) |
+| 3 | Browser login to `/admin/` | ✅ (user-confirmed) |
+| 4 | gunicorn boot logs clean | ✅ |
+| 5 | `railway variables` lists DJANGO_SECRET_KEY / DJANGO_DEBUG=False / DATABASE_URL | ✅ |
+| 6 | Budget alerts in dashboard | ⏸ Deferred — Hobby-only feature |
+| 7 | `context/deployment/deploy-plan.md` exists | ✅ |
+
+Additional confirmed: WhiteNoise manifest active (`base.428a30193bdc.css` served HTTP 200 from `/static/admin/css/...`), HTTPS redirect live (HTTP → 301 → HTTPS, HSTS header set per `SECURE_HSTS_SECONDS = 3600`).
