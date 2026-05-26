@@ -1,8 +1,8 @@
 ---
 project: envbooker
-researched_at: 2026-05-24
-recommended_platform: fly.io
-runner_up: railway
+researched_at: 2026-05-26
+recommended_platform: railway
+runner_up: render
 context_type: mvp
 tech_stack:
   language: python
@@ -12,111 +12,112 @@ tech_stack:
 
 ## Recommendation
 
-**Deploy on Fly.io.**
+**Deploy on Railway.**
 
-Fly.io scores 5/5 on the agent-friendly criteria, is the only candidate with a first-party MCP server (`superfly/flymcp`), and its per-second billing with auto-suspend keeps idle cost near zero — the best match for EnvBooker's cost-sensitive, low-QPS, after-hours-MVP profile. Choosing Fly.io also validates the `tech-stack.md` default (`deployment_target: fly`) under deliberate scoring rather than letting it stand by inertia.
+Railway is the strongest fit for a Django 6.0.5 / Python 3.14 / uv stack on a solo, cost-sensitive, 3-week after-hours timeline. The Railpack builder auto-detects `uv.lock` and reads `.python-version` (which uv already maintains), so the project deploys without a hand-written Dockerfile — a real advantage over Fly.io and Render, both of which require Dockerfile authoring for Python 3.14 today. The 30-day Free Trial credit ($5, no card) realistically covers the entire 10xDevs M1–M5 cohort window (2026-05-18 → 2026-06-15) for an always-on Django + Postgres MVP at low QPS, after which the project either moves to the Hobby plan ($5/mo subscription with $5 usage credit) or is torn down. Managed Postgres is co-located on the same private network at near-zero added latency, matching the "co-location preferred" interview answer.
+
+Render came in a close second on the agent-friendliness scorecard (Render MCP went GA in August 2025; Railway's MCP is still beta), but a Django+Postgres always-on setup on Render costs $14/mo from day one (Starter web $7 + Starter Postgres $7) with no free-trial equivalent suitable for a course project. Fly.io, despite being the original `tech-stack.md` default, was the weakest of the three: Managed Postgres has a ~$38/mo floor, the auto-generator doesn't handle uv, unmanaged Fly Postgres is officially deprecated, and `fly mcp` is self-described as "experimental demoware".
 
 ## Platform Comparison
 
-Hard filter applied: **Cloudflare Workers, Vercel, and Netlify dropped** — their serverless function runtimes don't host a full Django app (ORM + admin + sessions) without significant hackery, and the PRD requires Django's auth/admin/migrations stack out-of-the-box. Three candidates survived to scoring.
+**Hard filter applied:** Cloudflare Workers, Vercel, and Netlify were dropped before scoring. Django on Python 3.14 needs a long-running WSGI/ASGI process talking to a relational database; Cloudflare Workers (V8 isolates, JS/TS), Vercel serverless functions (10s / 250MB execution limits, Django not idiomatic), and Netlify Functions (JS-first serverless shell) all fail this constraint structurally — no amount of weight tuning rescues them.
 
-| Platform | CLI-first | Managed | Agent docs | Deploy API | MCP integration | Score |
+| Platform | CLI-first | Managed/Serverless | Agent-readable docs | Stable deploy API | MCP / Integration | Result |
 |---|---|---|---|---|---|---|
-| Fly.io | Pass | Pass | Pass | Pass | Pass | **5/5** |
-| Railway | Pass | Pass | Partial | Pass | Pass | **4.5/5** |
-| Render | Partial | Pass | Partial | Partial | Fail | **2.5/5** |
+| Cloudflare Workers | — | — | — | — | — | **Dropped** — no Python WSGI/ASGI runtime |
+| Vercel | — | — | — | — | — | **Dropped** — serverless funcs, Django not idiomatic |
+| Netlify | — | — | — | — | — | **Dropped** — JS-first serverless funcs |
+| **Railway** | Pass | **Pass** | Pass | Pass | Partial | **4 Pass + 1 Partial** |
+| **Render** | Pass | Pass | Pass | Pass | **Pass** | **5 Pass** |
+| **Fly.io** | Pass | Partial | Partial | Pass | Partial | **2 Pass + 3 Partial** |
+
+**Soft weights applied** (cost-min, single region, no familiarity, co-location preferred): cost preference penalises Fly.io heavily (Managed Postgres floor ~$38/mo); co-location preference is satisfied by all three; familiarity tie-break does not fire. Render edges Railway on raw scorecard because Render's MCP is GA, but Railway wins on cost-fit (free trial covers the course window) and on "managed" depth (Railpack auto-detects uv → no Dockerfile to maintain). The user selected Railway after reviewing the anti-bias cross-check on Render.
 
 ### Shortlisted Platforms
 
-#### 1. Fly.io (Recommended)
+#### 1. Railway (Recommended)
 
-`flyctl` covers the full operational loop (deploy, rollback, logs, secrets, volumes, scale). Docs are MDX in a public GitHub repo, so the agent can read source directly. `fly deploy` is deterministic with built-in release tracking and rollback. First-party `superfly/flymcp` MCP server wraps `flyctl` for Claude integration, and `fly mcp launch` is a one-command path for deploying MCP servers themselves. The pay-as-you-go model with auto-suspend means an idle EnvBooker can cost near $0 between work hours; an always-on small app + Postgres lands around $5-10/mo at MVP scale.
+Won on the combination of agent-friendly score (4/5 Pass) and the practical match to a solo cost-sensitive course project. Railpack autodetect for uv is unique among the three — Render and Fly both require Dockerfile authoring for Python 3.14 today. Managed Postgres, Redis, and Volumes are GA and live on the same private network. Both local and Remote MCP servers exist (`mcp.railway.com`, OAuth-backed) but are explicitly "a work in progress" as of 2026-05-26, so treat MCP as opportunistic and operate via the `railway` CLI for now. The 30-day trial credit covers an always-on Django+Postgres MVP for roughly one calendar month at low QPS, after which the project transitions to the Hobby plan ($5/mo, $5 usage credit included, realistic monthly bill $10–18).
 
-#### 2. Railway
+#### 2. Render
 
-Strong all-around platform with full `railway` CLI, Nixpacks auto-detection of Django, first-party MCP server, and predictable $5/mo Hobby billing (includes $5 in usage credit). The gap vs. Fly.io: no auto-suspend, so the flat $5 is paid even during quiet periods. Slightly weaker on docs format (markdown availability unclear). Would be the right choice if predictable billing matters more than idle savings.
+Best raw agent-friendliness score (5/5 Pass) — the only platform in this matrix with a GA MCP server (Aug 2025, 20+ tools, hosted at `mcp.render.com/mcp`) and the cleanest `llms.txt` + `llms-full.txt` story. Lost to Railway on the course-project economics: $14/mo always-on floor (Starter web $7 + Starter Postgres $7) with no trial-credit equivalent, and Python 3.14 not yet on Render's native Python runtime → Dockerfile authoring is mandatory, negating the "auto-detect uv.lock" advantage for this specific project. Strong runner-up: if Railway's MCP beta proves frustrating or the trial economics shift, Render is the platform to swap to.
 
-#### 3. Render
+#### 3. Fly.io
 
-Solid managed runtime, but the CLI is less complete than Fly's or Railway's — historically dashboard-first, and some operations still require the dashboard. No first-party MCP server. The free tier looks attractive at $0 but Postgres expires after 30 days (+14 day grace), which is a data-loss trap for any MVP with real users. Realistic paid path is ~$13/mo ($7 web + paid Postgres) — more expensive than either Fly or Railway at MVP scale, with worse agent integration.
+Despite being the `tech-stack.md` default, Fly came third on substance. Managed Postgres (MPG) has a Basic-tier floor of ~$38/mo (shared-2x, 1 GB RAM, $0.28/GB storage), and the alternative — unmanaged Fly Postgres — is officially deprecated ("we are not able to provide support or guidance"). Python 3.14 + uv requires a hand-written Dockerfile because the official `dockerfile-django` generator targets Poetry/pip. `fly mcp` is shipped but explicitly "experimental demoware that is subject to change." Docs are on GitHub as markdown but no `llms.txt`. Strong infra fundamentals; wrong cost shape for a free/cheap course project.
 
-## Anti-Bias Cross-Check: Fly.io
+## Anti-Bias Cross-Check: Railway
 
 ### Devil's Advocate — Weaknesses
 
-1. **No default spending cap.** Pay-as-you-go means a buggy client polling the env list every second can quietly accumulate egress charges until the credit-card statement arrives. The user must opt into spending limits manually.
-2. **Auto-suspend cold start eats into the 30-second success-criterion budget.** First request after suspend = 100-500ms; for a first-time user landing on the dashboard, that's measurable against the PRD's 30-second find-and-reserve target.
-3. **Postgres-on-Fly's "Managed" tier is still relatively new** vs. the legacy "Unmanaged" path. Picking the cheap unmanaged option means backups, replication, and failover are *your* responsibility — a footgun for a solo dev without ops experience.
-4. **Trial is 2 VM-hours / 7 days** — the user will be paying within the first week, not after a month of evaluation.
-5. **`flymcp` is a Fly project but the MCP ecosystem itself is moving fast** — no stability commitment yet on the wrapper.
+1. **Railway's MCP servers (local + remote) are explicitly "a work in progress" / beta as of 2026-05-26.** The exact criterion that would have pushed Render to #1 is Railway's soft spot. Plan to operate via the `railway` CLI for now and treat the MCP as opportunistic.
+2. **Usage-based pricing is unpredictable.** $20/vCPU-mo + $10/GB-mo + $0.10/GB egress means a runaway middleware, a memory leak, or a tight retry loop can produce real money before you notice. Render's $14/mo Starter is a known ceiling; Railway's is not.
+3. **Railpack is still young.** Nixpacks moved to maintenance and Railpack took over as default; Python 3.14 (Oct 2025) detection edge cases may bite. Dockerfile fallback is the contingency, not the default plan.
+4. **15-minute hard cap on WebSocket connections.** Not relevant to EnvBooker today (PRD says no realtime), but it locks the door on long-poll / SSE features later without explicit reconnection logic.
+5. **Ephemeral filesystem by default.** Any feature that writes files (CSV export of reservations, generated audit logs) needs a Volume ($0.25/GB-mo) or `railway bucket` (which is beta) — a stealth cost vector if added carelessly.
 
 ### Pre-Mortem — How This Could Fail
 
-Six months in, the EnvBooker team's Fly.io deployment has become a quiet disaster. The first pager came at midnight: the Postgres VM had filled its 1 GB volume and rejected new reservations. The team had picked the cheapest unmanaged Postgres tier without configuring automated backups, so recovery involved `fly volumes extend` followed by a frantic check of whether the last manual snapshot — three months stale — would survive. Around the same time, the Fly bill jumped from $8 to $47 in one month because an internal Slack bot polled the env list every second to "see what's free"; no spending cap was set, and egress charges accumulated silently. The team eventually moved to Railway, citing "predictable monthly cost" as the only reason — they'd never actually benefited from auto-suspend because the app was active enough during work hours to never sleep.
+The team picked Railway in May 2026 because Railpack auto-detected uv + Python 3.14 and the $5 trial felt low-stakes. By July EnvBooker had 80 daily users and a teammate shipped an "export reservations to CSV" feature that wrote temp files; the ephemeral filesystem deleted them on every restart and a user filed a P1 because their compliance export vanished mid-download. They migrated to `railway bucket`, but bucket was still beta — the SDK changed twice between July and October and they spent two evenings tracking a silent permissions regression. Meanwhile a Django middleware misconfiguration kept the DB connection pool larger than needed and the monthly usage bill drifted from $12 to $34; nobody had set a budget alert because Railway's billing dashboard doesn't push them by default. In September Railway rotated the MCP auth flow, breaking the team's Claude Code setup mid-deploy and taking staging offline for an evening. The cost story stayed cheaper than Fly would have been, but the operational story was rougher than Render — fewer guardrails, more moving parts still in flux.
 
 ### Unknown Unknowns
 
-- **`fly deploy` rebuilds the entire container image every time** unless BuildKit caching is configured. Without optimization, deploys take 2-5 minutes. Learn `--remote-only` and `release_command` for migrations early.
-- **Fly Postgres uses pgBouncer in transaction mode by default.** Django features that rely on session state (advisory locks, named cursors, `LISTEN/NOTIFY`) don't work. For EnvBooker MVP this likely doesn't bite, but if reservation-overlap protection later moves to DB advisory locks, you'd hit it.
-- **`fly secrets set` triggers a full app redeploy.** Setting a single env var causes a brief restart — useful for incident response planning.
-- **Single-region Postgres has no automatic failover.** Regional outage = your app is down until Fly recovers. Multi-region requires explicit setup at significantly higher cost.
-- **Logs on Fly are ephemeral.** `flyctl logs` is live-only; historical logs beyond ~24h need shipping to BetterStack / Logtail / etc. — your problem to set up.
-- **Python 3.14 is fresh (Oct 2025 GA).** Fly supports any Python version via Dockerfile (`FROM python:3.14-slim`), but `fly launch`'s Django auto-detection may default to an older Python — verify the generated Dockerfile pins 3.14 before first deploy.
-- **Future realtime calendar view (deferred by Q1)** would require Django Channels + Redis. Fly supports both (WebSockets natively, Upstash Redis via add-on or external), so no decision regret — but the day Channels lands, an ASGI server (Daphne/Uvicorn) replaces gunicorn and the Postgres pgBouncer caveat above becomes more relevant.
+- **`${{Postgres.DATABASE_URL}}` template variables resolve at deploy time, not runtime.** Rotating the Postgres password through the dashboard won't propagate to the running service until the next deploy.
+- **Railway "environments" are not Postgres branches.** Forking an environment forks variable refs, but the Postgres instance is shared by default. A real isolated staging DB means provisioning a second Postgres service explicitly.
+- **Railpack pins Python via `.python-version` which uv writes as `3.14`** — Railpack may grab a later 3.14 patch than tested locally if the pin is loose. Pin to the patch (`3.14.x`) if reproducibility matters.
+- **Hobby plan's $5/mo is a *credit floor*, not a hard ceiling.** Overuse rolls into pay-as-you-go silently; the project doesn't "stay at $5" if a misbehaving service eats the credit.
+- **MCP tokens are workspace-scoped, not project-scoped.** Agent token compromise reaches every Railway project in the workspace — not just EnvBooker.
 
 ## Operational Story
 
-- **Preview deploys**: Fly doesn't ship preview-deploys-on-PR out of the box. Use a GitHub Actions workflow that runs `flyctl deploy --app envbooker-pr-<num>` per PR with `--strategy=immediate`, and a teardown step on PR close. For solo dev MVP, skip until validated; deploy main branch only.
-- **Secrets**: `fly secrets set KEY=value` writes to Fly's encrypted store; values are available as env vars at runtime. Rotation: `fly secrets set KEY=newvalue` triggers redeploy. `SECRET_KEY`, `DATABASE_URL`, and any org-email-domain config live here — *not* in `envbooker/settings.py` (which currently ships with `DEBUG=True` and an insecure default — see CLAUDE.md tripwires).
-- **Rollback**: `fly releases` lists deploys; `fly deploy --image registry.fly.io/envbooker:deployment-<id>` rolls forward to a prior image. Database migrations do *not* roll back automatically — every migration that adds a column must remain backward-compatible across one release boundary.
-- **Approval**: Human-only — `fly secrets unset` (could break the app), `fly postgres destroy`, `fly volumes destroy`, any change to the production cert / domain, spending-limit increases. Agent-OK — `fly deploy`, `fly status`, `fly logs`, `fly ssh console` (read-only commands).
-- **Logs**: `fly logs -a envbooker` (live tail). For historical or structured search, plan to ship to BetterStack or similar — not configured at MVP, but in the risk register.
+How Railway actually operates for EnvBooker day to day. One concrete answer per axis.
+
+- **Free-tier window (course-specific):** The 30-day Free Trial grants $5 of usage credit (no credit card) with same-features-as-Hobby during the window: 1 GB RAM ceiling, shared vCPU, up to 5 services per project, databases allowed. At EnvBooker's low-QPS profile a realistic monthly bill is $3–5, so the $5 credit covers approximately one full month of always-on Django+Postgres. **This window aligns with the 10xDevs M1–M5 cohort schedule (2026-05-18 → 2026-06-15).** After the trial expires (30 days OR $5 consumed, whichever first), the account reverts to the permanent Free plan with **$1/month credit, 0.5 GB RAM, 1 vCPU, 0.5 GB volume, 1 replica** — enough for one tiny idling service but **not enough for an always-on Django + Postgres setup**. The decision point at day 30: upgrade to Hobby ($5/mo subscription + $5 usage credit, realistic bill $10–18), or tear down the project. Stateful volumes are deleted 30 days after trial credit expiry if neither happens.
+- **Preview deploys:** Railway's PR preview environments are GA on Hobby+. Branch deploys create isolated environments; Postgres is *not* automatically branched — provision a second Postgres service for staging if isolation matters. Fork PRs do not get previews without explicit token grants.
+- **Secrets:** Project/service variables stored in Railway's vault; set via `railway variables set KEY=value` or the dashboard. Cross-service refs use `${{Postgres.DATABASE_URL}}` syntax. **Critical: move `DEBUG` and the insecure `SECRET_KEY` out of `envbooker/settings.py` to env vars before first deploy** — Railway will not warn you. Rotation: set the new value, redeploy (template vars resolve at deploy time, not runtime).
+- **Rollback:** `railway redeploy --deployment <id>` to a prior deployment. Time-to-revert: 30–90 seconds depending on image cache. Caveat: this does NOT roll back DB migrations — destructive migrations require a separate restore plan.
+- **Approval:** Destructive actions (delete Postgres service, delete project, change billing plan) are human-only via the dashboard. The agent may unattended: deploy, redeploy, tail logs, set non-sensitive env vars, run one-off commands. Production secret rotation and DB drops are panel-by-hand.
+- **Logs:** Read-only via `railway logs` (runtime) and `railway logs --build` (build), with `-n <count>` for tail length. Both stream to stdout — agent-parseable. Filter by service/environment with `--service` and `--environment` flags.
 
 ## Risk Register
 
 | Risk | Source | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| Unbounded spend from buggy client / scraper | Devil's advocate / Pre-mortem | M | M | Set Fly spending limit on day one (`Account → Billing → Spending Limit`); start at $25/mo, raise consciously |
-| Postgres volume fills, rejects writes | Pre-mortem | M | H | Use Fly Managed Postgres (not legacy unmanaged); enable autoscaling volume or set CloudWatch-equivalent alert at 80% full |
-| No automated DB backups on cheap-tier Postgres | Pre-mortem | M | H | Pick Fly Managed Postgres tier (includes automated snapshots) — do NOT save $2/mo by picking the unmanaged tier |
-| Cold-start latency violates the 30-second PRD success criterion | Devil's advocate | L | M | Measure first-request latency after suspend; if >500ms, switch `auto_stop_machines` to `suspend` (faster wake) instead of `stop`, or set `min_machines_running = 1` (costs ~$2/mo more for always-on) |
-| pgBouncer transaction mode breaks future advisory-lock use | Unknown unknowns | L | M | Document in CLAUDE.md tripwires; if Channels lands, route reservation-overlap check to a separate session-pooled connection or use SELECT FOR UPDATE instead of advisory locks |
-| Trial expires before first deploy is fully working | Devil's advocate | M | L | Deploy a hello-world Django app on day one to start the clock with budget for iteration; don't wait until app is "ready" |
-| Logs lost beyond 24h during an incident | Unknown unknowns | L | M | Ship logs to BetterStack from week one if compliance/debugging matters; otherwise accept and note in CLAUDE.md |
-| Single-region outage takes app fully down | Unknown unknowns | L | M | Accepted for MVP per Q4 (single region is fine); revisit at production scale |
+| Trial credit expires before MVP is feature-complete; project suspended | Operational story (free-tier window) | M | M | At day 21 of trial, decide: upgrade to Hobby ($5/mo) or accept teardown. Set a calendar reminder. Export volume data before day 30+30. |
+| Permanent Free plan ($1/mo, 0.5 GB RAM) cannot run Django+Postgres always-on | Research finding | H (if relied on) | H | Treat Free plan as "tiny demo only". Plan for Hobby tier post-trial; budget $10–18/mo. |
+| Runaway usage produces unexpected bill on Hobby (no default budget alerts) | Pre-mortem | M | M | Set an explicit usage alert on the Railway dashboard immediately after upgrading; add a per-service resource cap if possible. |
+| Railway MCP auth/schema changes during course window break Claude Code integration | Devil's advocate / Pre-mortem | M | L | Don't rely on MCP for critical ops during the course; use `railway` CLI as the primary interface. Pin a known-working CLI version. |
+| Python 3.14 detection regression in Railpack | Devil's advocate | L | M | Fallback Dockerfile committed but not active; switch builder to Dockerfile mode (`builder = "DOCKERFILE"` in railway.toml) if Railpack fails. |
+| Ephemeral filesystem silently loses user-uploaded or generated files | Pre-mortem | M (if features added) | H | Any future feature touching disk must use a Volume or `railway bucket`. Add a lint/CI guard if uploads enter scope. |
+| `STATIC_ROOT` directory missing on first deploy → `collectstatic` fails | Research finding (Django gotcha) | M | L | Bake `mkdir -p staticfiles && python manage.py collectstatic --noinput` into the start command; ensure WhiteNoise is in `MIDDLEWARE`. |
+| Migrations run before health check; broken release leaves DB ahead of code | Unknown unknowns | L | H | Run `migrate` in the start command (not build); for destructive migrations, take a DB snapshot via `railway connect` first. |
+| Workspace-scoped MCP token compromised → blast radius beyond EnvBooker | Unknown unknowns | L | M | Keep one Railway workspace per project for now; rotate the MCP token after the course window if it was ever exposed in chat. |
+| `DEBUG=True` + insecure `SECRET_KEY` from starter ship to production | Research finding | M | H | Move both to env vars BEFORE first deploy; verify with `curl <prod-url>/__nonexistent__/` — DEBUG page must not appear. |
+| Template variable `${{Postgres.DATABASE_URL}}` doesn't pick up password rotation until next deploy | Unknown unknowns | L | M | After any Postgres credential rotation, trigger `railway redeploy` explicitly. |
 
 ## Getting Started
 
-Concrete first steps for EnvBooker (Django 6.0.5 / Python 3.14 / uv) on Fly.io:
+Concrete first steps for EnvBooker specifically — not generic Railway onboarding. Validated against the project's pinned versions: Django 6.0.5, Python 3.14, uv (no pip in `.venv`).
 
-1. **Install flyctl**: `curl -L https://fly.io/install.sh | sh` then `fly auth signup` (or `fly auth login`).
-2. **Set a spending cap on day one**: dashboard → `Account → Billing → Spending Limit`. Start at $25/mo. Rationale: the #1 risk in the register.
-3. **Write a Dockerfile manually** (don't let `fly launch` auto-generate it for a uv project — its default Python detection assumes pip/poetry). Skeleton: `FROM python:3.14-slim`; install uv via the official installer; `COPY pyproject.toml uv.lock ./` then `uv sync --frozen --no-dev`; copy app source; `CMD ["uv", "run", "gunicorn", "envbooker.wsgi:application", "--bind", "0.0.0.0:8000"]`.
-4. **Run `fly launch --no-deploy`** to generate `fly.toml` (it'll detect the Dockerfile). Edit `fly.toml`: set `primary_region` (closest to your org), set `[deploy] release_command = "uv run python manage.py migrate"`, set `auto_stop_machines = "suspend"` and `min_machines_running = 0` for cost savings.
-5. **Provision Managed Postgres** (NOT the legacy unmanaged tier): `fly mpg create --name envbooker-db --region <same-as-app>`. Then `fly mpg attach envbooker-db --app envbooker` to inject `DATABASE_URL` as a secret.
-6. **Move `SECRET_KEY` and `DEBUG` out of `envbooker/settings.py`** (currently hardcoded — see CLAUDE.md tripwires) into env-var reads. Then: `fly secrets set SECRET_KEY="<generated>" DEBUG=False ALLOWED_HOSTS="envbooker.fly.dev"`.
-7. **First deploy**: `fly deploy`. Verify `/admin/` loads. Tail logs with `fly logs`. Use `fly status` to confirm machine health.
-8. **Optional, recommended**: install `superfly/flymcp` MCP server so future agent sessions can read deploy state, releases, and logs as structured tool calls instead of shelling out to `flyctl`.
+1. **Install the Railway CLI** — `brew install railway` (macOS), or `curl -fsSL cli.new | sh`. Verify: `railway --version`.
+2. **Sign up and start the trial** — `railway login` opens a browser; the $5 trial credit attaches automatically (no card).
+3. **Move `DEBUG` and `SECRET_KEY` out of `envbooker/settings.py`** — read them from `os.environ` with no default for `SECRET_KEY` and `DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"`. This is non-negotiable before the first deploy (see CLAUDE.md tripwire).
+4. **Add `ALLOWED_HOSTS = [os.environ["RAILWAY_PUBLIC_DOMAIN"], "localhost", "127.0.0.1"]`** to `settings.py` — Railway injects `RAILWAY_PUBLIC_DOMAIN` automatically.
+5. **Add WhiteNoise** — `uv add whitenoise`, insert `whitenoise.middleware.WhiteNoiseMiddleware` directly after Django's `SecurityMiddleware`, set `STATIC_ROOT = BASE_DIR / "staticfiles"` and use the Django 6.0 `STORAGES` setting (not the deprecated `STATICFILES_STORAGE` key).
+6. **Initialize the Railway project** — `railway init` in the repo root, accept the default project name (`envbooker`).
+7. **Provision Postgres** — `railway add --database postgres`. Reference from the web service as `DATABASE_URL=${{Postgres.DATABASE_URL}}` (set via `railway variables set` or the dashboard).
+8. **Configure the start command** — in Railway service settings (or `railway.toml`):
+   `mkdir -p staticfiles && uv run python manage.py collectstatic --noinput && uv run python manage.py migrate && uv run gunicorn envbooker.wsgi --bind 0.0.0.0:$PORT`
+9. **Deploy** — `railway up`. Watch logs with `railway logs --build` then `railway logs`. First deploy takes ~3–5 minutes.
+10. **Create the admin user** — `railway run python manage.py createsuperuser` (runs locally with the production env injected; for a true in-container superuser use `railway ssh` then the same command).
+11. **Set a budget alert** — Railway dashboard → project → Usage → Alerts. Set a soft alert at $4 (trial 80%) and a hard alert at $4.80.
+12. **Mark the calendar for day 21 of trial** — decide upgrade-to-Hobby vs teardown by then.
 
 ## Out of Scope
 
 The following were not evaluated in this research:
-- Docker image optimization (multi-stage builds, BuildKit caching, image size)
-- CI/CD pipeline setup (GitHub Actions workflow for auto-deploy on merge — the tech-stack.md hint exists but the pipeline is a separate concern)
-- Production-scale architecture (multi-region failover, read replicas, HA, DR)
-- Application Performance Monitoring (Sentry, Datadog, etc.)
-- Custom domain + cert provisioning beyond the default `envbooker.fly.dev`
-
-## Sources
-
-- [Fly.io Pricing (official)](https://fly.io/pricing/)
-- [Fly.io Resource Pricing docs](https://fly.io/docs/about/pricing/)
-- [Fly.io Free Tier 2026 — what's left after the cuts](https://www.saaspricepulse.com/blog/flyio-free-tier-2026)
-- [superfly/flymcp — MCP server for Fly.io CLI](https://github.com/superfly/flymcp)
-- [Launching MCP Servers on Fly.io (Fly Blog)](https://fly.io/blog/mcp-launch/)
-- [Railway Pricing (official)](https://railway.com/pricing)
-- [Railway MCP Server docs](https://docs.railway.com/reference/mcp-server)
-- [Railway vs. Fly (Railway docs)](https://docs.railway.com/platform/compare-to-fly)
-- [Render Pricing (official)](https://render.com/pricing)
-- [Render Postgres flexible plans / 30-day expiry](https://render.com/docs/postgresql-refresh)
-- [How to Deploy MCP Servers: Vercel vs Railway vs Render vs Heroku vs Fly.io (2026)](https://mcpplaygroundonline.com/blog/deploy-mcp-server-vercel-railway-render-heroku-flyio)
+- Docker image configuration (only mentioned as a Railpack fallback; not designed).
+- CI/CD pipeline setup beyond the auto-deploy-on-merge default (GitHub Actions wiring is the next module's concern).
+- Production-scale architecture: multi-region failover, HA Postgres, read replicas, dedicated support tiers.
+- Custom domain configuration (project will use the auto-assigned `<project>.up.railway.app` URL for the course window).
