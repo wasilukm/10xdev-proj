@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project: EnvBooker
 
-Django 6.0.5 web app on **Python 3.14** (see `.python-version`), managed with **uv** (not pip/poetry). Single Django config package at `envbooker/`; no domain apps yet — they'll be added as the PRD ships. SQLite (`db.sqlite3`) for dev; Fly.io is the locked deploy target. Product & stack rationale live in `context/foundation/` (see the "Foundation paths" section below).
+Django 6.0.5 web app on **Python 3.14** (see `.python-version`), managed with **uv** (not pip/poetry). Single Django config package at `envbooker/`; no domain apps yet — they'll be added as the PRD ships. SQLite (`db.sqlite3`) for dev; **Railway** is the deploy target (see `railway.toml` and `context/foundation/infrastructure.md`). Product & stack rationale live in `context/foundation/`.
 
 ### Common commands
 
@@ -15,14 +15,25 @@ uv run python manage.py runserver    # dev server at http://127.0.0.1:8000
 uv run python manage.py migrate      # apply pending migrations
 uv run python manage.py makemigrations <app>  # generate migrations after model changes
 uv run python manage.py createsuperuser       # bootstrap an admin user
-uv run python manage.py test                  # run the Django test suite
+uv run python manage.py test                  # run the full Django test suite
+uv run python manage.py test <app>            # run tests for a single app
+```
+
+### Local dev setup
+
+`settings.py` reads `DJANGO_SECRET_KEY` from the environment and will crash on startup if it is missing. Before running the dev server:
+
+```bash
+export DJANGO_SECRET_KEY=any-local-secret-value
+export DJANGO_DEBUG=True          # optional; defaults to False if unset
 ```
 
 ### Project-specific tripwires
 
 - **The uv-managed `.venv` has no `pip`**, so `pip-audit` cannot use `PIPAPI_PYTHON_LOCATION`. Audit via:
   `uv export --no-hashes | grep -v '^#' | pip-audit -r /dev/stdin`
-- **`envbooker/settings.py` ships with `DEBUG=True` and an `insecure` SECRET_KEY** — django-admin defaults. Must be moved to env vars before any Fly.io deploy.
+- **Railway deploy** is defined in `railway.toml`: Railpack builder (auto-detects `uv.lock` + `.python-version`), runs `collectstatic → migrate → gunicorn` on start. No Dockerfile needed.
+- **No linting tools** are configured in `pyproject.toml` yet — add ruff or similar before wiring up CI.
 
 ## Course context
 
