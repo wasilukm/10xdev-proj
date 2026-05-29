@@ -242,20 +242,20 @@ Greenfield — no data migration. The abandoned `db.sqlite3` is no longer the de
 
 ### Phase 1: Local Postgres dev environment
 #### Automated
-- [x] 1.1 `docker compose up -d` brings Postgres to healthy
-- [x] 1.2 `manage.py migrate` connects to Postgres (no SQLite file)
-- [x] 1.3 `manage.py check` passes
+- [x] 1.1 `docker compose up -d` brings Postgres to healthy — c4e5c61
+- [x] 1.2 `manage.py migrate` connects to Postgres (no SQLite file) — c4e5c61
+- [x] 1.3 `manage.py check` passes — c4e5c61
 #### Manual
-- [x] 1.4 `psql` confirms `envbooker` DB reachable
-- [x] 1.5 Settings reads local `DATABASE_URL`
+- [x] 1.4 `psql` confirms `envbooker` DB reachable — c4e5c61
+- [x] 1.5 Settings reads local `DATABASE_URL` — c4e5c61
 
 ### Phase 2: Custom user model (accounts)
 #### Automated
-- [ ] 2.1 `makemigrations accounts` produces `0001_initial`
-- [ ] 2.2 `migrate` applies cleanly on Postgres
-- [ ] 2.3 `check` passes; `createsuperuser` succeeds
+- [x] 2.1 `makemigrations accounts` produces `0001_initial`
+- [x] 2.2 `migrate` applies cleanly on Postgres
+- [x] 2.3 `check` passes; `createsuperuser` succeeds
 #### Manual
-- [ ] 2.4 `/admin/` login + Users section visible
+- [x] 2.4 `/admin/` login + Users section visible
 
 ### Phase 3: Environment catalog (catalog)
 #### Automated
