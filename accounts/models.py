@@ -33,3 +33,14 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
     objects = UserManager()
+
+
+class AllowedEmailDomain(models.Model):
+    domain = models.CharField(max_length=255, unique=True)
+
+    def save(self, *args, **kwargs):
+        self.domain = self.domain.lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.domain

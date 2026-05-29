@@ -230,9 +230,9 @@ Migration 0002 alters the already-applied `accounts.User` table. Locally and on 
 
 #### Automated
 
-- [x] 1.1 Migrations generate with no model-state drift: `makemigrations --check --dry-run`
-- [x] 1.2 Migration applies cleanly: `migrate`
-- [x] 1.3 Manager test passes (create_user / create_superuser by email): `test accounts`
+- [x] 1.1 Migrations generate with no model-state drift: `makemigrations --check --dry-run` — 7a981ce
+- [x] 1.2 Migration applies cleanly: `migrate` — 7a981ce
+- [x] 1.3 Manager test passes (create_user / create_superuser by email): `test accounts` — 7a981ce
 
 #### Manual
 
@@ -243,9 +243,9 @@ Migration 0002 alters the already-applied `accounts.User` table. Locally and on 
 
 #### Automated
 
-- [ ] 2.1 Migration applies: `migrate`
-- [ ] 2.2 Tests pass — signup rejects disallowed domain (configured), accepts matching, accepts any when empty: `test accounts`
-- [ ] 2.3 Test: successful signup creates a User with first/last name and logs them in
+- [x] 2.1 Migration applies: `migrate`
+- [x] 2.2 Tests pass — signup rejects disallowed domain (configured), accepts matching, accepts any when empty: `test accounts`
+- [x] 2.3 Test: successful signup creates a User with first/last name and logs them in
 
 #### Manual
 

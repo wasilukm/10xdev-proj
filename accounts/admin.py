@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from .models import AllowedEmailDomain, User
 
 
 @admin.register(User)
@@ -44,3 +44,8 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
     )
+
+
+@admin.register(AllowedEmailDomain)
+class AllowedEmailDomainAdmin(admin.ModelAdmin):
+    list_display = ["domain"]
