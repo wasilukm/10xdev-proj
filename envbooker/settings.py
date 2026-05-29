@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.postgres",
     "accounts",
+    "catalog",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

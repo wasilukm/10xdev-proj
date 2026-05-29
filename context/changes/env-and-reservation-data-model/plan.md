@@ -251,19 +251,19 @@ Greenfield — no data migration. The abandoned `db.sqlite3` is no longer the de
 
 ### Phase 2: Custom user model (accounts)
 #### Automated
-- [x] 2.1 `makemigrations accounts` produces `0001_initial`
-- [x] 2.2 `migrate` applies cleanly on Postgres
-- [x] 2.3 `check` passes; `createsuperuser` succeeds
+- [x] 2.1 `makemigrations accounts` produces `0001_initial` — 8344a2d
+- [x] 2.2 `migrate` applies cleanly on Postgres — 8344a2d
+- [x] 2.3 `check` passes; `createsuperuser` succeeds — 8344a2d
 #### Manual
-- [x] 2.4 `/admin/` login + Users section visible
+- [x] 2.4 `/admin/` login + Users section visible — 8344a2d
 
 ### Phase 3: Environment catalog (catalog)
 #### Automated
-- [ ] 3.1 `makemigrations catalog` + `migrate` apply cleanly
-- [ ] 3.2 `test catalog` passes
-- [ ] 3.3 `check` passes
+- [x] 3.1 `makemigrations catalog` + `migrate` apply cleanly
+- [x] 3.2 `test catalog` passes
+- [x] 3.3 `check` passes
 #### Manual
-- [ ] 3.4 `/admin/` create Environment; list_filter works
+- [x] 3.4 `/admin/` create Environment; list_filter works
 
 ### Phase 4: Reservation + no-overlap (reservations)
 #### Automated
