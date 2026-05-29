@@ -19,7 +19,7 @@ def make_range(start_hour, end_hour):
 
 class ReservationNoOverlapTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="tester", password="pass")
+        self.user = User.objects.create_user(email="tester@example.com", password="pass")
         self.env1 = Environment.objects.create(
             name="env-1", version="1.0", purpose="test",
             project="alpha", use_case_tag="ci", owner=self.user,

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Home — EnvBooker{% endblock %}
+{% block content %}
+<h1>Hello, {{ user.get_full_name|default:user.email }}!</h1>
+<p>Welcome to EnvBooker.</p>
+{% endblock %}

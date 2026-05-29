@@ -5,6 +5,23 @@
   <title>{% block title %}EnvBooker{% endblock %}</title>
 </head>
 <body>
+<nav>
+  {% if user.is_authenticated %}
+    {{ user.get_full_name|default:user.email }}
+    <form method="post" action="{% url 'logout' %}" style="display:inline">
+      {% csrf_token %}
+      <button type="submit">Sign out</button>
+    </form>
+  {% else %}
+    <a href="{% url 'login' %}">Sign in</a> |
+    <a href="{% url 'signup' %}">Sign up</a>
+  {% endif %}
+</nav>
+{% if messages %}
+<ul>
+  {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+</ul>
+{% endif %}
 {% block content %}{% endblock %}
 </body>
 </html>

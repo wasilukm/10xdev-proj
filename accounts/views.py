@@ -1,5 +1,5 @@
-from django.conf import settings
 from django.contrib.auth import login
+from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 
 from .forms import SignUpForm
@@ -8,9 +8,7 @@ from .forms import SignUpForm
 class SignUpView(CreateView):
     form_class = SignUpForm
     template_name = "registration/signup.html"
-
-    def get_success_url(self):
-        return settings.LOGIN_REDIRECT_URL
+    success_url = reverse_lazy("home")
 
     def form_valid(self, form):
         response = super().form_valid(form)

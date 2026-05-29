@@ -236,32 +236,32 @@ Migration 0002 alters the already-applied `accounts.User` table. Locally and on 
 
 #### Manual
 
-- [ ] 1.4 `createsuperuser` prompts for email + first/last name and succeeds
-- [ ] 1.5 New superuser can log into `/admin/` with email + password
+- [x] 1.4 `createsuperuser` prompts for email + first/last name and succeeds
+- [x] 1.5 New superuser can log into `/admin/` with email + password
 
 ### Phase 2: Allowed-domain model + org-restricted signup
 
 #### Automated
 
-- [x] 2.1 Migration applies: `migrate`
-- [x] 2.2 Tests pass — signup rejects disallowed domain (configured), accepts matching, accepts any when empty: `test accounts`
-- [x] 2.3 Test: successful signup creates a User with first/last name and logs them in
+- [x] 2.1 Migration applies: `migrate` — 54aeb62
+- [x] 2.2 Tests pass — signup rejects disallowed domain (configured), accepts matching, accepts any when empty: `test accounts` — 54aeb62
+- [x] 2.3 Test: successful signup creates a User with first/last name and logs them in — 54aeb62
 
 #### Manual
 
-- [ ] 2.4 Non-matching domain shows inline error; matching domain succeeds → home
-- [ ] 2.5 Domain rows can be added/edited in `/admin/`
+- [x] 2.4 Non-matching domain shows inline error; matching domain succeeds → home
+- [x] 2.5 Domain rows can be added/edited in `/admin/`
 
 ### Phase 3: Login / logout / gated home + settings + base template
 
 #### Automated
 
-- [ ] 3.1 Test: GET `/` unauthenticated → 302 redirect to `LOGIN_URL`
-- [ ] 3.2 Test: valid login → home; logout (POST) ends session; home then redirects to login
-- [ ] 3.3 Full suite green: `test`
+- [x] 3.1 Test: GET `/` unauthenticated → 302 redirect to `LOGIN_URL`
+- [x] 3.2 Test: valid login → home; logout (POST) ends session; home then redirects to login
+- [x] 3.3 Full suite green: `test`
 
 #### Manual
 
-- [ ] 3.4 Logged-out `/` lands on sign-in; after sign-in, home greets by full name
-- [ ] 3.5 Sign-out button returns to sign-in and `/` is gated again
-- [ ] 3.6 `runserver` flow (signup → home → logout → login) works end to end
+- [x] 3.4 Logged-out `/` lands on sign-in; after sign-in, home greets by full name
+- [x] 3.5 Sign-out button returns to sign-in and `/` is gated again
+- [x] 3.6 `runserver` flow (signup → home → logout → login) works end to end

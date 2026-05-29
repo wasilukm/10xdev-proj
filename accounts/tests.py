@@ -126,3 +126,34 @@ class SignUpViewTests(TestCase):
         response = self._post(email="user@other.com")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "approved email domains")
+
+
+class AuthFlowTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="alice@example.com",
+            password="N0t-a-simple-pass!",
+            first_name="Alice",
+            last_name="Smith",
+        )
+
+    def test_unauthenticated_root_redirects_to_login(self):
+        response = self.client.get("/", secure=True)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_login_redirects_to_home(self):
+        response = self.client.post("/accounts/login/", {
+            "username": "alice@example.com",
+            "password": "N0t-a-simple-pass!",
+        }, secure=True)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/")
+
+    def test_logout_ends_session_and_home_gates(self):
+        self.client.force_login(self.user)
+        response = self.client.post("/accounts/logout/", secure=True)
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get("/", secure=True)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])

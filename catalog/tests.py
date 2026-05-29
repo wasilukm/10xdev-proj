@@ -6,7 +6,7 @@ from catalog.models import Environment
 
 class EnvironmentModelTest(TestCase):
     def test_create_and_str(self):
-        user = User.objects.create_user(username="owner", password="pass")
+        user = User.objects.create_user(email="owner@example.com", password="pass")
         env = Environment.objects.create(
             name="staging-01",
             version="1.2.3",
