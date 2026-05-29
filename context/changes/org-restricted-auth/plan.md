@@ -230,9 +230,9 @@ Migration 0002 alters the already-applied `accounts.User` table. Locally and on 
 
 #### Automated
 
-- [ ] 1.1 Migrations generate with no model-state drift: `makemigrations --check --dry-run`
-- [ ] 1.2 Migration applies cleanly: `migrate`
-- [ ] 1.3 Manager test passes (create_user / create_superuser by email): `test accounts`
+- [x] 1.1 Migrations generate with no model-state drift: `makemigrations --check --dry-run`
+- [x] 1.2 Migration applies cleanly: `migrate`
+- [x] 1.3 Manager test passes (create_user / create_superuser by email): `test accounts`
 
 #### Manual
 
