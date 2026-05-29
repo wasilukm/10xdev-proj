@@ -1,7 +1,7 @@
 ---
 change_id: env-and-reservation-data-model
 title: Env and reservation data model
-status: planned
+status: implementing
 created: 2026-05-28
 updated: 2026-05-29
 archived_at: null

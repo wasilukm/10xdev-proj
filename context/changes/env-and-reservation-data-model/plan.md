@@ -242,12 +242,12 @@ Greenfield — no data migration. The abandoned `db.sqlite3` is no longer the de
 
 ### Phase 1: Local Postgres dev environment
 #### Automated
-- [ ] 1.1 `docker compose up -d` brings Postgres to healthy
-- [ ] 1.2 `manage.py migrate` connects to Postgres (no SQLite file)
-- [ ] 1.3 `manage.py check` passes
+- [x] 1.1 `docker compose up -d` brings Postgres to healthy
+- [x] 1.2 `manage.py migrate` connects to Postgres (no SQLite file)
+- [x] 1.3 `manage.py check` passes
 #### Manual
-- [ ] 1.4 `psql` confirms `envbooker` DB reachable
-- [ ] 1.5 Settings reads local `DATABASE_URL`
+- [x] 1.4 `psql` confirms `envbooker` DB reachable
+- [x] 1.5 Settings reads local `DATABASE_URL`
 
 ### Phase 2: Custom user model (accounts)
 #### Automated

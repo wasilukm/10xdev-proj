@@ -21,11 +21,25 @@ uv run python manage.py test <app>            # run tests for a single app
 
 ### Local dev setup
 
-`settings.py` reads `DJANGO_SECRET_KEY` from the environment and will crash on startup if it is missing. Before running the dev server:
+Local dev uses **Postgres** (not SQLite) for full parity with Railway prod (exclusion constraints require it). Start Postgres first:
+
+```bash
+docker compose up -d              # start Postgres 17 on localhost:5432
+```
+
+Then export the three required env vars (copy from `.env.example`):
 
 ```bash
 export DJANGO_SECRET_KEY=any-local-secret-value
 export DJANGO_DEBUG=True          # optional; defaults to False if unset
+export DATABASE_URL=postgres://envbooker:envbooker@localhost:5432/envbooker
+```
+
+Run migrations and start the dev server:
+
+```bash
+uv run python manage.py migrate
+uv run python manage.py runserver
 ```
 
 ### Project-specific tripwires
