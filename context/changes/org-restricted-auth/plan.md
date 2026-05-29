@@ -236,8 +236,8 @@ Migration 0002 alters the already-applied `accounts.User` table. Locally and on 
 
 #### Manual
 
-- [x] 1.4 `createsuperuser` prompts for email + first/last name and succeeds
-- [x] 1.5 New superuser can log into `/admin/` with email + password
+- [x] 1.4 `createsuperuser` prompts for email + first/last name and succeeds — 178524f
+- [x] 1.5 New superuser can log into `/admin/` with email + password — 178524f
 
 ### Phase 2: Allowed-domain model + org-restricted signup
 
@@ -249,19 +249,19 @@ Migration 0002 alters the already-applied `accounts.User` table. Locally and on 
 
 #### Manual
 
-- [x] 2.4 Non-matching domain shows inline error; matching domain succeeds → home
-- [x] 2.5 Domain rows can be added/edited in `/admin/`
+- [x] 2.4 Non-matching domain shows inline error; matching domain succeeds → home — 178524f
+- [x] 2.5 Domain rows can be added/edited in `/admin/` — 178524f
 
 ### Phase 3: Login / logout / gated home + settings + base template
 
 #### Automated
 
-- [x] 3.1 Test: GET `/` unauthenticated → 302 redirect to `LOGIN_URL`
-- [x] 3.2 Test: valid login → home; logout (POST) ends session; home then redirects to login
-- [x] 3.3 Full suite green: `test`
+- [x] 3.1 Test: GET `/` unauthenticated → 302 redirect to `LOGIN_URL` — 178524f
+- [x] 3.2 Test: valid login → home; logout (POST) ends session; home then redirects to login — 178524f
+- [x] 3.3 Full suite green: `test` — 178524f
 
 #### Manual
 
-- [x] 3.4 Logged-out `/` lands on sign-in; after sign-in, home greets by full name
-- [x] 3.5 Sign-out button returns to sign-in and `/` is gated again
-- [x] 3.6 `runserver` flow (signup → home → logout → login) works end to end
+- [x] 3.4 Logged-out `/` lands on sign-in; after sign-in, home greets by full name — 178524f
+- [x] 3.5 Sign-out button returns to sign-in and `/` is gated again — 178524f
+- [x] 3.6 `runserver` flow (signup → home → logout → login) works end to end — 178524f

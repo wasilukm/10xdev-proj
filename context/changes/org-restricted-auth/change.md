@@ -1,9 +1,9 @@
 ---
 change_id: org-restricted-auth
 title: Org restricted auth
-status: implementing
+status: implemented
 created: 2026-05-29
-updated: 2026-05-29
+updated: 2026-05-30
 archived_at: null
 ---
 
