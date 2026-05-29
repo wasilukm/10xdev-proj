@@ -1,7 +1,7 @@
 ---
 change_id: org-restricted-auth
 title: Org restricted auth
-status: new
+status: planned
 created: 2026-05-29
 updated: 2026-05-29
 archived_at: null
