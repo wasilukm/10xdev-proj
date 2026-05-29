@@ -267,8 +267,8 @@ Greenfield — no data migration. The abandoned `db.sqlite3` is no longer the de
 
 ### Phase 4: Reservation + no-overlap (reservations)
 #### Automated
-- [x] 4.1 `makemigrations reservations` + `migrate` apply (extension + constraint)
-- [x] 4.2 full `test` suite passes incl. all FR-015 cases
-- [x] 4.3 `check` passes
+- [x] 4.1 `makemigrations reservations` + `migrate` apply (extension + constraint) — f6367b0
+- [x] 4.2 full `test` suite passes incl. all FR-015 cases — f6367b0
+- [x] 4.3 `check` passes — f6367b0
 #### Manual
-- [x] 4.4 `/admin/` overlap rejected, back-to-back accepted, cross-env accepted
+- [x] 4.4 `/admin/` overlap rejected, back-to-back accepted, cross-env accepted — f6367b0
