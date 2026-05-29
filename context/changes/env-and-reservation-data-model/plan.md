@@ -259,16 +259,16 @@ Greenfield — no data migration. The abandoned `db.sqlite3` is no longer the de
 
 ### Phase 3: Environment catalog (catalog)
 #### Automated
-- [x] 3.1 `makemigrations catalog` + `migrate` apply cleanly
-- [x] 3.2 `test catalog` passes
-- [x] 3.3 `check` passes
+- [x] 3.1 `makemigrations catalog` + `migrate` apply cleanly — 5b612bd
+- [x] 3.2 `test catalog` passes — 5b612bd
+- [x] 3.3 `check` passes — 5b612bd
 #### Manual
-- [x] 3.4 `/admin/` create Environment; list_filter works
+- [x] 3.4 `/admin/` create Environment; list_filter works — 5b612bd
 
 ### Phase 4: Reservation + no-overlap (reservations)
 #### Automated
-- [ ] 4.1 `makemigrations reservations` + `migrate` apply (extension + constraint)
-- [ ] 4.2 full `test` suite passes incl. all FR-015 cases
-- [ ] 4.3 `check` passes
+- [x] 4.1 `makemigrations reservations` + `migrate` apply (extension + constraint)
+- [x] 4.2 full `test` suite passes incl. all FR-015 cases
+- [x] 4.3 `check` passes
 #### Manual
-- [ ] 4.4 `/admin/` overlap rejected, back-to-back accepted, cross-env accepted
+- [x] 4.4 `/admin/` overlap rejected, back-to-back accepted, cross-env accepted

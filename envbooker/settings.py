@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "accounts",
     "catalog",
+    "reservations",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
