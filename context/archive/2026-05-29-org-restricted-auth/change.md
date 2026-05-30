@@ -1,10 +1,10 @@
 ---
 change_id: org-restricted-auth
 title: Org restricted auth
-status: impl_reviewed
+status: archived
 created: 2026-05-29
 updated: 2026-05-31
-archived_at: null
+archived_at: 2026-05-30T22:44:26Z
 ---
 
 ## Notes
