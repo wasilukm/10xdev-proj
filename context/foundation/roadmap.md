@@ -3,7 +3,7 @@ project: EnvBooker
 version: 1
 status: draft
 created: 2026-05-27
-updated: 2026-05-27
+updated: 2026-05-30
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -29,7 +29,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 
 | ID    | Change ID                       | Outcome (user can …)                                                                                                | Prerequisites    | PRD refs                                                  | Status   |
 | ----- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------------------------------------------- | -------- |
-| F-01  | env-and-reservation-data-model  | (foundation) Env + Reservation tables exist with DB-enforced no-overlap; admin seeds catalogue via Django `/admin/` | —                | FR-015, NFR §no-double-booking, Access Control            | ready    |
+| F-01  | env-and-reservation-data-model  | (foundation) Env + Reservation tables exist with DB-enforced no-overlap; admin seeds catalogue via Django `/admin/` | —                | FR-015, NFR §no-double-booking, Access Control            | done     |
 | S-01  | org-restricted-auth             | sign up with an org-domain email, sign in, and sign out                                                             | —                | FR-001, FR-002, FR-004, Access Control                    | ready    |
 | S-02  | browse-and-reserve              | sign in, see the env list with owners + upcoming windows, and create a non-overlapping reservation that appears immediately | F-01, S-01       | FR-008, FR-010, FR-011, FR-015, US-01                     | proposed |
 | S-03  | filter-env-list                 | filter the env list by availability, purpose / use-case tag, and project — closing the <30s primary success criterion | S-02             | FR-009, US-01, Success Criteria §Primary                  | proposed |
@@ -72,7 +72,7 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 - **Unknowns:**
   - Should the DB-level overlap constraint use `tstzrange` + `EXCLUDE USING gist`, or a query-time lock + check? — Owner: TBD (resolves in `/10x-plan`). Block: no.
 - **Risk:** Carrying the no-overlap rule at the application layer alone is the documented race-condition trap (PRD FR-015 Socratic note); pushing it into the DB schema is the durable fix and the load-bearing correctness call for the entire product. Sequenced first because every booking slice depends on it.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -180,4 +180,4 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 
 ## Done
 
-(Empty on first generation. `/10x-archive` appends an entry here — and flips that item's `Status` to `done` — when a change whose `Change ID` matches the item is archived.)
+- **F-01: (foundation) Environment and Reservation tables exist with descriptive attributes (version, owner, purpose, project, use-case tag) on Env and a Postgres-level exclusion constraint guaranteeing no two reservations on the same env overlap in time. Admin can seed and edit both via Django's built-in `/admin/` until a first-class admin UI ships in S-05.** — Archived 2026-05-30 → `context/archive/2026-05-28-env-and-reservation-data-model/`. Lesson: —.
