@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField, RangeOperators
 from django.db import models
+from django.db.models import Q
 
 
 class Reservation(models.Model):
@@ -27,6 +28,14 @@ class Reservation(models.Model):
                     ("during", RangeOperators.OVERLAPS),
                 ],
                 index_type="GIST",
+            ),
+            models.CheckConstraint(
+                name="reservation_during_bounded",
+                condition=Q(
+                    during__isempty=False,
+                    during__lower_inf=False,
+                    during__upper_inf=False,
+                ),
             ),
         ]
 

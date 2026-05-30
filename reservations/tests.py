@@ -60,3 +60,22 @@ class ReservationNoOverlapTest(TestCase):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 self._reserve(self.env1, 10, 12)
+
+    def test_empty_range_rejected(self):
+        """(e) An empty/zero-duration range is rejected by the bounded check."""
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                self._reserve(self.env1, 9, 9)
+
+    def test_unbounded_range_rejected(self):
+        """(f) An open-ended range bypasses overlap; the bounded check rejects it."""
+        open_ended = Range(
+            lower=datetime(2024, 1, 1, 9, 0, tzinfo=timezone.utc),
+            upper=None,
+            bounds="[)",
+        )
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Reservation.objects.create(
+                    owner=self.user, environment=self.env1, during=open_ended,
+                )
