@@ -19,7 +19,7 @@ class UserManagerTests(TestCase):
 
     def test_create_user_normalises_email(self):
         user = User.objects.create_user(email="Alice@EXAMPLE.COM", password="x")
-        self.assertEqual(user.email, "Alice@example.com")
+        self.assertEqual(user.email, "alice@example.com")
 
     def test_create_user_requires_email(self):
         with self.assertRaises(ValueError):
@@ -149,6 +149,14 @@ class AuthFlowTests(TestCase):
         }, secure=True)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["Location"], "/")
+
+    def test_login_is_case_insensitive(self):
+        response = self.client.post("/accounts/login/", {
+            "username": "Alice@Example.COM",
+            "password": "N0t-a-simple-pass!",
+        }, secure=True)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
 
     def test_logout_ends_session_and_home_gates(self):
         self.client.force_login(self.user)
