@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from .models import AllowedEmailDomain, User
 
@@ -13,11 +13,16 @@ class SignUpForm(UserCreationForm):
         fields = ("email", "first_name", "last_name")
 
     def clean_email(self):
-        email = self.cleaned_data["email"]
-        domain = email.split("@")[-1].lower()
+        email = self.cleaned_data["email"].lower()
+        domain = email.split("@")[-1]
         if AllowedEmailDomain.objects.exists():
             if not AllowedEmailDomain.objects.filter(domain=domain).exists():
                 raise forms.ValidationError(
                     "Sign-up is restricted to approved email domains."
                 )
         return email
+
+
+class EmailAuthenticationForm(AuthenticationForm):
+    def clean_username(self):
+        return self.cleaned_data["username"].lower()

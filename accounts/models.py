@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class UserManager(BaseUserManager):
@@ -8,7 +9,7 @@ class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("Email is required")
-        email = self.normalize_email(email)
+        email = self.normalize_email(email).lower()
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
         user = self.model(email=email, **extra_fields)
@@ -33,6 +34,11 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
     objects = UserManager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(Lower("email"), name="user_email_ci_uniq"),
+        ]
 
 
 class AllowedEmailDomain(models.Model):
