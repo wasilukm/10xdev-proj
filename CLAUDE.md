@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project: EnvBooker
 
-Django 6.0.5 web app on **Python 3.14** (see `.python-version`), managed with **uv** (not pip/poetry). Single Django config package at `envbooker/`; no domain apps yet — they'll be added as the PRD ships. SQLite (`db.sqlite3`) for dev; **Railway** is the deploy target (see `railway.toml` and `context/foundation/infrastructure.md`). Product & stack rationale live in `context/foundation/`.
+Django 6.0.5 web app on **Python 3.14** (see `.python-version`), managed with **uv** (not pip/poetry). Django config package at `envbooker/`; domain logic split across three apps: `accounts`, `catalog`, `reservations`. **Railway** is the deploy target (see `railway.toml` and `context/foundation/infrastructure.md`). Product & stack rationale live in `context/foundation/`.
 
 ### Common commands
 
@@ -41,6 +41,28 @@ Run migrations and start the dev server:
 uv run python manage.py migrate
 uv run python manage.py runserver
 ```
+
+## Architecture
+
+### App layout
+
+| App | Responsibility |
+|-----|---------------|
+| `accounts` | Custom `User` model (email-as-identity, no `username`), `AllowedEmailDomain` org-restriction, signup/login views |
+| `catalog` | `Environment` model — bookable environments with `name`, `version`, `purpose`, `project`, `use_case_tag`, and an `owner` FK |
+| `reservations` | `Reservation` model — links `owner` + `environment` with a `DateTimeRangeField(during)`; enforces no-overlap via a Postgres GiST exclusion constraint |
+
+### Auth model
+
+`accounts.User` extends `AbstractUser` with `username=None`; `email` is the `USERNAME_FIELD`. Uniqueness is enforced both at the DB level (`UNIQUE`) and case-insensitively via a `UniqueConstraint(Lower("email"))`. Sign-up is gated by `AllowedEmailDomain` — if any rows exist, only matching email domains are accepted. Domains are stored and matched lowercase.
+
+### Booking constraint
+
+`Reservation` uses `django.contrib.postgres.constraints.ExclusionConstraint` with `btree_gist`. This is **Postgres-only** — `settings.py` raises `ImproperlyConfigured` at startup for any non-Postgres `DATABASE_URL`. SQLite is not supported even in development.
+
+### Templates & static files
+
+Global templates live in `templates/` (configured in `TEMPLATES[0]["DIRS"]`). `whitenoise` serves static files in production via `CompressedManifestStaticFilesStorage`; `STATIC_ROOT = staticfiles/`. Login/logout redirects are `login` → `home`.
 
 ### Project-specific tripwires
 
