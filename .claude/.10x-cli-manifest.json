@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.6.1",
   "manifestVersion": 2,
-  "lastApplied": "2026-05-30T20:34:54.494Z",
-  "lessonId": "m2l3",
+  "lastApplied": "2026-05-31T15:35:09.244Z",
+  "lessonId": "m2l4",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -112,6 +112,16 @@
         ]
       },
       "10x-impl-review": {
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      "10x-frame": {
+        "files": [
+          "SKILL.md"
+        ]
+      },
+      "10x-research": {
         "files": [
           "SKILL.md"
         ]
