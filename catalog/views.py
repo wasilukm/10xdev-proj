@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 
+from reservations.forms import ReservationForm
 from .models import Environment
 from .services import build_row_context, prefetch_reservations_for_list
 
@@ -16,6 +17,10 @@ def environment_list(request):
         .order_by("name")
     )
 
-    rows = [build_row_context(env, now=now) for env in envs]
+    rows = []
+    for env in envs:
+        row = build_row_context(env, now=now)
+        row["booking_form"] = ReservationForm(initial={"environment": env.pk})
+        rows.append(row)
 
     return render(request, "catalog/environment_list.html", {"rows": rows})

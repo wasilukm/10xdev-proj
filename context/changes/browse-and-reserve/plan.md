@@ -296,30 +296,30 @@ No model changes — F-01's schema is reused as-is. `makemigrations --check` sho
 ### Phase 1: Read-only env list dashboard + HTMX wiring
 
 #### Automated
-- [x] 1.1 No unintended model changes (`makemigrations --check --dry-run`)
-- [x] 1.2 Anonymous request to `/` redirects to login
-- [x] 1.3 Dashboard groups current vs upcoming-within-24h reservations correctly
+- [x] 1.1 No unintended model changes (`makemigrations --check --dry-run`) — 9eb7cfe
+- [x] 1.2 Anonymous request to `/` redirects to login — 9eb7cfe
+- [x] 1.3 Dashboard groups current vs upcoming-within-24h reservations correctly — 9eb7cfe
 
 #### Manual
-- [ ] 1.4 `/` shows envs with owners + windows; free/busy state correct against seeded data
-- [ ] 1.5 Times display in the configured org timezone
-- [ ] 1.6 `Environment` and `Reservation` are editable under `/admin/` (for seeding QA data)
+- [x] 1.4 `/` shows envs with owners + windows; free/busy state correct against seeded data
+- [x] 1.5 Times display in the configured org timezone
+- [x] 1.6 `Environment` and `Reservation` are editable under `/admin/` (for seeding QA data)
 
 ### Phase 2: Reservation booking flow (create + overlap rejection)
 
 #### Automated
-- [ ] 2.1 Happy-path booking creates a reservation; response fragment shows it
-- [ ] 2.2 Overlapping window rejected; message names conflicting owner + window
-- [ ] 2.3 Constraint-violation handling: overlapping save caught and surfaced, not a 500
-- [ ] 2.4 `compute_end` "until next reservation" caps at MAX and stops at next booking's start (adjacency allowed)
-- [ ] 2.5 `next_free_window` returns a correct opening
-- [ ] 2.6 Create view requires auth
+- [x] 2.1 Happy-path booking creates a reservation; response fragment shows it
+- [x] 2.2 Overlapping window rejected; message names conflicting owner + window
+- [x] 2.3 Constraint-violation handling: overlapping save caught and surfaced, not a 500
+- [x] 2.4 `compute_end` "until next reservation" caps at MAX and stops at next booking's start (adjacency allowed)
+- [x] 2.5 `next_free_window` returns a correct opening
+- [x] 2.6 Create view requires auth
 
 #### Manual
-- [ ] 2.7 Booking a free env updates only that row, no full page reload (HTMX)
-- [ ] 2.8 Rejection shows named conflict + suggested next window inline, no reload
-- [ ] 2.9 "Until next reservation" fills the gap up to the next booking, capped at 4h
-- [ ] 2.10 Round-trip from landing to confirmed reservation feels well under 30s
+- [x] 2.7 Booking a free env updates only that row, no full page reload (HTMX)
+- [x] 2.8 Rejection shows named conflict + suggested next window inline, no reload
+- [x] 2.9 "Until next reservation" fills the gap up to the next booking, capped at 4h
+- [x] 2.10 Round-trip from landing to confirmed reservation feels well under 30s
 
 ### Phase 3: Automated test suite (core behavior + overlap focus)
 

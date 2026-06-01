@@ -22,7 +22,7 @@
     </thead>
     <tbody>
       {% for row in rows %}
-        {% with env=row.env is_busy=row.is_busy current_reservation=row.current_reservation upcoming_reservations=row.upcoming_reservations %}
+        {% with env=row.env is_busy=row.is_busy current_reservation=row.current_reservation upcoming_reservations=row.upcoming_reservations booking_form=row.booking_form %}
           {% include "catalog/_environment_row.html" %}
         {% endwith %}
       {% endfor %}
