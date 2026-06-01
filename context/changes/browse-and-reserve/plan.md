@@ -296,9 +296,9 @@ No model changes — F-01's schema is reused as-is. `makemigrations --check` sho
 ### Phase 1: Read-only env list dashboard + HTMX wiring
 
 #### Automated
-- [ ] 1.1 No unintended model changes (`makemigrations --check --dry-run`)
-- [ ] 1.2 Anonymous request to `/` redirects to login
-- [ ] 1.3 Dashboard groups current vs upcoming-within-24h reservations correctly
+- [x] 1.1 No unintended model changes (`makemigrations --check --dry-run`)
+- [x] 1.2 Anonymous request to `/` redirects to login
+- [x] 1.3 Dashboard groups current vs upcoming-within-24h reservations correctly
 
 #### Manual
 - [ ] 1.4 `/` shows envs with owners + windows; free/busy state correct against seeded data

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}EnvBooker — Environments{% endblock %}
+
+{% block content %}
+<h1>Environments</h1>
+{% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Project</th>
+        <th>Purpose</th>
+        <th>Tag</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th>Current reservation</th>
+        <th>Upcoming (24 h)</th>
+        <th>Book</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        {% with env=row.env is_busy=row.is_busy current_reservation=row.current_reservation upcoming_reservations=row.upcoming_reservations %}
+          {% include "catalog/_environment_row.html" %}
+        {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No environments found.</p>
+{% endif %}
+{% endblock %}

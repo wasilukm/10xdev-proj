@@ -1,0 +1,38 @@
+<tr id="env-row-{{ env.pk }}">
+  <td>{{ env.name }}</td>
+  <td>{{ env.version }}</td>
+  <td>{{ env.project }}</td>
+  <td>{{ env.purpose }}</td>
+  <td>{{ env.use_case_tag }}</td>
+  <td>{{ env.owner.get_full_name|default:env.owner.email }}</td>
+  <td>{% if is_busy %}<strong>Busy</strong>{% else %}Free{% endif %}</td>
+  <td>
+    {% if current_reservation %}
+      {{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}
+      {{ current_reservation.during.lower }} – {{ current_reservation.during.upper }}
+    {% else %}
+      —
+    {% endif %}
+  </td>
+  <td>
+    {% for r in upcoming_reservations %}
+      {{ r.owner.get_full_name|default:r.owner.email }}
+      {{ r.during.lower }} – {{ r.during.upper }}<br>
+    {% empty %}
+      —
+    {% endfor %}
+  </td>
+  <td>
+    {% if booking_form %}
+      {% if conflict_message %}<p>{{ conflict_message }}</p>{% endif %}
+      {% if next_free %}<p>Next free: {{ next_free }}</p>{% endif %}
+      <form hx-post="{% url 'reservations:create' %}"
+            hx-target="#env-row-{{ env.pk }}"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        {{ booking_form.as_p }}
+        <button type="submit">Book</button>
+      </form>
+    {% endif %}
+  </td>
+</tr>
