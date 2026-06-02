@@ -36,6 +36,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | S-04  | edit-own-reservation            | modify or cancel a reservation they own                                                                             | S-02             | FR-012, FR-013, FR-015, Access Control                    | proposed |
 | S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | proposed |
 | S-06  | admin-reservation-override      | (admin) modify or cancel any reservation, including those owned by other users                                      | S-02, S-01       | FR-014, Access Control                                    | proposed |
+| SPIKE-01 | timezone-calendar-edge-cases | (spike) understand & harden time-window handling against DST gaps/folds, leap years, and other calendar boundaries  | S-02             | NFR §reliability, FR-011, FR-015                          | proposed |
 
 ## Streams
 
@@ -153,6 +154,23 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 - **Risk:** The audit-trail question — "should admin overrides be logged so the original owner can see who cancelled their reservation?" — is not in scope per PRD §Non-Goals (no notifications) but is the natural next concern. Keep this slice strictly to the FR-014 capability; do not grow it.
 - **Status:** proposed
 
+## Spikes
+
+### SPIKE-01: Timezone & calendar edge-case hardening
+
+- **Outcome:** (spike) A documented understanding of how EnvBooker's time-window handling behaves across calendar edge cases, plus targeted hardening of the reservation form. Concretely: `ReservationForm.clean()` calls `timezone.make_aware(start, get_current_timezone())`, which raises on a DST gap/fold local datetime (`Europe/Warsaw`, twice a year) — today that surfaces as a 500 rather than a form error. The spike scopes the full class of calendar corner cases (DST gaps/folds, leap years, leap seconds if relevant, month/year boundaries on "until next reservation" gap math) and lands fixes that turn each into a graceful, user-visible outcome.
+- **Change ID:** timezone-calendar-edge-cases
+- **PRD refs:** NFR §reliability, FR-011 (duration), FR-015 (no-overlap)
+- **Prerequisites:** S-02
+- **Parallel with:** S-03, S-04, S-05, S-06
+- **Blockers:** —
+- **Source:** Deferred from the S-02 (`browse-and-reserve`) implementation review (finding F5, 2026-06-03). Booking otherwise works; this is reliability hardening, not a functional gap.
+- **Unknowns:**
+  - Which calendar edge cases can actually occur given a single org timezone + half-open `[start, end)` ranges, and which are theoretical? — Owner: user. Block: no.
+  - For a DST-gap start time, reject with a form error or snap forward to the valid instant? — Owner: user. Block: no.
+- **Risk:** Low blast radius (form-layer input handling), but the failure mode is a 500 on otherwise-valid-looking input twice a year. Easy to under-scope to just the `make_aware` call and miss the gap math in `compute_end` / `next_free_window`; the spike exists precisely to map the whole class before patching one symptom.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                       | Suggested issue title                                                                                  | Ready for `/10x-plan` | Notes                                            |
@@ -164,6 +182,7 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 | S-04       | edit-own-reservation            | EnvBooker: Modify and cancel own reservation                                                           | no                    | Promotes to ready once S-02 is done               |
 | S-05       | admin-env-catalog               | EnvBooker: Admin env-catalogue UI (create / modify-with-warning / delete-if-no-active)                 | no                    | Promotes to ready once F-01 + S-01 are done       |
 | S-06       | admin-reservation-override      | EnvBooker: Admin override of any reservation                                                           | no                    | Promotes to ready once S-02 + S-01 are done       |
+| SPIKE-01   | timezone-calendar-edge-cases    | EnvBooker: Spike — DST/leap-year/calendar edge-case hardening for reservation time windows             | no                    | Deferred from S-02 impl review (F5); ready after S-02 |
 
 ## Open Roadmap Questions
 

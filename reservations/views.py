@@ -53,6 +53,7 @@ def reservation_create(request):
                 Reservation.objects
                 .select_related("owner")
                 .filter(environment=env, during__overlap=during)
+                .order_by("during")
                 .first()
             )
             if conflict:
@@ -62,7 +63,9 @@ def reservation_create(request):
                     f"({conflict.during.lower:%Y-%m-%d %H:%M} – {conflict.during.upper:%Y-%m-%d %H:%M})"
                 )
             next_free = services.next_free_window(env, start)
-        else:
+        elif "reservation_during_bounded" in cause:
             conflict_message = "Invalid reservation range — please check your start time and duration."
+        else:
+            raise  # unknown IntegrityError is a bug, not user input — don't mask it
 
     return _row_response(request, env, conflict_message=conflict_message, next_free=next_free)

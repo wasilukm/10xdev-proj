@@ -5,10 +5,6 @@ from psycopg.types.range import Range
 from reservations.models import Reservation
 
 
-def _now_horizon(now):
-    return now, now + timezone.timedelta(hours=24)
-
-
 def build_row_context(env, now=None):
     """Return context dict for a single env row partial."""
     if now is None:
@@ -17,12 +13,19 @@ def build_row_context(env, now=None):
     horizon = now + timezone.timedelta(hours=24)
     window = Range(now, horizon, "[)")
 
-    upcoming = list(
-        env.reservations
-        .select_related("owner")
-        .filter(during__overlap=window)
-        .order_by("during")
-    )
+    # In the list view the 24h window is already loaded by
+    # prefetch_reservations_for_list; reuse that cache instead of re-querying
+    # per env (avoids N+1). The create view calls this without a prefetch, so
+    # fall back to a filtered query for the single-env case.
+    if "reservations" in getattr(env, "_prefetched_objects_cache", {}):
+        upcoming = list(env.reservations.all())
+    else:
+        upcoming = list(
+            env.reservations
+            .select_related("owner")
+            .filter(during__overlap=window)
+            .order_by("during")
+        )
 
     current = next(
         (r for r in upcoming if r.during.lower <= now < r.during.upper),
