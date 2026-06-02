@@ -324,8 +324,8 @@ No model changes — F-01's schema is reused as-is. `makemigrations --check` sho
 ### Phase 3: Automated test suite (core behavior + overlap focus)
 
 #### Automated
-- [x] 3.1 Full suite passes (`uv run python manage.py test`)
-- [x] 3.2 New tests cover overlap rejection, DB race path, gap/until-next logic, 24h horizon query, access control
+- [x] 3.1 Full suite passes (`uv run python manage.py test`) — 3db1d36
+- [x] 3.2 New tests cover overlap rejection, DB race path, gap/until-next logic, 24h horizon query, access control — 3db1d36
 
 #### Manual
-- [x] 3.3 Test names clearly map to FR-015 / US-01 acceptance criteria
+- [x] 3.3 Test names clearly map to FR-015 / US-01 acceptance criteria — 3db1d36
