@@ -3,7 +3,7 @@ project: EnvBooker
 version: 1
 status: draft
 created: 2026-05-27
-updated: 2026-05-31
+updated: 2026-06-03
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -31,7 +31,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | ----- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------------------------------------------- | -------- |
 | F-01  | env-and-reservation-data-model  | (foundation) Env + Reservation tables exist with DB-enforced no-overlap; admin seeds catalogue via Django `/admin/` | —                | FR-015, NFR §no-double-booking, Access Control            | done     |
 | S-01  | org-restricted-auth             | sign up with an org-domain email, sign in, and sign out                                                             | —                | FR-001, FR-002, FR-004, Access Control                    | done     |
-| S-02  | browse-and-reserve              | sign in, see the env list with owners + upcoming windows, and create a non-overlapping reservation that appears immediately | F-01, S-01       | FR-008, FR-010, FR-011, FR-015, US-01                     | proposed |
+| S-02  | browse-and-reserve              | sign in, see the env list with owners + upcoming windows, and create a non-overlapping reservation that appears immediately | F-01, S-01       | FR-008, FR-010, FR-011, FR-015, US-01                     | done     |
 | S-03  | filter-env-list                 | filter the env list by availability, purpose / use-case tag, and project — closing the <30s primary success criterion | S-02             | FR-009, US-01, Success Criteria §Primary                  | proposed |
 | S-04  | edit-own-reservation            | modify or cancel a reservation they own                                                                             | S-02             | FR-012, FR-013, FR-015, Access Control                    | proposed |
 | S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | proposed |
@@ -102,7 +102,7 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
   - Should the rejection message name only the conflicting reservation, or also suggest the next free window on that env? — Owner: user. Block: no.
   - What's the recommended-max-duration nudge wording (PRD FR-011 says ~4h)? — Owner: user. Block: no.
 - **Risk:** This is the validation milestone; if it lands and the no-overlap guarantee holds end-to-end under realistic concurrent use, the product hypothesis is proven. The principal risk is scope creep — keep filtering, edit/cancel, and admin override OUT of this slice so it stays plannable in one `/10x-plan` invocation.
-- **Status:** proposed
+- **Status:** done
 
 ### S-03: Filter env list (availability, purpose / use-case, project)
 
@@ -201,3 +201,4 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 
 - **F-01: (foundation) Environment and Reservation tables exist with descriptive attributes (version, owner, purpose, project, use-case tag) on Env and a Postgres-level exclusion constraint guaranteeing no two reservations on the same env overlap in time. Admin can seed and edit both via Django's built-in `/admin/` until a first-class admin UI ships in S-05.** — Archived 2026-05-30 → `context/archive/2026-05-28-env-and-reservation-data-model/`. Lesson: —.
 - **S-01: A new user can sign up with an email whose domain matches the organisation's, sign in with email + password, and sign out. Unauthenticated requests to gated routes are redirected to sign-in.** — Archived 2026-05-31 → `context/archive/2026-05-29-org-restricted-auth/`. Lesson: —.
+- **S-02: A signed-in user opens the env list, sees every env with its current state (free / reserved) and the identities + time windows of current and upcoming reservation owners, picks a free env, enters a time window, and confirms. The reservation is created and appears on the list immediately (no page reload); attempts to reserve an overlapping window are rejected with a message naming the conflicting reservation's owner and window.** — Archived 2026-06-03 → `context/archive/2026-05-31-browse-and-reserve/`. Lesson: —.

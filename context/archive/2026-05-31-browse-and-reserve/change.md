@@ -1,10 +1,10 @@
 ---
 change_id: browse-and-reserve
 title: Browse and reserve
-status: impl_reviewed
+status: archived
 created: 2026-05-31
 updated: 2026-06-03
-archived_at: null
+archived_at: 2026-06-02T22:15:06Z
 ---
 
 ## Notes
