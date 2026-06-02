@@ -95,3 +95,42 @@ class DashboardGroupingTest(TestCase):
         ctx = build_row_context(self.env, now=now)
         self.assertIsNotNone(ctx["current_reservation"])
         self.assertNotIn(ctx["current_reservation"], ctx["upcoming_reservations"])
+
+
+class DashboardOwnerVisibilityTest(TestCase):
+    """US-01: owner identity must be visible for current and upcoming reservations."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="visible@example.com",
+            password="pass",
+            first_name="Bob",
+            last_name="Jones",
+        )
+        self.env = Environment.objects.create(
+            name="vis-env", version="1.0", purpose="test",
+            project="proj", use_case_tag="ci", owner=self.owner,
+        )
+
+    def test_current_reservation_owner_available(self):
+        """Row context exposes owner identity on current reservation."""
+        now = make_dt(10)
+        Reservation.objects.create(
+            owner=self.owner, environment=self.env,
+            during=Range(lower=make_dt(9), upper=make_dt(12), bounds="[)"),
+        )
+        ctx = build_row_context(self.env, now=now)
+        res = ctx["current_reservation"]
+        self.assertIsNotNone(res)
+        self.assertEqual(res.owner.get_full_name(), "Bob Jones")
+
+    def test_upcoming_reservation_owner_available(self):
+        """Row context exposes owner identity on upcoming reservations."""
+        now = make_dt(10)
+        Reservation.objects.create(
+            owner=self.owner, environment=self.env,
+            during=Range(lower=make_dt(15), upper=make_dt(17), bounds="[)"),
+        )
+        ctx = build_row_context(self.env, now=now)
+        self.assertEqual(len(ctx["upcoming_reservations"]), 1)
+        self.assertEqual(ctx["upcoming_reservations"][0].owner.get_full_name(), "Bob Jones")

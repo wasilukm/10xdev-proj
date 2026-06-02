@@ -301,31 +301,31 @@ No model changes — F-01's schema is reused as-is. `makemigrations --check` sho
 - [x] 1.3 Dashboard groups current vs upcoming-within-24h reservations correctly — 9eb7cfe
 
 #### Manual
-- [x] 1.4 `/` shows envs with owners + windows; free/busy state correct against seeded data
-- [x] 1.5 Times display in the configured org timezone
-- [x] 1.6 `Environment` and `Reservation` are editable under `/admin/` (for seeding QA data)
+- [x] 1.4 `/` shows envs with owners + windows; free/busy state correct against seeded data — e335b43
+- [x] 1.5 Times display in the configured org timezone — e335b43
+- [x] 1.6 `Environment` and `Reservation` are editable under `/admin/` (for seeding QA data) — e335b43
 
 ### Phase 2: Reservation booking flow (create + overlap rejection)
 
 #### Automated
-- [x] 2.1 Happy-path booking creates a reservation; response fragment shows it
-- [x] 2.2 Overlapping window rejected; message names conflicting owner + window
-- [x] 2.3 Constraint-violation handling: overlapping save caught and surfaced, not a 500
-- [x] 2.4 `compute_end` "until next reservation" caps at MAX and stops at next booking's start (adjacency allowed)
-- [x] 2.5 `next_free_window` returns a correct opening
-- [x] 2.6 Create view requires auth
+- [x] 2.1 Happy-path booking creates a reservation; response fragment shows it — e335b43
+- [x] 2.2 Overlapping window rejected; message names conflicting owner + window — e335b43
+- [x] 2.3 Constraint-violation handling: overlapping save caught and surfaced, not a 500 — e335b43
+- [x] 2.4 `compute_end` "until next reservation" caps at MAX and stops at next booking's start (adjacency allowed) — e335b43
+- [x] 2.5 `next_free_window` returns a correct opening — e335b43
+- [x] 2.6 Create view requires auth — e335b43
 
 #### Manual
-- [x] 2.7 Booking a free env updates only that row, no full page reload (HTMX)
-- [x] 2.8 Rejection shows named conflict + suggested next window inline, no reload
-- [x] 2.9 "Until next reservation" fills the gap up to the next booking, capped at 4h
-- [x] 2.10 Round-trip from landing to confirmed reservation feels well under 30s
+- [x] 2.7 Booking a free env updates only that row, no full page reload (HTMX) — e335b43
+- [x] 2.8 Rejection shows named conflict + suggested next window inline, no reload — e335b43
+- [x] 2.9 "Until next reservation" fills the gap up to the next booking, capped at 4h — e335b43
+- [x] 2.10 Round-trip from landing to confirmed reservation feels well under 30s — e335b43
 
 ### Phase 3: Automated test suite (core behavior + overlap focus)
 
 #### Automated
-- [ ] 3.1 Full suite passes (`uv run python manage.py test`)
-- [ ] 3.2 New tests cover overlap rejection, DB race path, gap/until-next logic, 24h horizon query, access control
+- [x] 3.1 Full suite passes (`uv run python manage.py test`)
+- [x] 3.2 New tests cover overlap rejection, DB race path, gap/until-next logic, 24h horizon query, access control
 
 #### Manual
-- [ ] 3.3 Test names clearly map to FR-015 / US-01 acceptance criteria
+- [x] 3.3 Test names clearly map to FR-015 / US-01 acceptance criteria
