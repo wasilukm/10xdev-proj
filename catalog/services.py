@@ -4,6 +4,8 @@ from psycopg.types.range import Range
 
 from reservations.models import Reservation
 
+from .models import Environment
+
 
 def build_row_context(env, now=None):
     """Return context dict for a single env row partial."""
@@ -54,7 +56,6 @@ def filter_environments(queryset, *, availability=None, project=None, use_case_t
 
 
 def filter_options():
-    from .models import Environment
     projects = list(
         Environment.objects.values_list("project", flat=True).distinct().order_by("project")
     )

@@ -251,6 +251,9 @@ class FilterUITest(TestCase):
         self.assertIn("ui-alpha", content)
         self.assertNotIn("<html", content.lower())
         self.assertNotIn("<nav", content.lower())
+        # The swap is self-replacing: the partial must re-emit the wrapper id
+        # or subsequent filter swaps lose their #env-results target.
+        self.assertIn('id="env-results"', content)
 
     def test_htmx_filtered_returns_narrowed_rows(self):
         response = self.client.get(
