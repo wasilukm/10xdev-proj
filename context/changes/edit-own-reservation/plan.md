@@ -252,27 +252,27 @@ No schema changes — no migration. Cancellation is a hard delete; existing data
 
 #### Automated
 
-- [x] 2.1 Django check passes
-- [x] 2.2 URL reversing works (via reservations test suite)
+- [x] 2.1 Django check passes — 4aab81b
+- [x] 2.2 URL reversing works (via reservations test suite) — 4aab81b
 
 #### Manual
 
-- [x] 2.3 "My reservations" link appears and lists upcoming reservations
-- [x] 2.4 Edit form opens pre-populated with the current duration in hours
-- [x] 2.5 Editing a future reservation's duration updates in place without reload
-- [x] 2.6 Editing into an overlap re-renders with a named conflict, original window intact
-- [x] 2.7 In-progress edit shifts the end only; end-in-past rejected
-- [x] 2.8 Cancel shows confirm prompt and removes the row
-- [x] 2.9 Another user's reservation id on edit/cancel returns 404
+- [x] 2.3 "My reservations" link appears and lists upcoming reservations — 4aab81b
+- [x] 2.4 Edit form opens pre-populated with the current duration in hours — 4aab81b
+- [x] 2.5 Editing a future reservation's duration updates in place without reload — 4aab81b
+- [x] 2.6 Editing into an overlap re-renders with a named conflict, original window intact — 4aab81b
+- [x] 2.7 In-progress edit shifts the end only; end-in-past rejected — 4aab81b
+- [x] 2.8 Cancel shows confirm prompt and removes the row — 4aab81b
+- [x] 2.9 Another user's reservation id on edit/cancel returns 404 — 4aab81b
 
 ### Phase 3: Tests & Manual QA
 
 #### Automated
 
-- [ ] 3.1 Full reservations suite passes
-- [ ] 3.2 Full project suite passes
-- [ ] 3.3 Django check passes
+- [x] 3.1 Full reservations suite passes
+- [x] 3.2 Full project suite passes
+- [x] 3.3 Django check passes
 
 #### Manual
 
-- [ ] 3.4 End-to-end manual walkthrough with a second user account confirms all criteria
+- [x] 3.4 End-to-end manual walkthrough with a second user account confirms all criteria

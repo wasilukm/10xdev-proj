@@ -349,3 +349,211 @@ class ReservationEditFormTest(TestCase):
         form = ReservationEditForm({"hours": "2"}, start=_dt(6))
         self.assertFalse(form.is_valid())
         self.assertIn("New end must be in the future", str(form.errors))
+
+
+# ---------------------------------------------------------------------------
+# View: reservation_edit
+# ---------------------------------------------------------------------------
+
+class ReservationEditViewTest(TestCase):
+    """Integration tests for the HTMX reservation-edit endpoint.
+
+    timezone.now is frozen to 2024-01-01 08:00 UTC throughout patched tests.
+    self.reservation = [10:00, 12:00) is future (lower > now).
+    In-progress fixtures use [06:00, 09:00): lower < now, upper > now, no overlap with [10:00, 12:00).
+    Past fixtures use [04:00, 06:00): upper <= now.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="editor@example.com", password="pass",
+            first_name="Alice", last_name="Smith",
+        )
+        self.other_user = User.objects.create_user(
+            email="other@example.com", password="pass",
+            first_name="Bob", last_name="Jones",
+        )
+        self.env = Environment.objects.create(
+            name="edit-env", version="1.0", purpose="test",
+            project="proj", use_case_tag="ci", owner=self.user,
+        )
+        self.reservation = Reservation.objects.create(
+            owner=self.user, environment=self.env, during=_range(10, 12),
+        )
+
+    def _edit_url(self, pk=None):
+        return reverse("reservations:edit", args=[pk if pk is not None else self.reservation.pk])
+
+    def _post(self, hours=2, pk=None):
+        return self.client.post(self._edit_url(pk), {"hours": str(hours)})
+
+    def test_auth_required(self):
+        """Unauthenticated POST redirects to login."""
+        response = self._post()
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response["Location"])
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_non_owner_404(self, _):
+        """POST as a different user returns 404."""
+        self.client.login(email="other@example.com", password="pass")
+        response = self._post()
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_nonexistent_pk_404(self, _):
+        """POST to a non-existent pk returns 404."""
+        self.client.login(email="editor@example.com", password="pass")
+        response = self._post(pk=99999)
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_happy_path_updates_during(self, _):
+        """Valid edit updates the reservation window and returns 200."""
+        self.client.login(email="editor@example.com", password="pass")
+        response = self._post(hours=4)  # start=10:00, end=14:00
+        self.assertEqual(response.status_code, 200)
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.lower, _dt(10))
+        self.assertEqual(self.reservation.during.upper, _dt(14))
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_in_progress_edit_changes_end_keeps_start(self, _):
+        """Editing an in-progress reservation changes only the end; start is immutable."""
+        # [06:00, 09:00) is in-progress at now=08:00, no overlap with [10:00, 12:00)
+        in_progress = Reservation.objects.create(
+            owner=self.user, environment=self.env, during=_range(6, 9),
+        )
+        self.client.login(email="editor@example.com", password="pass")
+        url = reverse("reservations:edit", args=[in_progress.pk])
+        # hours=2.5 → end = 06:00 + 2.5h = 08:30 > now=08:00
+        response = self.client.post(url, {"hours": "2.5"})
+        self.assertEqual(response.status_code, 200)
+        in_progress.refresh_from_db()
+        self.assertEqual(in_progress.during.lower, _dt(6))
+        self.assertEqual(in_progress.during.upper, _dt(8, 30))
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_in_progress_reject_end_in_past(self, _):
+        """Edit that would set end <= now is rejected; original window unchanged."""
+        # [06:00, 09:00) in-progress, no overlap with [10:00, 12:00)
+        in_progress = Reservation.objects.create(
+            owner=self.user, environment=self.env, during=_range(6, 9),
+        )
+        self.client.login(email="editor@example.com", password="pass")
+        url = reverse("reservations:edit", args=[in_progress.pk])
+        # hours=1 → end = 06:00 + 1h = 07:00 < now=08:00 → form invalid
+        response = self.client.post(url, {"hours": "1"})
+        self.assertEqual(response.status_code, 200)
+        in_progress.refresh_from_db()
+        self.assertEqual(in_progress.during.upper, _dt(9))  # unchanged
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_overlap_conflict_names_other_owner_not_self(self, _):
+        """Overlap rejection names the conflicting other owner — verifies .exclude(pk=...) in conflict query."""
+        # Shorten own reservation to make room for a non-overlapping sibling
+        self.reservation.during = _range(10, 11)
+        self.reservation.save()
+        Reservation.objects.create(
+            owner=self.other_user, environment=self.env, during=_range(13, 16),
+        )
+        self.client.login(email="editor@example.com", password="pass")
+        # hours=4 → [10:00, 14:00) overlaps Bob's [13:00, 16:00)
+        response = self._post(hours=4)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("Bob Jones", content)       # conflict names the other owner
+        self.assertNotIn("Alice Smith", content)  # not a false self-report
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(11))  # original window intact
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_extend_own_window_no_self_conflict(self, _):
+        """Extending a reservation to a superset of its old range succeeds (no false self-conflict)."""
+        self.client.login(email="editor@example.com", password="pass")
+        # hours=4 → [10:00, 14:00); old was [10:00, 12:00); no other reservations
+        response = self._post(hours=4)
+        self.assertEqual(response.status_code, 200)
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(14))
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_past_reservation_404(self, _):
+        """Edit on a past (already-ended) reservation returns 404."""
+        past = Reservation.objects.create(
+            owner=self.user, environment=self.env, during=_range(4, 6),
+        )
+        self.client.login(email="editor@example.com", password="pass")
+        url = reverse("reservations:edit", args=[past.pk])
+        response = self.client.post(url, {"hours": "2"})
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# View: reservation_cancel
+# ---------------------------------------------------------------------------
+
+class ReservationCancelViewTest(TestCase):
+    """Integration tests for the HTMX reservation-cancel endpoint."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="canceler@example.com", password="pass",
+        )
+        self.other_user = User.objects.create_user(
+            email="other2@example.com", password="pass",
+        )
+        self.env = Environment.objects.create(
+            name="cancel-env", version="1.0", purpose="test",
+            project="proj", use_case_tag="ci", owner=self.user,
+        )
+        self.reservation = Reservation.objects.create(
+            owner=self.user, environment=self.env, during=_range(10, 12),
+        )
+
+    def _cancel_url(self, pk=None):
+        return reverse("reservations:cancel", args=[pk if pk is not None else self.reservation.pk])
+
+    def _post(self, pk=None):
+        return self.client.post(self._cancel_url(pk))
+
+    def test_auth_required(self):
+        """Unauthenticated POST redirects to login."""
+        response = self._post()
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response["Location"])
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_non_owner_404(self, _):
+        """POST as a different user returns 404."""
+        self.client.login(email="other2@example.com", password="pass")
+        response = self._post()
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_nonexistent_pk_404(self, _):
+        """POST to a non-existent pk returns 404."""
+        self.client.login(email="canceler@example.com", password="pass")
+        response = self._post(pk=99999)
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_cancel_deletes_row_and_returns_empty(self, _):
+        """Cancel hard-deletes the reservation and returns empty content for HTMX row removal."""
+        self.client.login(email="canceler@example.com", password="pass")
+        pk = self.reservation.pk
+        response = self._post()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"")
+        self.assertFalse(Reservation.objects.filter(pk=pk).exists())
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_past_reservation_404(self, _):
+        """Cancel on a past (already-ended) reservation returns 404."""
+        past = Reservation.objects.create(
+            owner=self.user, environment=self.env, during=_range(4, 6),
+        )
+        self.client.login(email="canceler@example.com", password="pass")
+        url = reverse("reservations:cancel", args=[past.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
