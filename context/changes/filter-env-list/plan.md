@@ -198,13 +198,13 @@ None — no model or schema changes.
 
 #### Automated
 
-- [ ] 1.1 Test suite passes: `uv run python manage.py test catalog`
-- [ ] 1.2 Unit tests cover project / use_case_tag / availability=free / availability=busy / AND-combination / blank-unknown=no-constraint / `filter_options()` distinct-sorted
+- [x] 1.1 Test suite passes: `uv run python manage.py test catalog`
+- [x] 1.2 Unit tests cover project / use_case_tag / availability=free / availability=busy / AND-combination / blank-unknown=no-constraint / `filter_options()` distinct-sorted
 
 #### Manual
 
-- [ ] 1.3 URL-param filtering returns expected subsets via runserver
-- [ ] 1.4 No regression: unfiltered `/` lists all envs with correct Busy/Free badges
+- [x] 1.3 URL-param filtering returns expected subsets via runserver
+- [x] 1.4 No regression: unfiltered `/` lists all envs with correct Busy/Free badges
 
 ### Phase 2: Filter UI (htmx partial)
 
