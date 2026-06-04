@@ -245,8 +245,8 @@ No schema changes — no migration. Cancellation is a hard delete; existing data
 
 #### Automated
 
-- [ ] 1.1 New edit-form unit tests pass (ReservationEditFormTest)
-- [ ] 1.2 No regression in existing create-path / service tests (reservations)
+- [x] 1.1 New edit-form unit tests pass (ReservationEditFormTest)
+- [x] 1.2 No regression in existing create-path / service tests (reservations)
 
 ### Phase 2: Views, URLs, Templates, Nav
 

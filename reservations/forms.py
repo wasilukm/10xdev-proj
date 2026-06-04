@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import forms
 from django.utils import timezone
 from psycopg.types.range import Range
@@ -61,4 +63,37 @@ class ReservationForm(forms.Form):
             raise forms.ValidationError("Computed end time is not after start — choose a longer duration.")
 
         cleaned_data["during"] = Range(start, end, "[)")
+        return cleaned_data
+
+
+class ReservationEditForm(forms.Form):
+    hours = forms.DecimalField(
+        min_value=0.25,
+        max_digits=5,
+        decimal_places=2,
+        required=True,
+        label="Duration (hours)",
+    )
+
+    def __init__(self, *args, start, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._start = start
+
+    def clean(self):
+        cleaned_data = super().clean()
+        hours = cleaned_data.get("hours")
+        if hours is None:
+            return cleaned_data
+
+        end = self._start + timedelta(hours=float(hours))
+
+        if end <= self._start:
+            raise forms.ValidationError("Computed end time is not after start — choose a longer duration.")
+
+        if end <= timezone.now():
+            raise forms.ValidationError(
+                "New end must be in the future — increase the hours or cancel instead."
+            )
+
+        cleaned_data["during"] = Range(self._start, end, "[)")
         return cleaned_data
