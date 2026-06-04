@@ -210,13 +210,13 @@ None — no model or schema changes.
 
 #### Automated
 
-- [x] 2.1 Test suite passes: `uv run python manage.py test catalog`
-- [x] 2.2 Tests cover full-page form render, `HX-Request` partial-only render, filtered htmx results, zero-match message, unfiltered table render
+- [x] 2.1 Test suite passes: `uv run python manage.py test catalog` — ffa6744
+- [x] 2.2 Tests cover full-page form render, `HX-Request` partial-only render, filtered htmx results, zero-match message, unfiltered table render — ffa6744
 
 #### Manual
 
-- [x] 2.3 Selecting a filter updates the table without full page reload
-- [x] 2.4 URL reflects active filters and reloads reproduce the filtered list
-- [x] 2.5 Clear filters resets list and URL to `/`
-- [x] 2.6 Booking from a filtered list still works (row swap unaffected)
-- [x] 2.7 Browser back/forward moves between filter states correctly
+- [x] 2.3 Selecting a filter updates the table without full page reload — ffa6744
+- [x] 2.4 URL reflects active filters and reloads reproduce the filtered list — ffa6744
+- [x] 2.5 Clear filters resets list and URL to `/` — ffa6744
+- [x] 2.6 Booking from a filtered list still works (row swap unaffected) — ffa6744
+- [x] 2.7 Browser back/forward moves between filter states correctly — ffa6744
