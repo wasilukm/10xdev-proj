@@ -1,11 +1,15 @@
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
+from django.db.models import Func
+from django.db.models.fields import DateTimeField
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from catalog.models import Environment
 from catalog.services import build_row_context
-from .forms import ReservationForm
+from .forms import ReservationEditForm, ReservationForm
 from .models import Reservation
 from . import services
 
@@ -20,6 +24,20 @@ def _row_response(request, env, form=None, conflict_message=None, next_free=None
         "next_free": next_free,
     })
     return render(request, "catalog/_environment_row.html", ctx)
+
+
+def _item_response(request, reservation, form=None, conflict_message=None):
+    now = timezone.now()
+    if form is None:
+        hours = round((reservation.during.upper - reservation.during.lower).total_seconds() / 3600, 2)
+        form = ReservationEditForm(initial={"hours": hours}, start=reservation.during.lower)
+    return render(request, "reservations/_reservation_item.html", {
+        "reservation": reservation,
+        "form": form,
+        "conflict_message": conflict_message,
+        "is_editable": reservation.during.upper > now,
+        "is_active": reservation.during.lower <= now,
+    })
 
 
 @login_required
@@ -49,23 +67,83 @@ def reservation_create(request):
     except IntegrityError as e:
         cause = str(getattr(e, "__cause__", "") or e)
         if "reservation_no_overlap" in cause:
-            conflict = (
-                Reservation.objects
-                .select_related("owner")
-                .filter(environment=env, during__overlap=during)
-                .order_by("during")
-                .first()
-            )
-            if conflict:
-                owner_label = conflict.owner.get_full_name() or conflict.owner.email
-                conflict_message = (
-                    f"Conflicts with {owner_label}'s reservation "
-                    f"({conflict.during.lower:%Y-%m-%d %H:%M} – {conflict.during.upper:%Y-%m-%d %H:%M})"
-                )
+            conflict_message = services.describe_overlap_conflict(env, during)
             next_free = services.next_free_window(env, start)
         elif "reservation_during_bounded" in cause:
             conflict_message = "Invalid reservation range — please check your start time and duration."
         else:
-            raise  # unknown IntegrityError is a bug, not user input — don't mask it
+            raise
 
     return _row_response(request, env, conflict_message=conflict_message, next_free=next_free)
+
+
+@login_required
+def my_reservations(request):
+    now = timezone.now()
+    reservations = (
+        Reservation.objects
+        .annotate(
+            lower_bound=Func("during", function="lower", output_field=DateTimeField()),
+            upper_bound=Func("during", function="upper", output_field=DateTimeField()),
+        )
+        .filter(owner=request.user, upper_bound__gt=now)
+        .select_related("environment")
+        .order_by("lower_bound")
+    )
+    items = []
+    for r in reservations:
+        hours = round((r.during.upper - r.during.lower).total_seconds() / 3600, 2)
+        form = ReservationEditForm(initial={"hours": hours}, start=r.during.lower)
+        items.append({
+            "reservation": r,
+            "form": form,
+            "is_editable": True,
+            "is_active": r.during.lower <= now,
+            "conflict_message": None,
+        })
+    return render(request, "reservations/my_reservations.html", {"items": items})
+
+
+@login_required
+@require_POST
+def reservation_edit(request, pk):
+    reservation = get_object_or_404(Reservation, pk=pk, owner=request.user)
+    now = timezone.now()
+    if reservation.during.upper <= now:
+        raise Http404
+
+    form = ReservationEditForm(request.POST, start=reservation.during.lower)
+    if not form.is_valid():
+        return _item_response(request, reservation, form=form)
+
+    during = form.cleaned_data["during"]
+    original_during = reservation.during
+    conflict_message = None
+
+    try:
+        with transaction.atomic():
+            reservation.during = during
+            reservation.save(update_fields=["during"])
+    except IntegrityError as e:
+        reservation.during = original_during
+        cause = str(getattr(e, "__cause__", "") or e)
+        if "reservation_no_overlap" in cause:
+            conflict_message = services.describe_overlap_conflict(
+                reservation.environment, during, exclude_pk=reservation.pk
+            )
+        elif "reservation_during_bounded" in cause:
+            conflict_message = "Invalid reservation range — please check your duration."
+        else:
+            raise
+
+    return _item_response(request, reservation, conflict_message=conflict_message)
+
+
+@login_required
+@require_POST
+def reservation_cancel(request, pk):
+    reservation = get_object_or_404(Reservation, pk=pk, owner=request.user)
+    if reservation.during.upper <= timezone.now():
+        raise Http404
+    reservation.delete()
+    return HttpResponse("")

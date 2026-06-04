@@ -51,6 +51,26 @@ def compute_end(env, start, duration_choice, custom_hours=None):
     raise ValueError(f"Unknown duration_choice: {duration_choice!r}")
 
 
+def describe_overlap_conflict(env, during, exclude_pk=None):
+    """Return a human-readable conflict message for a reservation_no_overlap violation, or None."""
+    qs = (
+        Reservation.objects
+        .select_related("owner")
+        .filter(environment=env, during__overlap=during)
+        .order_by("during")
+    )
+    if exclude_pk is not None:
+        qs = qs.exclude(pk=exclude_pk)
+    conflict = qs.first()
+    if conflict is None:
+        return None
+    owner_label = conflict.owner.get_full_name() or conflict.owner.email
+    return (
+        f"Conflicts with {owner_label}'s reservation "
+        f"({conflict.during.lower:%Y-%m-%d %H:%M} – {conflict.during.upper:%Y-%m-%d %H:%M})"
+    )
+
+
 def next_free_window(env, after):
     """Return the earliest datetime at or after `after` when env has no reservation.
 

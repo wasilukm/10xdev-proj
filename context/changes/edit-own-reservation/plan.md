@@ -245,25 +245,25 @@ No schema changes — no migration. Cancellation is a hard delete; existing data
 
 #### Automated
 
-- [x] 1.1 New edit-form unit tests pass (ReservationEditFormTest)
-- [x] 1.2 No regression in existing create-path / service tests (reservations)
+- [x] 1.1 New edit-form unit tests pass (ReservationEditFormTest) — 8a52543
+- [x] 1.2 No regression in existing create-path / service tests (reservations) — 8a52543
 
 ### Phase 2: Views, URLs, Templates, Nav
 
 #### Automated
 
-- [ ] 2.1 Django check passes
-- [ ] 2.2 URL reversing works (via reservations test suite)
+- [x] 2.1 Django check passes
+- [x] 2.2 URL reversing works (via reservations test suite)
 
 #### Manual
 
-- [ ] 2.3 "My reservations" link appears and lists upcoming reservations
-- [ ] 2.4 Edit form opens pre-populated with the current duration in hours
-- [ ] 2.5 Editing a future reservation's duration updates in place without reload
-- [ ] 2.6 Editing into an overlap re-renders with a named conflict, original window intact
-- [ ] 2.7 In-progress edit shifts the end only; end-in-past rejected
-- [ ] 2.8 Cancel shows confirm prompt and removes the row
-- [ ] 2.9 Another user's reservation id on edit/cancel returns 404
+- [x] 2.3 "My reservations" link appears and lists upcoming reservations
+- [x] 2.4 Edit form opens pre-populated with the current duration in hours
+- [x] 2.5 Editing a future reservation's duration updates in place without reload
+- [x] 2.6 Editing into an overlap re-renders with a named conflict, original window intact
+- [x] 2.7 In-progress edit shifts the end only; end-in-past rejected
+- [x] 2.8 Cancel shows confirm prompt and removes the row
+- [x] 2.9 Another user's reservation id on edit/cancel returns 404
 
 ### Phase 3: Tests & Manual QA
 

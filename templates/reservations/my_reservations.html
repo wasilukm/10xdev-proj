@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}My Reservations — EnvBooker{% endblock %}
+
+{% block content %}
+<h1>My Reservations</h1>
+{% if items %}
+  {% for item in items %}
+    {% include "reservations/_reservation_item.html" with reservation=item.reservation form=item.form is_editable=item.is_editable is_active=item.is_active conflict_message=item.conflict_message %}
+  {% endfor %}
+{% else %}
+  <p>You have no upcoming reservations.</p>
+{% endif %}
+{% endblock %}
