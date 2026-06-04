@@ -1,7 +1,7 @@
 from datetime import datetime, timezone as dt_timezone
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from psycopg.types.range import Range
 
@@ -204,6 +204,86 @@ class FilterOptionsTest(TestCase):
     def test_filter_options_distinct_sorted_tags(self):
         opts = filter_options()
         self.assertEqual(opts["use_case_tags"], ["ci", "perf"])
+
+
+@override_settings(STORAGES={
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
+class FilterUITest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email="ui@example.com", password="pass")
+        self.client.login(username="ui@example.com", password="pass")
+        self.env1 = Environment.objects.create(
+            name="ui-alpha", version="1.0", purpose="test",
+            project="alpha", use_case_tag="ci", owner=self.user,
+        )
+        self.env2 = Environment.objects.create(
+            name="ui-beta", version="1.0", purpose="staging",
+            project="beta", use_case_tag="perf", owner=self.user,
+        )
+
+    def test_full_page_renders_filter_form_with_options(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('name="availability"', content)
+        self.assertIn('name="project"', content)
+        self.assertIn('name="use_case_tag"', content)
+        self.assertIn("alpha", content)
+        self.assertIn("beta", content)
+        self.assertIn("ci", content)
+        self.assertIn("perf", content)
+        self.assertIn("Clear filters", content)
+
+    def test_full_page_renders_table(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("ui-alpha", content)
+        self.assertIn("ui-beta", content)
+        self.assertIn("<html", content.lower())
+
+    def test_htmx_request_returns_partial_only(self):
+        response = self.client.get(reverse("home"), HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("ui-alpha", content)
+        self.assertNotIn("<html", content.lower())
+        self.assertNotIn("<nav", content.lower())
+
+    def test_htmx_filtered_returns_narrowed_rows(self):
+        response = self.client.get(
+            reverse("home"), {"project": "alpha"}, HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("ui-alpha", content)
+        self.assertNotIn("ui-beta", content)
+
+    def test_htmx_zero_match_shows_no_match_message(self):
+        response = self.client.get(
+            reverse("home"), {"project": "nonexistent"}, HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("No environments match these filters", content)
+        self.assertNotIn("No environments found", content)
+
+    def test_unfiltered_full_page_shows_table_not_empty_message(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn("No environments found", content)
+        self.assertIn("<table", content)
+
+    def test_no_envs_at_all_shows_empty_catalog_message(self):
+        Environment.objects.all().delete()
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("No environments found", content)
+        self.assertNotIn("No environments match", content)
 
 
 class DashboardOwnerVisibilityTest(TestCase):

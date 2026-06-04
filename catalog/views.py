@@ -36,6 +36,12 @@ def environment_list(request):
         row["booking_form"] = ReservationForm(initial={"environment": env.pk})
         rows.append(row)
 
+    if request.headers.get("HX-Request"):
+        return render(request, "catalog/_environment_results.html", {
+            "rows": rows,
+            "filters": filters,
+        })
+
     return render(request, "catalog/environment_list.html", {
         "rows": rows,
         "filters": filters,
