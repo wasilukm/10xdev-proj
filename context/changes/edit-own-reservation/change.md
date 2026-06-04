@@ -1,7 +1,7 @@
 ---
 change_id: edit-own-reservation
 title: Edit own reservation
-status: implementing
+status: implemented
 created: 2026-06-04
 updated: 2026-06-04
 archived_at: null

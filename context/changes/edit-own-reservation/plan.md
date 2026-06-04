@@ -269,10 +269,10 @@ No schema changes — no migration. Cancellation is a hard delete; existing data
 
 #### Automated
 
-- [x] 3.1 Full reservations suite passes
-- [x] 3.2 Full project suite passes
-- [x] 3.3 Django check passes
+- [x] 3.1 Full reservations suite passes — 6f67c62
+- [x] 3.2 Full project suite passes — 6f67c62
+- [x] 3.3 Django check passes — 6f67c62
 
 #### Manual
 
-- [x] 3.4 End-to-end manual walkthrough with a second user account confirms all criteria
+- [x] 3.4 End-to-end manual walkthrough with a second user account confirms all criteria — 6f67c62
