@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.6.1",
   "manifestVersion": 2,
-  "lastApplied": "2026-05-31T15:41:28.306Z",
-  "lessonId": "m2l5",
+  "lastApplied": "2026-06-07T14:32:40.047Z",
+  "lessonId": "m3l1",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -123,6 +123,12 @@
       },
       "10x-research": {
         "files": [
+          "SKILL.md"
+        ]
+      },
+      "10x-test-plan": {
+        "files": [
+          "references/test-plan-schema.md",
           "SKILL.md"
         ]
       }
