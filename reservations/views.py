@@ -26,18 +26,26 @@ def _row_response(request, env, form=None, conflict_message=None, next_free=None
     return render(request, "catalog/_environment_row.html", ctx)
 
 
-def _item_response(request, reservation, form=None, conflict_message=None):
+def _item_context(reservation, form=None, conflict_message=None):
     now = timezone.now()
     if form is None:
         hours = round((reservation.during.upper - reservation.during.lower).total_seconds() / 3600, 2)
         form = ReservationEditForm(initial={"hours": hours}, start=reservation.during.lower)
-    return render(request, "reservations/_reservation_item.html", {
+    return {
         "reservation": reservation,
         "form": form,
         "conflict_message": conflict_message,
         "is_editable": reservation.during.upper > now,
         "is_active": reservation.during.lower <= now,
-    })
+    }
+
+
+def _item_response(request, reservation, form=None, conflict_message=None):
+    return render(
+        request,
+        "reservations/_reservation_item.html",
+        _item_context(reservation, form, conflict_message),
+    )
 
 
 @login_required
@@ -90,17 +98,7 @@ def my_reservations(request):
         .select_related("environment")
         .order_by("lower_bound")
     )
-    items = []
-    for r in reservations:
-        hours = round((r.during.upper - r.during.lower).total_seconds() / 3600, 2)
-        form = ReservationEditForm(initial={"hours": hours}, start=r.during.lower)
-        items.append({
-            "reservation": r,
-            "form": form,
-            "is_editable": True,
-            "is_active": r.during.lower <= now,
-            "conflict_message": None,
-        })
+    items = [_item_context(r) for r in reservations]
     return render(request, "reservations/my_reservations.html", {"items": items})
 
 
