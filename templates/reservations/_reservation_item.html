@@ -1,0 +1,33 @@
+<div id="reservation-{{ reservation.pk }}">
+  <p>
+    <strong>{{ reservation.environment.name }}</strong>
+    &mdash; Start: {{ reservation.during.lower|date:"Y-m-d H:i" }}
+    &mdash; End: {{ reservation.during.upper|date:"Y-m-d H:i" }}
+    &mdash; {% if is_active %}In progress{% else %}Upcoming{% endif %}
+  </p>
+  {% if conflict_message %}
+    <p><strong>{{ conflict_message }}</strong></p>
+  {% endif %}
+  {% if is_editable %}
+    <form hx-post="{% url 'reservations:edit' reservation.pk %}"
+          hx-target="#reservation-{{ reservation.pk }}"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      <label>{{ form.hours.label }}: {{ form.hours }}</label>
+      {% if form.hours.errors %}
+        <span> &mdash; {{ form.hours.errors|join:", " }}</span>
+      {% endif %}
+      {% if form.non_field_errors %}
+        <p>{{ form.non_field_errors|join:", " }}</p>
+      {% endif %}
+      <button type="submit">Update duration</button>
+    </form>
+    <form hx-post="{% url 'reservations:cancel' reservation.pk %}"
+          hx-target="#reservation-{{ reservation.pk }}"
+          hx-swap="outerHTML"
+          hx-confirm="Cancel this reservation?">
+      {% csrf_token %}
+      <button type="submit">Cancel reservation</button>
+    </form>
+  {% endif %}
+</div>

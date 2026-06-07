@@ -1,9 +1,9 @@
 ---
 change_id: edit-own-reservation
 title: Edit own reservation
-status: planned
+status: impl_reviewed
 created: 2026-06-04
-updated: 2026-06-04
+updated: 2026-06-07
 archived_at: null
 ---
 
