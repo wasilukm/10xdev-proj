@@ -1,10 +1,10 @@
 ---
 change_id: filter-env-list
 title: Filter env list
-status: impl_reviewed
+status: archived
 created: 2026-06-04
-updated: 2026-06-04
-archived_at: null
+updated: 2026-06-07
+archived_at: 2026-06-07T14:04:50Z
 ---
 
 ## Notes
