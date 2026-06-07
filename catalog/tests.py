@@ -1,13 +1,13 @@
 from datetime import datetime, timezone as dt_timezone
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from psycopg.types.range import Range
 
 from accounts.models import User
 from catalog.models import Environment
-from catalog.services import build_row_context
+from catalog.services import build_row_context, filter_environments, filter_options
 from reservations.models import Reservation
 
 
@@ -95,6 +95,198 @@ class DashboardGroupingTest(TestCase):
         ctx = build_row_context(self.env, now=now)
         self.assertIsNotNone(ctx["current_reservation"])
         self.assertNotIn(ctx["current_reservation"], ctx["upcoming_reservations"])
+
+
+class FilterEnvironmentsTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email="filt@example.com", password="pass")
+        self.env_alpha = Environment.objects.create(
+            name="alpha", version="1.0", purpose="test",
+            project="alpha-proj", use_case_tag="ci", owner=self.user,
+        )
+        self.env_beta = Environment.objects.create(
+            name="beta", version="1.0", purpose="staging",
+            project="beta-proj", use_case_tag="perf", owner=self.user,
+        )
+        self.env_gamma = Environment.objects.create(
+            name="gamma", version="1.0", purpose="test",
+            project="alpha-proj", use_case_tag="perf", owner=self.user,
+        )
+
+    def _qs(self):
+        return Environment.objects.all()
+
+    def test_filter_by_project(self):
+        now = make_dt(10)
+        result = list(filter_environments(self._qs(), project="alpha-proj", now=now))
+        self.assertIn(self.env_alpha, result)
+        self.assertIn(self.env_gamma, result)
+        self.assertNotIn(self.env_beta, result)
+
+    def test_filter_by_use_case_tag(self):
+        now = make_dt(10)
+        result = list(filter_environments(self._qs(), use_case_tag="perf", now=now))
+        self.assertIn(self.env_beta, result)
+        self.assertIn(self.env_gamma, result)
+        self.assertNotIn(self.env_alpha, result)
+
+    def test_filter_availability_free(self):
+        now = make_dt(10)
+        # Reserve alpha — busy at now
+        Reservation.objects.create(
+            owner=self.user, environment=self.env_alpha,
+            during=make_range(9, 12),
+        )
+        result = list(filter_environments(self._qs(), availability="free", now=now))
+        self.assertNotIn(self.env_alpha, result)
+        self.assertIn(self.env_beta, result)
+        self.assertIn(self.env_gamma, result)
+
+    def test_filter_availability_busy(self):
+        now = make_dt(10)
+        Reservation.objects.create(
+            owner=self.user, environment=self.env_alpha,
+            during=make_range(9, 12),
+        )
+        result = list(filter_environments(self._qs(), availability="busy", now=now))
+        self.assertIn(self.env_alpha, result)
+        self.assertNotIn(self.env_beta, result)
+        self.assertNotIn(self.env_gamma, result)
+
+    def test_filter_and_combination(self):
+        now = make_dt(10)
+        result = list(filter_environments(
+            self._qs(), project="alpha-proj", use_case_tag="perf", now=now,
+        ))
+        self.assertEqual(result, [self.env_gamma])
+
+    def test_blank_availability_no_constraint(self):
+        now = make_dt(10)
+        result = list(filter_environments(self._qs(), availability=None, now=now))
+        self.assertEqual(len(result), 3)
+
+    def test_unknown_availability_value_no_constraint(self):
+        now = make_dt(10)
+        result = list(filter_environments(self._qs(), availability="unknown", now=now))
+        self.assertEqual(len(result), 3)
+
+    def test_blank_project_no_constraint(self):
+        now = make_dt(10)
+        result = list(filter_environments(self._qs(), project=None, now=now))
+        self.assertEqual(len(result), 3)
+
+    def test_blank_use_case_tag_no_constraint(self):
+        now = make_dt(10)
+        result = list(filter_environments(self._qs(), use_case_tag=None, now=now))
+        self.assertEqual(len(result), 3)
+
+
+class FilterOptionsTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email="opts@example.com", password="pass")
+        Environment.objects.create(
+            name="e1", version="1.0", purpose="test",
+            project="zeta", use_case_tag="perf", owner=self.user,
+        )
+        Environment.objects.create(
+            name="e2", version="1.0", purpose="test",
+            project="alpha", use_case_tag="ci", owner=self.user,
+        )
+        Environment.objects.create(
+            name="e3", version="1.0", purpose="test",
+            project="alpha", use_case_tag="perf", owner=self.user,
+        )
+
+    def test_filter_options_distinct_sorted_projects(self):
+        opts = filter_options()
+        self.assertEqual(opts["projects"], ["alpha", "zeta"])
+
+    def test_filter_options_distinct_sorted_tags(self):
+        opts = filter_options()
+        self.assertEqual(opts["use_case_tags"], ["ci", "perf"])
+
+
+@override_settings(STORAGES={
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
+class FilterUITest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email="ui@example.com", password="pass")
+        self.client.login(username="ui@example.com", password="pass")
+        self.env1 = Environment.objects.create(
+            name="ui-alpha", version="1.0", purpose="test",
+            project="alpha", use_case_tag="ci", owner=self.user,
+        )
+        self.env2 = Environment.objects.create(
+            name="ui-beta", version="1.0", purpose="staging",
+            project="beta", use_case_tag="perf", owner=self.user,
+        )
+
+    def test_full_page_renders_filter_form_with_options(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn('name="availability"', content)
+        self.assertIn('name="project"', content)
+        self.assertIn('name="use_case_tag"', content)
+        self.assertIn("alpha", content)
+        self.assertIn("beta", content)
+        self.assertIn("ci", content)
+        self.assertIn("perf", content)
+        self.assertIn("Clear filters", content)
+
+    def test_full_page_renders_table(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("ui-alpha", content)
+        self.assertIn("ui-beta", content)
+        self.assertIn("<html", content.lower())
+
+    def test_htmx_request_returns_partial_only(self):
+        response = self.client.get(reverse("home"), HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("ui-alpha", content)
+        self.assertNotIn("<html", content.lower())
+        self.assertNotIn("<nav", content.lower())
+        # The swap is self-replacing: the partial must re-emit the wrapper id
+        # or subsequent filter swaps lose their #env-results target.
+        self.assertIn('id="env-results"', content)
+
+    def test_htmx_filtered_returns_narrowed_rows(self):
+        response = self.client.get(
+            reverse("home"), {"project": "alpha"}, HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("ui-alpha", content)
+        self.assertNotIn("ui-beta", content)
+
+    def test_htmx_zero_match_shows_no_match_message(self):
+        response = self.client.get(
+            reverse("home"), {"project": "nonexistent"}, HTTP_HX_REQUEST="true"
+        )
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("No environments match these filters", content)
+        self.assertNotIn("No environments found", content)
+
+    def test_unfiltered_full_page_shows_table_not_empty_message(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn("No environments found", content)
+        self.assertIn("<table", content)
+
+    def test_no_envs_at_all_shows_empty_catalog_message(self):
+        Environment.objects.all().delete()
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("No environments found", content)
+        self.assertNotIn("No environments match", content)
 
 
 class DashboardOwnerVisibilityTest(TestCase):

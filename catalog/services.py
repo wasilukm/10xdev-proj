@@ -1,8 +1,10 @@
 from django.utils import timezone
-from django.db.models import Prefetch
+from django.db.models import Exists, OuterRef, Prefetch
 from psycopg.types.range import Range
 
 from reservations.models import Reservation
+
+from .models import Environment
 
 
 def build_row_context(env, now=None):
@@ -38,6 +40,29 @@ def build_row_context(env, now=None):
         "current_reservation": current,
         "upcoming_reservations": [r for r in upcoming if r is not current],
     }
+
+
+def filter_environments(queryset, *, availability=None, project=None, use_case_tag=None, now):
+    if project:
+        queryset = queryset.filter(project=project)
+    if use_case_tag:
+        queryset = queryset.filter(use_case_tag=use_case_tag)
+    if availability in ("free", "busy"):
+        # Exists subquery: does a reservation cover this exact instant?
+        busy = Reservation.objects.filter(environment=OuterRef("pk"), during__contains=now)
+        queryset = queryset.annotate(_busy=Exists(busy))
+        queryset = queryset.filter(_busy=(availability == "busy"))
+    return queryset
+
+
+def filter_options():
+    projects = list(
+        Environment.objects.values_list("project", flat=True).distinct().order_by("project")
+    )
+    use_case_tags = list(
+        Environment.objects.values_list("use_case_tag", flat=True).distinct().order_by("use_case_tag")
+    )
+    return {"projects": projects, "use_case_tags": use_case_tags}
 
 
 def prefetch_reservations_for_list(now):

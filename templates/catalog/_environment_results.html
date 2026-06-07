@@ -1,0 +1,31 @@
+<div id="env-results">
+{% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Project</th>
+        <th>Purpose</th>
+        <th>Tag</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th>Current reservation</th>
+        <th>Upcoming (24 h)</th>
+        <th>Book</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        {% with env=row.env is_busy=row.is_busy current_reservation=row.current_reservation upcoming_reservations=row.upcoming_reservations booking_form=row.booking_form %}
+          {% include "catalog/_environment_row.html" %}
+        {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+{% elif filters.availability or filters.project or filters.use_case_tag %}
+  <p>No environments match these filters.</p>
+{% else %}
+  <p>No environments found.</p>
+{% endif %}
+</div>

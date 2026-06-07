@@ -198,25 +198,25 @@ None — no model or schema changes.
 
 #### Automated
 
-- [ ] 1.1 Test suite passes: `uv run python manage.py test catalog`
-- [ ] 1.2 Unit tests cover project / use_case_tag / availability=free / availability=busy / AND-combination / blank-unknown=no-constraint / `filter_options()` distinct-sorted
+- [x] 1.1 Test suite passes: `uv run python manage.py test catalog` — 5c05d2f
+- [x] 1.2 Unit tests cover project / use_case_tag / availability=free / availability=busy / AND-combination / blank-unknown=no-constraint / `filter_options()` distinct-sorted — 5c05d2f
 
 #### Manual
 
-- [ ] 1.3 URL-param filtering returns expected subsets via runserver
-- [ ] 1.4 No regression: unfiltered `/` lists all envs with correct Busy/Free badges
+- [x] 1.3 URL-param filtering returns expected subsets via runserver — 5c05d2f
+- [x] 1.4 No regression: unfiltered `/` lists all envs with correct Busy/Free badges — 5c05d2f
 
 ### Phase 2: Filter UI (htmx partial)
 
 #### Automated
 
-- [ ] 2.1 Test suite passes: `uv run python manage.py test catalog`
-- [ ] 2.2 Tests cover full-page form render, `HX-Request` partial-only render, filtered htmx results, zero-match message, unfiltered table render
+- [x] 2.1 Test suite passes: `uv run python manage.py test catalog` — ffa6744
+- [x] 2.2 Tests cover full-page form render, `HX-Request` partial-only render, filtered htmx results, zero-match message, unfiltered table render — ffa6744
 
 #### Manual
 
-- [ ] 2.3 Selecting a filter updates the table without full page reload
-- [ ] 2.4 URL reflects active filters and reloads reproduce the filtered list
-- [ ] 2.5 Clear filters resets list and URL to `/`
-- [ ] 2.6 Booking from a filtered list still works (row swap unaffected)
-- [ ] 2.7 Browser back/forward moves between filter states correctly
+- [x] 2.3 Selecting a filter updates the table without full page reload — ffa6744
+- [x] 2.4 URL reflects active filters and reloads reproduce the filtered list — ffa6744
+- [x] 2.5 Clear filters resets list and URL to `/` — ffa6744
+- [x] 2.6 Booking from a filtered list still works (row swap unaffected) — ffa6744
+- [x] 2.7 Browser back/forward moves between filter states correctly — ffa6744

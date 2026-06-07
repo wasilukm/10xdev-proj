@@ -1,7 +1,7 @@
 ---
 change_id: filter-env-list
 title: Filter env list
-status: planned
+status: impl_reviewed
 created: 2026-06-04
 updated: 2026-06-04
 archived_at: null
