@@ -1,10 +1,10 @@
 ---
 change_id: edit-own-reservation
 title: Edit own reservation
-status: impl_reviewed
+status: archived
 created: 2026-06-04
 updated: 2026-06-07
-archived_at: null
+archived_at: 2026-06-07T14:04:50Z
 ---
 
 ## Notes
