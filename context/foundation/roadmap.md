@@ -3,7 +3,7 @@ project: EnvBooker
 version: 1
 status: draft
 created: 2026-05-27
-updated: 2026-06-03
+updated: 2026-06-07
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -37,6 +37,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | proposed |
 | S-06  | admin-reservation-override      | (admin) modify or cancel any reservation, including those owned by other users                                      | S-02, S-01       | FR-014, Access Control                                    | proposed |
 | SPIKE-01 | timezone-calendar-edge-cases | (spike) understand & harden time-window handling against DST gaps/folds, leap years, and other calendar boundaries  | S-02             | NFR §reliability, FR-011, FR-015                          | proposed |
+| Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | proposed |
 
 ## Streams
 
@@ -47,6 +48,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | A      | Booking core         | `F-01` → `S-02` → `S-03` / `S-04` / `S-06`           | Carries the north star and the discovery closure; capacity bias keeps `S-03`/`S-04`/`S-06` parallel after `S-02`. |
 | B      | Account lifecycle    | `S-01`                                               | Standalone visible-enabler slice; joins Stream A at `S-02` and Stream C at `S-05`.                |
 | C      | Admin catalogue      | `S-05`                                               | Joins Stream A at `F-01` and Stream B at `S-01`; can run parallel with the rest of Stream A once both are done. |
+| D      | Quality / enablers   | `Q-01`                                               | Cross-cutting; not a vertical slice. Sequenced after the S-02 baseline so it ratchets over shipped code and gates later slices. |
 
 ## Baseline
 
@@ -154,6 +156,26 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 - **Risk:** The audit-trail question — "should admin overrides be logged so the original owner can see who cancelled their reservation?" — is not in scope per PRD §Non-Goals (no notifications) but is the natural next concern. Keep this slice strictly to the FR-014 capability; do not grow it.
 - **Status:** proposed
 
+## Quality / Enablers
+
+Cross-cutting engineering-quality work that is not a user-visible slice. Items here harden the codebase against the agent-friendliness quality bar set in `context/foundation/tech-stack.md` rather than delivering a new user outcome.
+
+### Q-01: Type-hint retrofit + mypy type-check gate
+
+- **Outcome:** (enabler) Public functions/methods across `accounts/`, `catalog/`, `reservations/`, and `envbooker/` carry type annotations, and `mypy` (with the `django-stubs` plugin) runs clean under an agreed baseline strictness, wired as a gate so future untyped drift is caught. Closes the gap between the stack commitment ("explicit typing ... mitigated downstream with type hints and model-level schemas", `tech-stack.md` §Why this stack) and the codebase, where 0 of ~125 functions are currently annotated.
+- **Change ID:** typing-and-type-check-gate
+- **PRD refs:** — (no direct FR; traces to the `tech-stack.md` typing commitment and the stack's agent-friendliness quality bar)
+- **Prerequisites:** F-01, S-01, S-02 (annotate code that already exists; sequence after the north star so the gate ratchets over a shipped baseline rather than churning against in-flight slices)
+- **Parallel with:** S-03, S-04, S-05, S-06, SPIKE-01 — but those slices touch the same `views.py` / `services.py` / `forms.py` files, so once Q-01 lands they inherit the gate and must pass it; coordinate to avoid merge churn (best landed when write-path slices are quiescent or rebased onto Q-01).
+- **Blockers:** —
+- **Unknowns:**
+  - What mypy baseline to adopt — full `--strict`, or a pragmatic first-party baseline (`disallow_untyped_defs` on the three apps + `envbooker/`, lenient on `migrations/` and tests)? — Owner: user. Block: no.
+  - How is the gate enforced given no CI exists yet (`CLAUDE.md` notes CI is unwired) — a minimal GitHub Actions job, a `pre-commit` hook, or a documented `uv run mypy` command for now? — Owner: TBD (resolves in `/10x-plan`). Block: no.
+  - Does `django-stubs` need extra plugin config for the custom `accounts.User` (`AbstractUser`, `username=None`) and the Postgres `DateTimeRangeField` / `ExclusionConstraint` on `Reservation`? — Owner: TBD (resolves in `/10x-plan`). Block: no.
+- **Risk:** Horizontal change touching nearly every `.py` file — blast radius is wide but shallow (annotations + config, no behavior change). The real risk is scope creep into a strict-everywhere crusade that stalls; cap it at first-party app code with a green baseline and defer test/migration coverage. The ruff/lint CI tripwire (`CLAUDE.md`) is deliberately excluded to keep this item typing-only.
+- **Source:** Drift discovered 2026-06-07 — typing committed in `tech-stack.md` but never implemented (0/125 functions annotated, no checker installed).
+- **Status:** proposed
+
 ## Spikes
 
 ### SPIKE-01: Timezone & calendar edge-case hardening
@@ -183,6 +205,7 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 | S-05       | admin-env-catalog               | EnvBooker: Admin env-catalogue UI (create / modify-with-warning / delete-if-no-active)                 | no                    | Promotes to ready once F-01 + S-01 are done       |
 | S-06       | admin-reservation-override      | EnvBooker: Admin override of any reservation                                                           | no                    | Promotes to ready once S-02 + S-01 are done       |
 | SPIKE-01   | timezone-calendar-edge-cases    | EnvBooker: Spike — DST/leap-year/calendar edge-case hardening for reservation time windows             | no                    | Deferred from S-02 impl review (F5); ready after S-02 |
+| Q-01       | typing-and-type-check-gate      | EnvBooker: Retrofit type hints + mypy (django-stubs) type-check gate                                    | no                    | Promotes to ready once S-02 is done (baseline to annotate)        |
 
 ## Open Roadmap Questions
 
