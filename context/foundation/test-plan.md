@@ -69,7 +69,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 2 | Authorization & endpoint access | Prove every gated route enforces authentication and ownership, and that admin-only actions reject non-admins. | #3 | integration / view | not started | — |
 | 3 | Critical-path e2e | Prove the find → filter → reserve → appears-without-reload flow works in a real browser within the 30s success criterion. | #2 | e2e (browser; runner config owned by M3 L4) + optional single-screen visual review | not started | — |
 | 4 | Calendar reliability | Turn the DST gap/fold 500 into a graceful, user-visible outcome and map the calendar edge-case class. | #4 | unit | not started | — |
-| 5 | Quality-gates wiring | Lock the floor: a gate runs the suite plus mypy/django-stubs (Q-01) and blocks merges; ratchets over Phases 1–4. | #6 | gates (CI config owned by M1 L5 / M2 L5) | not started | — |
+| 5 | Quality-gates wiring | Lock the floor: stand up the CI harness so the unit+integration suite (and the Phase 3 e2e gate) block merges, and adopt the mypy/django-stubs gate defined by roadmap Q-01. Ratchets over Phases 1–4. | #6 | gates | not started | — |
 
 **Status vocabulary** (fixed — parser literals): `not started` → `change opened` → `researched` → `planned` → `implementing` → `complete`.
 
@@ -114,24 +114,50 @@ phase lands; before that, the gate is planned.
 | multimodal visual review | CI on PR | optional — dashboard screen only | rendering issues a partial-level test misses |
 | pre-prod smoke | between merge and prod (Railway) | optional | environment-specific failures on deploy |
 
+**Phase 5 ↔ roadmap Q-01.** No CI exists today (verified 2026-06-08: no
+`.github`/`.gitea`/`.forgejo` workflows, no lint/type tooling in
+`pyproject.toml`). Q-01 owns the type-hint retrofit and the mypy + django-stubs
+*gate definition* (it is typing-only and excludes lint/test wiring). Phase 5
+stands up the CI harness and enforces the unit+integration suite (and the
+Phase 3 e2e gate), consuming Q-01's typecheck rather than redefining it — so
+neither is redundant. Sequence Q-01 before or with Phase 5; whichever lands
+first stands up the harness, the other plugs in. This plan only *names* these
+gates; the YAML/config lands in each phase's downstream change, not in
+`/10x-test-plan`.
+
 ## 6. Cookbook Patterns
 
 How to add new tests in this project. Each sub-section is filled in once the
 relevant rollout phase ships; before that, it reads "TBD — see §3 Phase <N>."
 
+**Test file layout.** Each app keeps its tests in a `<app>/tests/` package
+(`__init__.py` + `test_*.py`), split **by surface under test**:
+`test_models.py`, `test_services.py`, `test_forms.py`, `test_views.py`.
+Classify by *what is exercised* (a model/constraint, a service function, a
+form, a view) — never by a unit-vs-integration judgment. That boundary is
+deliberately **not** used as the split axis here, because DB-touching tests
+blur it (a model `.save()` or an overlap check is both). The default test
+runner discovers `test_*.py` in the package automatically; no config change.
+Conversion is incremental: `reservations/` moves to the package layout as the
+**first sub-phase of §3 Phase 1** (it is the largest file and grows next);
+`catalog/` and `accounts/` convert when a phase next touches them or they
+outgrow a single `tests.py`. Until an app is converted, its `tests.py` stays
+as-is.
+
 ### 6.1 Adding a unit test
 
-- **Location**: `<app>/tests.py` (one file per app; promote to a `<app>/tests/` package only if it outgrows a single file).
+- **Location**: `<app>/tests/test_<surface>.py` matching what is exercised (e.g. `test_services.py` for a service function, `test_models.py` for model/constraint behavior). See *Test file layout* above.
 - **Naming**: `class <Thing>Test(TestCase)` with `def test_<behavior>` methods.
-- **Reference test**: `reservations/tests.py::ComputeEndTest` (pure logic, no DB writes beyond setup).
+- **Reference test**: `reservations` `ComputeEndTest` (service logic, no DB writes beyond setup) and `EnvironmentModelTest` — in `tests/test_services.py` / `test_models.py` after Phase 1's conversion; in `tests.py` until then.
 - **Run locally**: `uv run python manage.py test <app>`.
 
 ### 6.2 Adding an integration test
 
-- **Location**: `<app>/tests.py`, using `TestCase` (or `TransactionTestCase` when a real DB transaction/constraint or concurrency is under test).
+- **Location**: the same `<app>/tests/` package, in the `test_<surface>.py` matching the entry point under test (usually `test_views.py`). Use `TestCase`, or `TransactionTestCase` when a real DB transaction/constraint or concurrency is under test.
+- **Cross-app placement**: most integration tests here span apps (a `Reservation` needs a catalog `Environment` and an accounts `User`). File the test under the app that owns the **entry point / behavior under test** — the view, form, or service being exercised — *not* under every app whose models it sets up. Existing precedent: `DashboardGroupingTest` creates reservations but lives in catalog (the dashboard is the surface); `ReservationCreateViewTest` creates environments + users but lives in reservations (the write path is the surface). Only if a flow has genuinely no single owning surface should you reach for a project-level `tests/` package (also discoverable by the default runner) — nothing in the current scope needs this.
 - **Policy**: exercise the real DB (Postgres) and the real view/form; do not mock internal modules. Assert the observable side effect (row written/not written, status code, message), not an internal call.
-- **Reference test**: `reservations/tests.py::ReservationCreateViewTest` and `::ReservationNoOverlapTest`.
-- **Run locally**: `uv run python manage.py test <app>`.
+- **Reference test**: `reservations` `ReservationCreateViewTest` and `ReservationNoOverlapTest` — in `tests/test_views.py` / `test_models.py` after Phase 1's conversion; in `tests.py` until then.
+- **Run locally**: `uv run python manage.py test <app>` (or `manage.py test` for the whole suite).
 
 ### 6.3 Adding an e2e test
 
