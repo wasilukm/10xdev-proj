@@ -11,12 +11,15 @@ Django 6.0.5 web app on **Python 3.14** (see `.python-version`), managed with **
 ```bash
 uv sync                              # install/refresh dependencies from uv.lock
 uv add <pkg>                         # add a runtime dependency
+./dev.sh                             # one-shot: starts Postgres, migrates, runs server
 uv run python manage.py runserver    # dev server at http://127.0.0.1:8000
 uv run python manage.py migrate      # apply pending migrations
 uv run python manage.py makemigrations <app>  # generate migrations after model changes
 uv run python manage.py createsuperuser       # bootstrap an admin user
 uv run python manage.py test                  # run the full Django test suite
 uv run python manage.py test <app>            # run tests for a single app
+uv run python manage.py test reservations.tests.test_models              # single file
+uv run python manage.py test reservations.tests.test_models.SomeTestClass  # single class
 ```
 
 ### Local dev setup
@@ -60,9 +63,15 @@ uv run python manage.py runserver
 
 `Reservation` uses `django.contrib.postgres.constraints.ExclusionConstraint` with `btree_gist`. This is **Postgres-only** — `settings.py` raises `ImproperlyConfigured` at startup for any non-Postgres `DATABASE_URL`. SQLite is not supported even in development.
 
+### Service layer
+
+Both `catalog` and `reservations` contain a `services.py`. Views are thin — all queryset composition, N+1 prevention, conflict detection, and domain rules live in the service layer. Cross-module calls (e.g. `catalog.services.build_row_context` called from `reservations.views`) are intentional. `reservations/services.py` also defines `MAX_DURATION` and free-window helpers.
+
 ### Templates & static files
 
 Global templates live in `templates/` (configured in `TEMPLATES[0]["DIRS"]`). `whitenoise` serves static files in production via `CompressedManifestStaticFilesStorage`; `STATIC_ROOT = staticfiles/`. Login/logout redirects are `login` → `home`.
+
+`htmx.min.js` is vendored at `static/vendor/` and powers the filter→pick→reserve partial-rendering flow (no full page reload). HTMX requests hit the same Django views; partial-template responses are distinguished by the `HX-Request` header or separate URL patterns.
 
 ### Project-specific tripwires
 
@@ -70,6 +79,7 @@ Global templates live in `templates/` (configured in `TEMPLATES[0]["DIRS"]`). `w
   `uv export --no-hashes | grep -v '^#' | pip-audit -r /dev/stdin`
 - **Railway deploy** is defined in `railway.toml`: Railpack builder (auto-detects `uv.lock` + `.python-version`), runs `collectstatic → migrate → gunicorn` on start. No Dockerfile needed.
 - **No linting tools** are configured in `pyproject.toml` yet — add ruff or similar before wiring up CI.
+- **`reservations/tests/` is a package** (not a flat `tests.py`). Files: `test_models.py`, `test_forms.py`, `test_services.py`, `test_views.py`. Shared fixtures live in `_helpers.py` (fixed anchor: 2024-01-01 08:00 UTC).
 
 ## Course context
 
