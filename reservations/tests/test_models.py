@@ -6,7 +6,7 @@ from accounts.models import User
 from catalog.models import Environment
 from reservations.models import Reservation
 
-from ._helpers import _dt, make_range
+from ._helpers import _dt, _range
 
 
 class ReservationNoOverlapTest(TestCase):
@@ -24,7 +24,7 @@ class ReservationNoOverlapTest(TestCase):
     def _reserve(self, env, start_hour, end_hour):
         return Reservation.objects.create(
             owner=self.user, environment=env,
-            during=make_range(start_hour, end_hour),
+            during=_range(start_hour, end_hour),
         )
 
     def test_overlap_rejected(self):

@@ -322,7 +322,7 @@ No schema or data changes. Production code (`models.py`, `views.py`, `forms.py`,
 
 #### Manual
 
-- [ ] 1.4 Spot-check no test was dropped or silently renamed (class/method names match originals)
+- [x] 1.4 Spot-check no test was dropped or silently renamed (class/method names match originals)
 
 ### Phase 2: Lock the no-overlap translation coupling + update cookbook
 
