@@ -316,9 +316,9 @@ No schema or data changes. Production code (`models.py`, `views.py`, `forms.py`,
 
 #### Automated
 
-- [ ] 1.1 Suite passes with unchanged count (42 tests): `uv run python manage.py test reservations`
-- [ ] 1.2 Full suite still green: `uv run python manage.py test`
-- [ ] 1.3 `reservations/tests.py` removed; `reservations/tests/` holds `__init__.py`, `_helpers.py`, `test_models.py`, `test_services.py`, `test_forms.py`, `test_views.py`
+- [x] 1.1 Suite passes with unchanged count (42 tests): `uv run python manage.py test reservations`
+- [x] 1.2 Full suite still green: `uv run python manage.py test`
+- [x] 1.3 `reservations/tests.py` removed; `reservations/tests/` holds `__init__.py`, `_helpers.py`, `test_models.py`, `test_services.py`, `test_forms.py`, `test_views.py`
 
 #### Manual
 
