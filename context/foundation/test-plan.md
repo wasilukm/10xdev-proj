@@ -65,7 +65,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | No-overlap hardening | Prove a concurrent or constraint-violating overlapping reservation is rejected with a clean user-facing error — not a 500, not a silent second row — on both the create and edit write paths. | #1 | integration (+ concurrency, scoped by research) | change opened | `context/changes/testing-no-overlap-hardening/` |
+| 1 | No-overlap hardening | Prove a concurrent or constraint-violating overlapping reservation is rejected with a clean user-facing error — not a 500, not a silent second row — on both the create and edit write paths. | #1 | integration (+ concurrency, scoped by research) | complete | `context/changes/testing-no-overlap-hardening/` |
 | 2 | Authorization & endpoint access | Prove every gated route enforces authentication and ownership, and that admin-only actions reject non-admins. | #3 | integration / view | not started | — |
 | 3 | Critical-path e2e | Prove the find → filter → reserve → appears-without-reload flow works in a real browser within the 30s success criterion. | #2 | e2e (browser; runner config owned by M3 L4) + optional single-screen visual review | not started | — |
 | 4 | Calendar reliability | Turn the DST gap/fold 500 into a graceful, user-visible outcome and map the calendar edge-case class. | #4 | unit | not started | — |
@@ -138,17 +138,16 @@ form, a view) — never by a unit-vs-integration judgment. That boundary is
 deliberately **not** used as the split axis here, because DB-touching tests
 blur it (a model `.save()` or an overlap check is both). The default test
 runner discovers `test_*.py` in the package automatically; no config change.
-Conversion is incremental: `reservations/` moves to the package layout as the
-**first sub-phase of §3 Phase 1** (it is the largest file and grows next);
-`catalog/` and `accounts/` convert when a phase next touches them or they
-outgrow a single `tests.py`. Until an app is converted, its `tests.py` stays
-as-is.
+Conversion is incremental: `reservations/` converted as the first sub-phase of
+§3 Phase 1; `catalog/` and `accounts/` convert when a phase next touches them
+or they outgrow a single `tests.py`. Until an app is converted, its `tests.py`
+stays as-is.
 
 ### 6.1 Adding a unit test
 
 - **Location**: `<app>/tests/test_<surface>.py` matching what is exercised (e.g. `test_services.py` for a service function, `test_models.py` for model/constraint behavior). See *Test file layout* above.
 - **Naming**: `class <Thing>Test(TestCase)` with `def test_<behavior>` methods.
-- **Reference test**: `reservations` `ComputeEndTest` (service logic, no DB writes beyond setup) and `EnvironmentModelTest` — in `tests/test_services.py` / `test_models.py` after Phase 1's conversion; in `tests.py` until then.
+- **Reference test**: `reservations` `ComputeEndTest` (service logic, no DB writes beyond setup) and `EnvironmentModelTest` — in `reservations/tests/test_services.py` / `reservations/tests/test_models.py`.
 - **Run locally**: `uv run python manage.py test <app>`.
 
 ### 6.2 Adding an integration test
@@ -156,7 +155,7 @@ as-is.
 - **Location**: the same `<app>/tests/` package, in the `test_<surface>.py` matching the entry point under test (usually `test_views.py`). Use `TestCase`, or `TransactionTestCase` when a real DB transaction/constraint or concurrency is under test.
 - **Cross-app placement**: most integration tests here span apps (a `Reservation` needs a catalog `Environment` and an accounts `User`). File the test under the app that owns the **entry point / behavior under test** — the view, form, or service being exercised — *not* under every app whose models it sets up. Existing precedent: `DashboardGroupingTest` creates reservations but lives in catalog (the dashboard is the surface); `ReservationCreateViewTest` creates environments + users but lives in reservations (the write path is the surface). Only if a flow has genuinely no single owning surface should you reach for a project-level `tests/` package (also discoverable by the default runner) — nothing in the current scope needs this.
 - **Policy**: exercise the real DB (Postgres) and the real view/form; do not mock internal modules. Assert the observable side effect (row written/not written, status code, message), not an internal call.
-- **Reference test**: `reservations` `ReservationCreateViewTest` and `ReservationNoOverlapTest` — in `tests/test_views.py` / `test_models.py` after Phase 1's conversion; in `tests.py` until then.
+- **Reference test**: `reservations` `ReservationCreateViewTest` and `ReservationNoOverlapTest` — in `reservations/tests/test_views.py` / `reservations/tests/test_models.py`.
 - **Run locally**: `uv run python manage.py test <app>` (or `manage.py test` for the whole suite).
 
 ### 6.3 Adding an e2e test
@@ -169,11 +168,16 @@ as-is.
 
 ### 6.5 Adding an authorization / ownership test
 
-- TBD — see §3 Phase 2. Seed pattern today: `reservations/tests.py::ReservationEditViewTest::test_non_owner_404` and `::test_auth_required`.
+- TBD — see §3 Phase 2. Seed pattern today: `reservations/tests/test_views.py::ReservationEditViewTest::test_non_owner_404` and `::test_auth_required`.
 
 ### 6.6 Per-rollout-phase notes
 
-(Filled in by `/10x-implement` as each phase lands — capture anything surprising the phase taught, e.g. fixtures introduced or a hazard found.)
+**Phase 1 — No-overlap hardening (2026-06-09)**
+
+- `reservations/tests/` package layout landed. Shared fixtures live in `_helpers.py` (leading underscore keeps the runner from treating it as a test module). When splitting a monolith `tests.py`, consolidate near-duplicate helpers into `_helpers.py` first — the deduplication is easiest while they're side-by-side.
+- **Constraint-name-pin pattern** (`ReservationConstraintNamesTest` in `test_models.py`): when a view or service detects a DB constraint violation by matching a literal constraint name in the error text, add a no-DB test asserting that name is present in `Model._meta.constraints`. The docstring must cite the views/lines that depend on the name. This turns a silent rename-then-500 regression into an immediate test failure.
+- `SECURE_SSL_REDIRECT = True` is active when `DEBUG=False`. Run tests with `DJANGO_DEBUG=True` (or export it in the shell) to prevent all view test requests from getting a 301 before they reach the view decorator.
+- `DJANGO_DEBUG=True` must be set when running the test suite locally (disables `SECURE_SSL_REDIRECT`). Add this to your shell profile or `.env.example` annotation so the next developer doesn't chase phantom 301s.
 
 ## 7. What We Deliberately Don't Test
 

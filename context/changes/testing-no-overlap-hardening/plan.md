@@ -316,23 +316,23 @@ No schema or data changes. Production code (`models.py`, `views.py`, `forms.py`,
 
 #### Automated
 
-- [x] 1.1 Suite passes with unchanged count (42 tests): `uv run python manage.py test reservations`
-- [x] 1.2 Full suite still green: `uv run python manage.py test`
-- [x] 1.3 `reservations/tests.py` removed; `reservations/tests/` holds `__init__.py`, `_helpers.py`, `test_models.py`, `test_services.py`, `test_forms.py`, `test_views.py`
+- [x] 1.1 Suite passes with unchanged count (42 tests): `uv run python manage.py test reservations` — 5fcb337
+- [x] 1.2 Full suite still green: `uv run python manage.py test` — 5fcb337
+- [x] 1.3 `reservations/tests.py` removed; `reservations/tests/` holds `__init__.py`, `_helpers.py`, `test_models.py`, `test_services.py`, `test_forms.py`, `test_views.py` — 5fcb337
 
 #### Manual
 
-- [x] 1.4 Spot-check no test was dropped or silently renamed (class/method names match originals)
+- [x] 1.4 Spot-check no test was dropped or silently renamed (class/method names match originals) — 5abcbfd
 
 ### Phase 2: Lock the no-overlap translation coupling + update cookbook
 
 #### Automated
 
-- [ ] 2.1 New tests present and passing (44 tests): `uv run python manage.py test reservations`
-- [ ] 2.2 Constraint-name pin guards: a temporary local rename makes `test_models.py` fail (revert, do not commit)
-- [ ] 2.3 Full suite green: `uv run python manage.py test`
+- [x] 2.1 New tests present and passing (44 tests): `uv run python manage.py test reservations`
+- [x] 2.2 Constraint-name pin guards: a temporary local rename makes `test_models.py` fail (revert, do not commit)
+- [x] 2.3 Full suite green: `uv run python manage.py test`
 
 #### Manual
 
-- [ ] 2.4 New test docstrings clearly explain the coupling guard and the edit not-500 intent
-- [ ] 2.5 Test-plan §6 has no dangling "until then" references; §6.6 note accurate; §1–§5 unchanged
+- [x] 2.4 New test docstrings clearly explain the coupling guard and the edit not-500 intent
+- [x] 2.5 Test-plan §6 has no dangling "until then" references; §6.6 note accurate; §1–§5 unchanged

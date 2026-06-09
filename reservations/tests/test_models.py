@@ -71,3 +71,25 @@ class ReservationNoOverlapTest(TestCase):
                 Reservation.objects.create(
                     owner=self.user, environment=self.env1, during=open_ended,
                 )
+
+
+class ReservationConstraintNamesTest(TestCase):
+    """Guard the view translation coupling against silent constraint renames.
+
+    Both reservation_create (views.py:77) and reservation_edit (views.py:128)
+    detect a no-overlap violation by matching the literal string
+    "reservation_no_overlap" in the IntegrityError cause. If the constraint is
+    renamed in a migration, the match fails silently and control reaches
+    `else: raise` — an unhandled 500, i.e. exactly the Risk-#1 failure mode
+    reintroduced. This test fails immediately on a rename, pointing the author
+    at the coupling before it ships.
+    """
+
+    def test_no_overlap_constraint_name_is_stable(self):
+        """'reservation_no_overlap' is present in Reservation._meta.constraints by that exact name."""
+        names = [c.name for c in Reservation._meta.constraints]
+        self.assertIn(
+            "reservation_no_overlap",
+            names,
+            "Constraint renamed — update the string match at views.py:77 and views.py:128 before proceeding.",
+        )

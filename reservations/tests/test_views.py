@@ -222,6 +222,26 @@ class ReservationEditViewTest(TestCase):
         response = self.client.post(url, {"hours": "2"})
         self.assertEqual(response.status_code, 404)
 
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_overlap_conflict_is_not_500(self, _):
+        """Overlap on the edit path returns 200, not 500 — guards the constraint-name string-match.
+
+        Mirrors test_overlap_rejection_is_not_500 on the create path. If the
+        'reservation_no_overlap' constraint is renamed, views.py:128 falls to
+        `else: raise` and this test catches the resulting 500 before it ships.
+        """
+        # Shorten own reservation to make room for a non-overlapping sibling
+        self.reservation.during = _range(10, 11)
+        self.reservation.save()
+        Reservation.objects.create(
+            owner=self.other_user, environment=self.env, during=_range(13, 16),
+        )
+        self.client.login(email="editor@example.com", password="pass")
+        # hours=4 → [10:00, 14:00) overlaps Bob's [13:00, 16:00)
+        response = self._post(hours=4)
+        self.assertNotEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 200)
+
 
 # ---------------------------------------------------------------------------
 # View: reservation_cancel
