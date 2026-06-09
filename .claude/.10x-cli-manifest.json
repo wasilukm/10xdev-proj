@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.6.1",
   "manifestVersion": 2,
-  "lastApplied": "2026-06-09T21:50:42.000Z",
-  "lessonId": "m3l2",
+  "lastApplied": "2026-06-09T21:53:53.560Z",
+  "lessonId": "m3l3",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
