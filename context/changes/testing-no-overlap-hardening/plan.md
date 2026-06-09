@@ -328,11 +328,11 @@ No schema or data changes. Production code (`models.py`, `views.py`, `forms.py`,
 
 #### Automated
 
-- [x] 2.1 New tests present and passing (44 tests): `uv run python manage.py test reservations`
-- [x] 2.2 Constraint-name pin guards: a temporary local rename makes `test_models.py` fail (revert, do not commit)
-- [x] 2.3 Full suite green: `uv run python manage.py test`
+- [x] 2.1 New tests present and passing (44 tests): `uv run python manage.py test reservations` — 9c19a0e
+- [x] 2.2 Constraint-name pin guards: a temporary local rename makes `test_models.py` fail (revert, do not commit) — 9c19a0e
+- [x] 2.3 Full suite green: `uv run python manage.py test` — 9c19a0e
 
 #### Manual
 
-- [x] 2.4 New test docstrings clearly explain the coupling guard and the edit not-500 intent
-- [x] 2.5 Test-plan §6 has no dangling "until then" references; §6.6 note accurate; §1–§5 unchanged
+- [x] 2.4 New test docstrings clearly explain the coupling guard and the edit not-500 intent — 9c19a0e
+- [x] 2.5 Test-plan §6 has no dangling "until then" references; §6.6 note accurate; §1–§5 unchanged — 9c19a0e
