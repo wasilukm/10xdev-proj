@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.utils import timezone
 from django.db.models import Exists, OuterRef, Prefetch
 from psycopg.types.range import Range
@@ -12,7 +14,7 @@ def build_row_context(env, now=None):
     if now is None:
         now = timezone.now()
 
-    horizon = now + timezone.timedelta(hours=24)
+    horizon = now + timedelta(hours=24)
     window = Range(now, horizon, "[)")
 
     # In the list view the 24h window is already loaded by
@@ -67,7 +69,7 @@ def filter_options():
 
 def prefetch_reservations_for_list(now):
     """Return a Prefetch for the 24h reservation window, for use on an Environment queryset."""
-    horizon = now + timezone.timedelta(hours=24)
+    horizon = now + timedelta(hours=24)
     window = Range(now, horizon, "[)")
     return Prefetch(
         "reservations",

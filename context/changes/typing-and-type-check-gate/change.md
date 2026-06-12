@@ -1,7 +1,7 @@
 ---
 change_id: typing-and-type-check-gate
 title: Typing and type check gate
-status: planned
+status: implementing
 created: 2026-06-10
 updated: 2026-06-11
 archived_at: null

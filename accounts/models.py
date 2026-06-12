@@ -13,7 +13,7 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+        user.set_password(password)  # type: ignore[attr-defined]
         user.save(using=self._db)
         return user
 
@@ -28,12 +28,12 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
-    username = None
+    username = None  # type: ignore[assignment]
     email = models.EmailField(unique=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
-    objects = UserManager()
+    objects = UserManager()  # type: ignore[misc, assignment]
 
     class Meta:
         constraints = [

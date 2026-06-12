@@ -38,6 +38,8 @@ class ReservationForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        if cleaned_data is None:
+            return cleaned_data
         start = cleaned_data.get("start")
         duration = cleaned_data.get("duration")
         env = cleaned_data.get("environment")
@@ -81,6 +83,8 @@ class ReservationEditForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        if cleaned_data is None:
+            return cleaned_data
         hours = cleaned_data.get("hours")
         if hours is None:
             return cleaned_data

@@ -236,12 +236,12 @@ None — no data or schema changes. Existing contributors must run
 
 #### Automated
 
-- [ ] 1.1 mypy installed (`uv run mypy --version`)
-- [ ] 1.2 Lenient baseline green (`uv run mypy .` exits 0)
+- [x] 1.1 mypy installed (`uv run mypy --version`)
+- [x] 1.2 Lenient baseline green (`uv run mypy .` exits 0)
 
 #### Manual
 
-- [ ] 1.3 Plugin resolved custom user model + Postgres fields without crashes
+- [x] 1.3 Plugin resolved custom user model + Postgres fields without crashes
 
 ### Phase 2: Annotate first-party code + strict islands
 
