@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import cast
+
 from django.contrib import admin
 from django.utils import timezone
 
@@ -10,8 +15,10 @@ class ReservationAdmin(admin.ModelAdmin):
     autocomplete_fields = ["environment", "owner"]
 
     @admin.display(description="During (local)")
-    def during_local(self, obj):
+    def during_local(self, obj: Reservation) -> str:
+        # during is non-empty and bounded (reservation_during_bounded
+        # CheckConstraint), so lower/upper are never None.
         fmt = "%Y-%m-%d %H:%M %Z"
-        lo = timezone.localtime(obj.during.lower).strftime(fmt)
-        hi = timezone.localtime(obj.during.upper).strftime(fmt)
+        lo = timezone.localtime(cast(datetime, obj.during.lower)).strftime(fmt)
+        hi = timezone.localtime(cast(datetime, obj.during.upper)).strftime(fmt)
         return f"[{lo}, {hi})"

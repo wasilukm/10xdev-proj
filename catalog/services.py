@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, cast
+from typing import TypedDict, cast
 
 from django.utils import timezone
 from django.db.models import Exists, OuterRef, Prefetch, QuerySet
@@ -12,7 +12,16 @@ from reservations.models import Reservation
 from .models import Environment
 
 
-def build_row_context(env: Environment, now: datetime | None = None) -> dict[str, Any]:
+class RowContext(TypedDict):
+    """Context for a single env row partial."""
+
+    env: Environment
+    is_busy: bool
+    current_reservation: Reservation | None
+    upcoming_reservations: list[Reservation]
+
+
+def build_row_context(env: Environment, now: datetime | None = None) -> RowContext:
     """Return context dict for a single env row partial."""
     if now is None:
         now = timezone.now()

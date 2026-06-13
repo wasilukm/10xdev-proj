@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -35,7 +37,7 @@ def environment_list(request: HttpRequest) -> HttpResponse:
 
     rows = []
     for env in envs:
-        row = build_row_context(env, now=now)
+        row: dict[str, Any] = dict(build_row_context(env, now=now))
         row["booking_form"] = ReservationForm(initial={"environment": env.pk})
         rows.append(row)
 

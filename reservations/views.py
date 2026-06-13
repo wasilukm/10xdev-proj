@@ -28,7 +28,7 @@ def _row_response(
 ) -> HttpResponse:
     if form is None:
         form = ReservationForm(initial={"environment": env.pk})
-    ctx = build_row_context(env)
+    ctx: dict[str, Any] = dict(build_row_context(env))
     ctx.update({
         "booking_form": form,
         "conflict_message": conflict_message,
