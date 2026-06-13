@@ -3,7 +3,7 @@ project: EnvBooker
 version: 1
 status: draft
 created: 2026-05-27
-updated: 2026-06-07
+updated: 2026-06-13
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -37,7 +37,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | proposed |
 | S-06  | admin-reservation-override      | (admin) modify or cancel any reservation, including those owned by other users                                      | S-02, S-01       | FR-014, Access Control                                    | proposed |
 | SPIKE-01 | timezone-calendar-edge-cases | (spike) understand & harden time-window handling against DST gaps/folds, leap years, and other calendar boundaries  | S-02             | NFR §reliability, FR-011, FR-015                          | proposed |
-| Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | proposed |
+| Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | done |
 
 ## Streams
 
@@ -174,7 +174,7 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
   - Does `django-stubs` need extra plugin config for the custom `accounts.User` (`AbstractUser`, `username=None`) and the Postgres `DateTimeRangeField` / `ExclusionConstraint` on `Reservation`? — Owner: TBD (resolves in `/10x-plan`). Block: no.
 - **Risk:** Horizontal change touching nearly every `.py` file — blast radius is wide but shallow (annotations + config, no behavior change). The real risk is scope creep into a strict-everywhere crusade that stalls; cap it at first-party app code with a green baseline and defer test/migration coverage. The ruff/lint CI tripwire (`CLAUDE.md`) is deliberately excluded to keep this item typing-only.
 - **Source:** Drift discovered 2026-06-07 — typing committed in `tech-stack.md` but never implemented (0/125 functions annotated, no checker installed).
-- **Status:** proposed
+- **Status:** done
 
 ## Spikes
 
@@ -227,3 +227,4 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
 - **S-02: A signed-in user opens the env list, sees every env with its current state (free / reserved) and the identities + time windows of current and upcoming reservation owners, picks a free env, enters a time window, and confirms. The reservation is created and appears on the list immediately (no page reload); attempts to reserve an overlapping window are rejected with a message naming the conflicting reservation's owner and window.** — Archived 2026-06-03 → `context/archive/2026-05-31-browse-and-reserve/`. Lesson: —.
 - **S-03: filter the env list by availability, purpose / use-case tag, and project — closing the <30s primary success criterion** — Archived 2026-06-07 → `context/archive/2026-06-04-filter-env-list/`. Lesson: —.
 - **S-04: modify or cancel a reservation they own** — Archived 2026-06-07 → `context/archive/2026-06-04-edit-own-reservation/`. Lesson: —.
+- **Q-01: (enabler) Public functions/methods across `accounts/`, `catalog/`, `reservations/`, and `envbooker/` carry type annotations, and `mypy` (with the `django-stubs` plugin) runs clean under an agreed baseline strictness, wired as a gate so future untyped drift is caught. Closes the gap between the stack commitment ("explicit typing ... mitigated downstream with type hints and model-level schemas", `tech-stack.md` §Why this stack) and the codebase, where 0 of ~125 functions are currently annotated.** — Archived 2026-06-13 → `context/archive/2026-06-10-typing-and-type-check-gate/`. Lesson: —.
