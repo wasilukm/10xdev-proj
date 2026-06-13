@@ -22,6 +22,18 @@ uv run python manage.py test reservations.tests.test_models              # singl
 uv run python manage.py test reservations.tests.test_models.SomeTestClass  # single class
 ```
 
+### Type checking
+
+```bash
+# Run the type checker (dummy env vars — no live DB needed for mypy)
+DJANGO_SECRET_KEY=mypy DATABASE_URL=postgres://u:p@localhost:5432/db uv run mypy .
+
+# After a fresh clone or after adding a team member: register the pre-commit hook
+uv run lefthook install
+```
+
+The `pre-commit` hook (`lefthook.yml`) runs the full mypy pass before every commit. It requires no live Postgres — `dj_database_url.config()` parses the URL without connecting. New contributors must run `uv run lefthook install` once after cloning.
+
 ### Local dev setup
 
 Local dev uses **Postgres** (not SQLite) for full parity with Railway prod (exclusion constraints require it). Start Postgres first:

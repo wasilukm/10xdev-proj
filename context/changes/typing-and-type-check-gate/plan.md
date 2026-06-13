@@ -247,22 +247,22 @@ None — no data or schema changes. Existing contributors must run
 
 #### Automated
 
-- [x] 2.1 Full typecheck green with strict-island overrides
-- [x] 2.2 No untyped defs remain in island modules
-- [x] 2.3 Test suite still green
-- [x] 2.4 Typecheck duration measured (cold + warm) and captured into notes
+- [x] 2.1 Full typecheck green with strict-island overrides — f710699
+- [x] 2.2 No untyped defs remain in island modules — f710699
+- [x] 2.3 Test suite still green — f710699
+- [x] 2.4 Typecheck duration measured (cold + warm) and captured into notes — f710699
 
 #### Manual
 
-- [x] 2.5 TypedDict/Literal/Optional choices read naturally; no Any shortcuts in services
+- [x] 2.5 TypedDict/Literal/Optional choices read naturally; no Any shortcuts in services — f710699
 
 ### Phase 3: Wire the Lefthook pre-commit gate
 
 #### Automated
 
-- [ ] 3.1 Hooks installed (`.git/hooks/pre-commit` references lefthook)
-- [ ] 3.2 Hook passes on clean tree
-- [ ] 3.3 Hook blocks on a deliberate type error
+- [x] 3.1 Hooks installed (`.git/hooks/pre-commit` references lefthook)
+- [x] 3.2 Hook passes on clean tree
+- [x] 3.3 Hook blocks on a deliberate type error
 
 #### Manual
 

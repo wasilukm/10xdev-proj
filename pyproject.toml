@@ -15,6 +15,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "django-stubs[compatible-mypy]>=6.0.5",
+    "lefthook>=2.1.9",
 ]
 
 [tool.mypy]

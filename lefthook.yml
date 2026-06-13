@@ -1,0 +1,4 @@
+pre-commit:
+  commands:
+    typecheck:
+      run: DJANGO_SECRET_KEY=mypy DATABASE_URL=postgres://u:p@localhost:5432/db uv run mypy .
