@@ -379,17 +379,17 @@ mechanical commit; land it while write-path slices are quiescent (currently true
 
 #### Automated
 
-- [ ] 1.1 ruff installed (`uv run ruff --version`)
-- [ ] 1.2 Lint clean (`uv run ruff check .` exits 0)
-- [ ] 1.3 Format clean (`uv run ruff format --check .` exits 0)
-- [ ] 1.4 Baseline regression run captured green before cleanup (OK + test count recorded)
-- [ ] 1.5 Post-cleanup regression run matches baseline (same test count, all passing)
-- [ ] 1.6 mypy still green (no regression from formatting)
+- [x] 1.1 ruff installed (`uv run ruff --version`)
+- [x] 1.2 Lint clean (`uv run ruff check .` exits 0)
+- [x] 1.3 Format clean (`uv run ruff format --check .` exits 0)
+- [x] 1.4 Baseline regression run captured green before cleanup (OK + test count recorded)
+- [x] 1.5 Post-cleanup regression run matches baseline (same test count, all passing)
+- [x] 1.6 mypy still green (no regression from formatting)
 
 #### Manual
 
-- [ ] 1.7 Reformat diff is layout/auto-fix only (spot-check reformatted files)
-- [ ] 1.8 Migrations untouched by the format pass
+- [x] 1.7 Reformat diff is layout/auto-fix only (spot-check reformatted files)
+- [x] 1.8 Migrations untouched by the format pass
 
 ### Phase 2: Lefthook pre-commit gate
 

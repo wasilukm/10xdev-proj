@@ -17,11 +17,13 @@ class SignUpForm(UserCreationForm):
     def clean_email(self) -> str:
         email = self.cleaned_data["email"].lower()
         domain = email.split("@")[-1]
-        if AllowedEmailDomain.objects.exists():
-            if not AllowedEmailDomain.objects.filter(domain=domain).exists():
-                raise forms.ValidationError(
-                    "Sign-up is restricted to approved email domains."
-                )
+        if (
+            AllowedEmailDomain.objects.exists()
+            and not AllowedEmailDomain.objects.filter(domain=domain).exists()
+        ):
+            raise forms.ValidationError(
+                "Sign-up is restricted to approved email domains."
+            )
         return email
 
 

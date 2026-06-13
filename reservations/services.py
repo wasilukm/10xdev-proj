@@ -15,14 +15,17 @@ from .models import Reservation
 MAX_DURATION = timedelta(hours=4)
 
 
-def _qs_starting_at_or_after(env: Environment, start: datetime) -> QuerySet[Reservation]:
+def _qs_starting_at_or_after(
+    env: Environment, start: datetime
+) -> QuerySet[Reservation]:
     """Return a queryset of reservations for env with lower bound >= start, ordered by lower bound.
 
     DateTimeRangeField does not support 'lower__gte' — use lower() via Func annotation instead.
     """
     return (
-        Reservation.objects
-        .annotate(lower_bound=Func("during", function="lower", output_field=DateTimeField()))
+        Reservation.objects.annotate(
+            lower_bound=Func("during", function="lower", output_field=DateTimeField())
+        )
         .filter(environment=env, lower_bound__gte=start)
         .order_by("lower_bound")
     )
@@ -71,8 +74,7 @@ def describe_overlap_conflict(
 ) -> str | None:
     """Return a human-readable conflict message for a reservation_no_overlap violation, or None."""
     qs = (
-        Reservation.objects
-        .select_related("owner")
+        Reservation.objects.select_related("owner")
         .filter(environment=env, during__overlap=during)
         .order_by("during")
     )
@@ -95,11 +97,9 @@ def next_free_window(env: Environment, after: datetime) -> datetime:
 
     Follows contiguous or back-to-back blocks to find the true gap start.
     """
-    containing = (
-        Reservation.objects
-        .filter(environment=env, during__contains=after)
-        .first()
-    )
+    containing = Reservation.objects.filter(
+        environment=env, during__contains=after
+    ).first()
 
     free: datetime = cast(datetime, containing.during.upper) if containing else after
 

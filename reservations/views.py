@@ -14,9 +14,10 @@ from django.views.decorators.http import require_POST
 
 from catalog.models import Environment
 from catalog.services import build_row_context
+
+from . import services
 from .forms import ReservationEditForm, ReservationForm
 from .models import Reservation
-from . import services
 
 
 def _row_response(
@@ -29,11 +30,13 @@ def _row_response(
     if form is None:
         form = ReservationForm(initial={"environment": env.pk})
     ctx: dict[str, Any] = dict(build_row_context(env))
-    ctx.update({
-        "booking_form": form,
-        "conflict_message": conflict_message,
-        "next_free": next_free,
-    })
+    ctx.update(
+        {
+            "booking_form": form,
+            "conflict_message": conflict_message,
+            "next_free": next_free,
+        }
+    )
     return render(request, "catalog/_environment_row.html", ctx)
 
 
@@ -44,8 +47,14 @@ def _item_context(
 ) -> dict[str, Any]:
     now = timezone.now()
     if form is None:
-        hours = round((reservation.during.upper - reservation.during.lower).total_seconds() / 3600, 2)
-        form = ReservationEditForm(initial={"hours": hours}, start=reservation.during.lower)
+        hours = round(
+            (reservation.during.upper - reservation.during.lower).total_seconds()
+            / 3600,
+            2,
+        )
+        form = ReservationEditForm(
+            initial={"hours": hours}, start=reservation.during.lower
+        )
     return {
         "reservation": reservation,
         "form": form,
@@ -98,19 +107,22 @@ def reservation_create(request: HttpRequest) -> HttpResponse:
             conflict_message = services.describe_overlap_conflict(env, during)
             next_free = services.next_free_window(env, start)
         elif "reservation_during_bounded" in cause:
-            conflict_message = "Invalid reservation range — please check your start time and duration."
+            conflict_message = (
+                "Invalid reservation range — please check your start time and duration."
+            )
         else:
             raise
 
-    return _row_response(request, env, conflict_message=conflict_message, next_free=next_free)
+    return _row_response(
+        request, env, conflict_message=conflict_message, next_free=next_free
+    )
 
 
 @login_required
 def my_reservations(request: HttpRequest) -> HttpResponse:
     now = timezone.now()
     reservations = (
-        Reservation.objects
-        .annotate(
+        Reservation.objects.annotate(
             lower_bound=Func("during", function="lower", output_field=DateTimeField()),
             upper_bound=Func("during", function="upper", output_field=DateTimeField()),
         )

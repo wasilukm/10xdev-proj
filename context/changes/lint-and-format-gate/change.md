@@ -1,7 +1,7 @@
 ---
 change_id: lint-and-format-gate
 title: Lint and format tooling with pre-commit and per-edit agent hooks
-status: planned
+status: implementing
 created: 2026-06-13
 updated: 2026-06-13
 archived_at: null

@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import TypedDict, cast
 
-from django.utils import timezone
 from django.db.models import Exists, OuterRef, Prefetch, QuerySet
+from django.utils import timezone
 from psycopg.types.range import Range
 
 from reservations.models import Reservation
@@ -37,15 +37,15 @@ def build_row_context(env: Environment, now: datetime | None = None) -> RowConte
         upcoming = list(env.reservations.all())
     else:
         upcoming = list(
-            env.reservations
-            .select_related("owner")
+            env.reservations.select_related("owner")
             .filter(during__overlap=window)
             .order_by("during")
         )
 
     current = next(
         (
-            r for r in upcoming
+            r
+            for r in upcoming
             if cast(datetime, r.during.lower) <= now < cast(datetime, r.during.upper)
         ),
         None,
@@ -73,7 +73,9 @@ def filter_environments(
         queryset = queryset.filter(use_case_tag=use_case_tag)
     if availability in ("free", "busy"):
         # Exists subquery: does a reservation cover this exact instant?
-        busy = Reservation.objects.filter(environment=OuterRef("pk"), during__contains=now)
+        busy = Reservation.objects.filter(
+            environment=OuterRef("pk"), during__contains=now
+        )
         queryset = queryset.annotate(_busy=Exists(busy))
         queryset = queryset.filter(_busy=(availability == "busy"))
     return queryset
@@ -81,10 +83,14 @@ def filter_environments(
 
 def filter_options() -> dict[str, list[str]]:
     projects = list(
-        Environment.objects.values_list("project", flat=True).distinct().order_by("project")
+        Environment.objects.values_list("project", flat=True)
+        .distinct()
+        .order_by("project")
     )
     use_case_tags = list(
-        Environment.objects.values_list("use_case_tag", flat=True).distinct().order_by("use_case_tag")
+        Environment.objects.values_list("use_case_tag", flat=True)
+        .distinct()
+        .order_by("use_case_tag")
     )
     return {"projects": projects, "use_case_tags": use_case_tags}
 
@@ -96,8 +102,7 @@ def prefetch_reservations_for_list(now: datetime) -> Prefetch:
     return Prefetch(
         "reservations",
         queryset=(
-            Reservation.objects
-            .select_related("owner")
+            Reservation.objects.select_related("owner")
             .filter(during__overlap=window)
             .order_by("during")
         ),

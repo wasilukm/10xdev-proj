@@ -10,7 +10,9 @@ from django.db.models.functions import Lower
 class UserManager(BaseUserManager["User"]):
     use_in_migrations = True
 
-    def create_user(self, email: str, password: str | None = None, **extra_fields: Any) -> User:
+    def create_user(
+        self, email: str, password: str | None = None, **extra_fields: Any
+    ) -> User:
         if not email:
             raise ValueError("Email is required")
         email = self.normalize_email(email).lower()
@@ -21,7 +23,9 @@ class UserManager(BaseUserManager["User"]):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email: str, password: str | None = None, **extra_fields: Any) -> User:
+    def create_superuser(
+        self, email: str, password: str | None = None, **extra_fields: Any
+    ) -> User:
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         if extra_fields.get("is_staff") is not True:

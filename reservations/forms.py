@@ -9,8 +9,8 @@ from django.utils import timezone
 from psycopg.types.range import Range
 
 from catalog.models import Environment
-from . import services
 
+from . import services
 
 DURATION_CHOICES = [
     ("1h", "1 hour"),
@@ -53,7 +53,9 @@ class ReservationForm(forms.Form):
             return cleaned_data
 
         if duration == "custom" and not custom_hours:
-            self.add_error("custom_hours", "Enter the number of hours for a custom duration.")
+            self.add_error(
+                "custom_hours", "Enter the number of hours for a custom duration."
+            )
             return cleaned_data
 
         if timezone.is_naive(start):
@@ -66,7 +68,9 @@ class ReservationForm(forms.Form):
         end = services.compute_end(env, start, duration, custom_hours=custom_hours)
 
         if end <= start:
-            raise forms.ValidationError("Computed end time is not after start — choose a longer duration.")
+            raise forms.ValidationError(
+                "Computed end time is not after start — choose a longer duration."
+            )
 
         cleaned_data["during"] = Range(start, end, "[)")
         return cleaned_data
@@ -96,7 +100,9 @@ class ReservationEditForm(forms.Form):
         end = self._start + timedelta(hours=float(hours))
 
         if end <= self._start:
-            raise forms.ValidationError("Computed end time is not after start — choose a longer duration.")
+            raise forms.ValidationError(
+                "Computed end time is not after start — choose a longer duration."
+            )
 
         if end <= timezone.now():
             raise forms.ValidationError(

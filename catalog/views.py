@@ -8,8 +8,14 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from reservations.forms import ReservationForm
+
 from .models import Environment
-from .services import build_row_context, filter_environments, filter_options, prefetch_reservations_for_list
+from .services import (
+    build_row_context,
+    filter_environments,
+    filter_options,
+    prefetch_reservations_for_list,
+)
 
 
 @login_required
@@ -19,11 +25,14 @@ def environment_list(request: HttpRequest) -> HttpResponse:
     availability = request.GET.get("availability", "")
     project = request.GET.get("project", "")
     use_case_tag = request.GET.get("use_case_tag", "")
-    filters = {"availability": availability, "project": project, "use_case_tag": use_case_tag}
+    filters = {
+        "availability": availability,
+        "project": project,
+        "use_case_tag": use_case_tag,
+    }
 
     envs = (
-        Environment.objects
-        .select_related("owner")
+        Environment.objects.select_related("owner")
         .prefetch_related(prefetch_reservations_for_list(now))
         .order_by("name")
     )
@@ -42,13 +51,21 @@ def environment_list(request: HttpRequest) -> HttpResponse:
         rows.append(row)
 
     if request.headers.get("HX-Request"):
-        return render(request, "catalog/_environment_results.html", {
+        return render(
+            request,
+            "catalog/_environment_results.html",
+            {
+                "rows": rows,
+                "filters": filters,
+            },
+        )
+
+    return render(
+        request,
+        "catalog/environment_list.html",
+        {
             "rows": rows,
             "filters": filters,
-        })
-
-    return render(request, "catalog/environment_list.html", {
-        "rows": rows,
-        "filters": filters,
-        "options": filter_options(),
-    })
+            "options": filter_options(),
+        },
+    )

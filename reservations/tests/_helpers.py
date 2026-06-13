@@ -1,13 +1,13 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from psycopg.types.range import Range
 
-_FIXED_NOW = datetime(2024, 1, 1, 8, 0, tzinfo=timezone.utc)
+_FIXED_NOW = datetime(2024, 1, 1, 8, 0, tzinfo=UTC)
 
 
 def _dt(h, m=0, d=1):
     """Aware UTC datetime on 2024-01-01 at the given hour/minute."""
-    return datetime(2024, 1, d, h, m, tzinfo=timezone.utc)
+    return datetime(2024, 1, d, h, m, tzinfo=UTC)
 
 
 def _range(sh, eh):

@@ -9,10 +9,10 @@ from reservations.models import Reservation
 
 from ._helpers import _FIXED_NOW, _dt, _range
 
-
 # ---------------------------------------------------------------------------
 # View: reservation_create (happy path, overlap rejection, auth)
 # ---------------------------------------------------------------------------
+
 
 class ReservationCreateViewTest(TestCase):
     """
@@ -33,17 +33,24 @@ class ReservationCreateViewTest(TestCase):
             last_name="Smith",
         )
         self.env = Environment.objects.create(
-            name="view-env", version="1.0", purpose="test",
-            project="proj", use_case_tag="ci", owner=self.user,
+            name="view-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user,
         )
         self.url = reverse("reservations:create")
 
     def _post(self, start_str="2024-01-01T10:00", duration="1h"):
-        return self.client.post(self.url, {
-            "environment": self.env.pk,
-            "start": start_str,
-            "duration": duration,
-        })
+        return self.client.post(
+            self.url,
+            {
+                "environment": self.env.pk,
+                "start": start_str,
+                "duration": duration,
+            },
+        )
 
     def test_auth_required(self):
         """US-01: unauthenticated POST redirects to login, no reservation created."""
@@ -64,7 +71,9 @@ class ReservationCreateViewTest(TestCase):
     def test_overlap_rejection_names_owner_and_window(self, _):
         """FR-015: overlapping POST returns inline message naming the conflicting owner."""
         Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(9, 14),
+            owner=self.user,
+            environment=self.env,
+            during=_range(9, 14),
         )
         self.client.login(email="booker@example.com", password="pass")
         response = self._post()
@@ -77,7 +86,9 @@ class ReservationCreateViewTest(TestCase):
     def test_overlap_rejection_is_not_500(self, _):
         """FR-015: DB race (IntegrityError from exclusion constraint) is caught inline, not 500."""
         Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(9, 14),
+            owner=self.user,
+            environment=self.env,
+            during=_range(9, 14),
         )
         self.client.login(email="booker@example.com", password="pass")
         response = self._post()
@@ -88,6 +99,7 @@ class ReservationCreateViewTest(TestCase):
 # ---------------------------------------------------------------------------
 # View: reservation_edit
 # ---------------------------------------------------------------------------
+
 
 class ReservationEditViewTest(TestCase):
     """Integration tests for the HTMX reservation-edit endpoint.
@@ -100,23 +112,35 @@ class ReservationEditViewTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            email="editor@example.com", password="pass",
-            first_name="Alice", last_name="Smith",
+            email="editor@example.com",
+            password="pass",
+            first_name="Alice",
+            last_name="Smith",
         )
         self.other_user = User.objects.create_user(
-            email="other@example.com", password="pass",
-            first_name="Bob", last_name="Jones",
+            email="other@example.com",
+            password="pass",
+            first_name="Bob",
+            last_name="Jones",
         )
         self.env = Environment.objects.create(
-            name="edit-env", version="1.0", purpose="test",
-            project="proj", use_case_tag="ci", owner=self.user,
+            name="edit-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user,
         )
         self.reservation = Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(10, 12),
+            owner=self.user,
+            environment=self.env,
+            during=_range(10, 12),
         )
 
     def _edit_url(self, pk=None):
-        return reverse("reservations:edit", args=[pk if pk is not None else self.reservation.pk])
+        return reverse(
+            "reservations:edit", args=[pk if pk is not None else self.reservation.pk]
+        )
 
     def _post(self, hours=2, pk=None):
         return self.client.post(self._edit_url(pk), {"hours": str(hours)})
@@ -156,7 +180,9 @@ class ReservationEditViewTest(TestCase):
         """Editing an in-progress reservation changes only the end; start is immutable."""
         # [06:00, 09:00) is in-progress at now=08:00, no overlap with [10:00, 12:00)
         in_progress = Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(6, 9),
+            owner=self.user,
+            environment=self.env,
+            during=_range(6, 9),
         )
         self.client.login(email="editor@example.com", password="pass")
         url = reverse("reservations:edit", args=[in_progress.pk])
@@ -172,7 +198,9 @@ class ReservationEditViewTest(TestCase):
         """Edit that would set end <= now is rejected; original window unchanged."""
         # [06:00, 09:00) in-progress, no overlap with [10:00, 12:00)
         in_progress = Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(6, 9),
+            owner=self.user,
+            environment=self.env,
+            during=_range(6, 9),
         )
         self.client.login(email="editor@example.com", password="pass")
         url = reverse("reservations:edit", args=[in_progress.pk])
@@ -189,17 +217,21 @@ class ReservationEditViewTest(TestCase):
         self.reservation.during = _range(10, 11)
         self.reservation.save()
         Reservation.objects.create(
-            owner=self.other_user, environment=self.env, during=_range(13, 16),
+            owner=self.other_user,
+            environment=self.env,
+            during=_range(13, 16),
         )
         self.client.login(email="editor@example.com", password="pass")
         # hours=4 → [10:00, 14:00) overlaps Bob's [13:00, 16:00)
         response = self._post(hours=4)
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        self.assertIn("Bob Jones", content)       # conflict names the other owner
+        self.assertIn("Bob Jones", content)  # conflict names the other owner
         self.assertNotIn("Alice Smith", content)  # not a false self-report
         self.reservation.refresh_from_db()
-        self.assertEqual(self.reservation.during.upper, _dt(11))  # original window intact
+        self.assertEqual(
+            self.reservation.during.upper, _dt(11)
+        )  # original window intact
 
     @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
     def test_extend_own_window_no_self_conflict(self, _):
@@ -215,7 +247,9 @@ class ReservationEditViewTest(TestCase):
     def test_past_reservation_404(self, _):
         """Edit on a past (already-ended) reservation returns 404."""
         past = Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(4, 6),
+            owner=self.user,
+            environment=self.env,
+            during=_range(4, 6),
         )
         self.client.login(email="editor@example.com", password="pass")
         url = reverse("reservations:edit", args=[past.pk])
@@ -234,7 +268,9 @@ class ReservationEditViewTest(TestCase):
         self.reservation.during = _range(10, 11)
         self.reservation.save()
         Reservation.objects.create(
-            owner=self.other_user, environment=self.env, during=_range(13, 16),
+            owner=self.other_user,
+            environment=self.env,
+            during=_range(13, 16),
         )
         self.client.login(email="editor@example.com", password="pass")
         # hours=4 → [10:00, 14:00) overlaps Bob's [13:00, 16:00)
@@ -247,26 +283,37 @@ class ReservationEditViewTest(TestCase):
 # View: reservation_cancel
 # ---------------------------------------------------------------------------
 
+
 class ReservationCancelViewTest(TestCase):
     """Integration tests for the HTMX reservation-cancel endpoint."""
 
     def setUp(self):
         self.user = User.objects.create_user(
-            email="canceler@example.com", password="pass",
+            email="canceler@example.com",
+            password="pass",
         )
         self.other_user = User.objects.create_user(
-            email="other2@example.com", password="pass",
+            email="other2@example.com",
+            password="pass",
         )
         self.env = Environment.objects.create(
-            name="cancel-env", version="1.0", purpose="test",
-            project="proj", use_case_tag="ci", owner=self.user,
+            name="cancel-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user,
         )
         self.reservation = Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(10, 12),
+            owner=self.user,
+            environment=self.env,
+            during=_range(10, 12),
         )
 
     def _cancel_url(self, pk=None):
-        return reverse("reservations:cancel", args=[pk if pk is not None else self.reservation.pk])
+        return reverse(
+            "reservations:cancel", args=[pk if pk is not None else self.reservation.pk]
+        )
 
     def _post(self, pk=None):
         return self.client.post(self._cancel_url(pk))
@@ -305,7 +352,9 @@ class ReservationCancelViewTest(TestCase):
     def test_past_reservation_404(self, _):
         """Cancel on a past (already-ended) reservation returns 404."""
         past = Reservation.objects.create(
-            owner=self.user, environment=self.env, during=_range(4, 6),
+            owner=self.user,
+            environment=self.env,
+            during=_range(4, 6),
         )
         self.client.login(email="canceler@example.com", password="pass")
         url = reverse("reservations:cancel", args=[past.pk])
