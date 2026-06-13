@@ -408,12 +408,12 @@ mechanical commit; land it while write-path slices are quiescent (currently true
 
 #### Automated
 
-- [x] 3.1 `.claude/settings.json` valid with a `Write|Edit` `PostToolUse` hook
-- [x] 3.2 `.claude/settings.jsom` renamed to `.json` (history preserved, no orphan)
-- [x] 3.3 Handler is a no-op for non-`.py` paths, runs ruff for `.py` paths
-- [x] 3.4 ruff still green repo-wide
+- [x] 3.1 `.claude/settings.json` valid with a `Write|Edit` `PostToolUse` hook — b8aa9c9
+- [x] 3.2 `.claude/settings.jsom` renamed to `.json` (history preserved, no orphan) — b8aa9c9
+- [x] 3.3 Handler is a no-op for non-`.py` paths, runs ruff for `.py` paths — b8aa9c9
+- [x] 3.4 ruff still green repo-wide — b8aa9c9
 
 #### Manual
 
-- [x] 3.5 Live edit of a mis-formatted `.py` triggers reformat + announce (and blocking feedback on a seeded non-fixable finding)
-- [x] 3.6 `CLAUDE.md` updated; old "no linting tools" tripwire corrected
+- [x] 3.5 Live edit of a mis-formatted `.py` triggers reformat + announce (and blocking feedback on a seeded non-fixable finding) — b8aa9c9
+- [x] 3.6 `CLAUDE.md` updated; old "no linting tools" tripwire corrected — b8aa9c9
