@@ -266,4 +266,15 @@ None — no data or schema changes. Existing contributors must run
 
 #### Manual
 
-- [ ] 3.4 Real `git commit` triggers hook and passes within a few seconds
+- [x] 3.4 Real `git commit` triggers hook and passes within a few seconds — ca363eb
+
+## Per-phase Notes
+
+### Phase 2 timing (measured 2026-06-13, Python 3.14, 46 source files)
+
+| Run | real time |
+|-----|-----------|
+| Cold (no cache) | 4.5 s |
+| Warm (cache hit) | 1.0 s |
+
+Warm run well under "a few seconds" → plain `uv run mypy .` used in the Phase 3 hook (not dmypy).
