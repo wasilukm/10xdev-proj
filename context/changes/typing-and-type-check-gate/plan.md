@@ -260,9 +260,9 @@ None — no data or schema changes. Existing contributors must run
 
 #### Automated
 
-- [x] 3.1 Hooks installed (`.git/hooks/pre-commit` references lefthook)
-- [x] 3.2 Hook passes on clean tree
-- [x] 3.3 Hook blocks on a deliberate type error
+- [x] 3.1 Hooks installed (`.git/hooks/pre-commit` references lefthook) — 11ec300
+- [x] 3.2 Hook passes on clean tree — 11ec300
+- [x] 3.3 Hook blocks on a deliberate type error — 11ec300
 
 #### Manual
 
