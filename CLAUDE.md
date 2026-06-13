@@ -48,9 +48,9 @@ uv run ruff check --fix .        # lint + apply safe auto-fixes
 Two enforcement layers:
 
 - **Pre-commit** (`lefthook.yml`): `format` and `lint` commands run over staged `.py` files with `stage_fixed: true`, so fixable issues are auto-healed and re-staged before the commit lands. A non-fixable finding blocks the commit.
-- **Per-edit agent hook** (`.claude/settings.json`): a `PostToolUse` hook fires on every `Write`/`Edit`, runs ruff format + check --fix on the edited `.py` file, and feeds results back into the agent's context — reformatted files are announced (prompting a re-read); residual non-fixable findings are surfaced as blocking (exit 2).
+- **Per-edit agent hook** (`.claude/settings.json`): a `PostToolUse` hook fires on every `Write`/`Edit`, runs ruff format + check --fix on the edited `.py` file, and feeds results back into the agent's context — reformatted files are announced (prompting a re-read); residual non-fixable findings are surfaced as blocking. Both signals use one mechanism — a JSON result on stdout (`additionalContext` for the note, `decision: block` + `reason` for the finding).
 
-Hook script lives at `.claude/hooks/ruff-post-edit.sh`. Migrations (`**/migrations/**`) are excluded from all ruff passes.
+Hook script lives at `.claude/hooks/ruff-post-edit.sh`; it reads the edited path from the tool payload with `python3` (no `jq` dependency). Migrations (`**/migrations/**`) are excluded from all ruff passes.
 
 ### Local dev setup
 
