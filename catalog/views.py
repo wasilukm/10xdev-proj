@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from django.contrib.auth.decorators import login_required
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
@@ -8,7 +11,7 @@ from .services import build_row_context, filter_environments, filter_options, pr
 
 
 @login_required
-def environment_list(request):
+def environment_list(request: HttpRequest) -> HttpResponse:
     now = timezone.now()
 
     availability = request.GET.get("availability", "")

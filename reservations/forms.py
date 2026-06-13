@@ -1,4 +1,8 @@
-from datetime import timedelta
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Any
 
 from django import forms
 from django.utils import timezone
@@ -36,7 +40,7 @@ class ReservationForm(forms.Form):
         label="Custom hours",
     )
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
         if cleaned_data is None:
             return cleaned_data
@@ -77,15 +81,15 @@ class ReservationEditForm(forms.Form):
         label="Duration (hours)",
     )
 
-    def __init__(self, *args, start, **kwargs):
+    def __init__(self, *args: Any, start: datetime, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._start = start
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
         if cleaned_data is None:
             return cleaned_data
-        hours = cleaned_data.get("hours")
+        hours: Decimal | None = cleaned_data.get("hours")
         if hours is None:
             return cleaned_data
 

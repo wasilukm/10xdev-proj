@@ -27,5 +27,20 @@ warn_unused_ignores = true
 module = ["*.migrations.*", "*.tests.*"]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = [
+    "accounts.models",
+    "catalog.models",
+    "reservations.models",
+    "catalog.services",
+    "reservations.services",
+    "catalog.views",
+    "reservations.views",
+    "accounts.views",
+    "accounts.forms",
+    "reservations.forms",
+]
+disallow_untyped_defs = true
+
 [tool.django-stubs]
 django_settings_module = "envbooker.settings"

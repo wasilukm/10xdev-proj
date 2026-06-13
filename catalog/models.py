@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings
 from django.db import models
 
@@ -17,5 +19,5 @@ class Environment(models.Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

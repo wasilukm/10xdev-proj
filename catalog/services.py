@@ -1,7 +1,10 @@
-from datetime import timedelta
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from typing import Any, cast
 
 from django.utils import timezone
-from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models import Exists, OuterRef, Prefetch, QuerySet
 from psycopg.types.range import Range
 
 from reservations.models import Reservation
@@ -9,7 +12,7 @@ from reservations.models import Reservation
 from .models import Environment
 
 
-def build_row_context(env, now=None):
+def build_row_context(env: Environment, now: datetime | None = None) -> dict[str, Any]:
     """Return context dict for a single env row partial."""
     if now is None:
         now = timezone.now()
@@ -32,7 +35,10 @@ def build_row_context(env, now=None):
         )
 
     current = next(
-        (r for r in upcoming if r.during.lower <= now < r.during.upper),
+        (
+            r for r in upcoming
+            if cast(datetime, r.during.lower) <= now < cast(datetime, r.during.upper)
+        ),
         None,
     )
 
@@ -44,7 +50,14 @@ def build_row_context(env, now=None):
     }
 
 
-def filter_environments(queryset, *, availability=None, project=None, use_case_tag=None, now):
+def filter_environments(
+    queryset: QuerySet[Environment],
+    *,
+    availability: str | None = None,
+    project: str | None = None,
+    use_case_tag: str | None = None,
+    now: datetime,
+) -> QuerySet[Environment]:
     if project:
         queryset = queryset.filter(project=project)
     if use_case_tag:
@@ -57,7 +70,7 @@ def filter_environments(queryset, *, availability=None, project=None, use_case_t
     return queryset
 
 
-def filter_options():
+def filter_options() -> dict[str, list[str]]:
     projects = list(
         Environment.objects.values_list("project", flat=True).distinct().order_by("project")
     )
@@ -67,7 +80,7 @@ def filter_options():
     return {"projects": projects, "use_case_tags": use_case_tags}
 
 
-def prefetch_reservations_for_list(now):
+def prefetch_reservations_for_list(now: datetime) -> Prefetch:
     """Return a Prefetch for the 24h reservation window, for use on an Environment queryset."""
     horizon = now + timedelta(hours=24)
     window = Range(now, horizon, "[)")

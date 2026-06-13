@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
@@ -12,7 +14,7 @@ class SignUpForm(UserCreationForm):
         model = User
         fields = ("email", "first_name", "last_name")
 
-    def clean_email(self):
+    def clean_email(self) -> str:
         email = self.cleaned_data["email"].lower()
         domain = email.split("@")[-1]
         if AllowedEmailDomain.objects.exists():
@@ -24,5 +26,5 @@ class SignUpForm(UserCreationForm):
 
 
 class EmailAuthenticationForm(AuthenticationForm):
-    def clean_username(self):
+    def clean_username(self) -> str:
         return self.cleaned_data["username"].lower()

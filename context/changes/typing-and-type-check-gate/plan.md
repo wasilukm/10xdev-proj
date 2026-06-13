@@ -236,25 +236,25 @@ None — no data or schema changes. Existing contributors must run
 
 #### Automated
 
-- [x] 1.1 mypy installed (`uv run mypy --version`)
-- [x] 1.2 Lenient baseline green (`uv run mypy .` exits 0)
+- [x] 1.1 mypy installed (`uv run mypy --version`) — d62ce9c
+- [x] 1.2 Lenient baseline green (`uv run mypy .` exits 0) — d62ce9c
 
 #### Manual
 
-- [x] 1.3 Plugin resolved custom user model + Postgres fields without crashes
+- [x] 1.3 Plugin resolved custom user model + Postgres fields without crashes — d62ce9c
 
 ### Phase 2: Annotate first-party code + strict islands
 
 #### Automated
 
-- [ ] 2.1 Full typecheck green with strict-island overrides
-- [ ] 2.2 No untyped defs remain in island modules
-- [ ] 2.3 Test suite still green
-- [ ] 2.4 Typecheck duration measured (cold + warm) and captured into notes
+- [x] 2.1 Full typecheck green with strict-island overrides
+- [x] 2.2 No untyped defs remain in island modules
+- [x] 2.3 Test suite still green
+- [x] 2.4 Typecheck duration measured (cold + warm) and captured into notes
 
 #### Manual
 
-- [ ] 2.5 TypedDict/Literal/Optional choices read naturally; no Any shortcuts in services
+- [x] 2.5 TypedDict/Literal/Optional choices read naturally; no Any shortcuts in services
 
 ### Phase 3: Wire the Lefthook pre-commit gate
 
