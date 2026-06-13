@@ -395,25 +395,25 @@ mechanical commit; land it while write-path slices are quiescent (currently true
 
 #### Automated
 
-- [x] 2.1 Hook config lists `format`, `lint`, `typecheck` under `pre-commit`
-- [x] 2.2 Clean tree commits successfully (ruff finds nothing)
-- [x] 2.3 Fixable violation in a staged file is auto-fixed and re-staged
-- [x] 2.4 Non-fixable violation fails the hook
+- [x] 2.1 Hook config lists `format`, `lint`, `typecheck` under `pre-commit` — b6bdd4b
+- [x] 2.2 Clean tree commits successfully (ruff finds nothing) — b6bdd4b
+- [x] 2.3 Fixable violation in a staged file is auto-fixed and re-staged — b6bdd4b
+- [x] 2.4 Non-fixable violation fails the hook — b6bdd4b
 
 #### Manual
 
-- [x] 2.5 Real `git commit` lands a clean, ruff-formatted commit within seconds
+- [x] 2.5 Real `git commit` lands a clean, ruff-formatted commit within seconds — b6bdd4b
 
 ### Phase 3: Per-edit agent hook + cleanup + docs
 
 #### Automated
 
-- [ ] 3.1 `.claude/settings.json` valid with a `Write|Edit` `PostToolUse` hook
-- [ ] 3.2 `.claude/settings.jsom` renamed to `.json` (history preserved, no orphan)
-- [ ] 3.3 Handler is a no-op for non-`.py` paths, runs ruff for `.py` paths
-- [ ] 3.4 ruff still green repo-wide
+- [x] 3.1 `.claude/settings.json` valid with a `Write|Edit` `PostToolUse` hook
+- [x] 3.2 `.claude/settings.jsom` renamed to `.json` (history preserved, no orphan)
+- [x] 3.3 Handler is a no-op for non-`.py` paths, runs ruff for `.py` paths
+- [x] 3.4 ruff still green repo-wide
 
 #### Manual
 
-- [ ] 3.5 Live edit of a mis-formatted `.py` triggers reformat + announce (and blocking feedback on a seeded non-fixable finding)
-- [ ] 3.6 `CLAUDE.md` updated; old "no linting tools" tripwire corrected
+- [x] 3.5 Live edit of a mis-formatted `.py` triggers reformat + announce (and blocking feedback on a seeded non-fixable finding)
+- [x] 3.6 `CLAUDE.md` updated; old "no linting tools" tripwire corrected

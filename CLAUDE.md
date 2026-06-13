@@ -34,6 +34,24 @@ uv run lefthook install
 
 The `pre-commit` hook (`lefthook.yml`) runs the full mypy pass before every commit. It requires no live Postgres — `dj_database_url.config()` parses the URL without connecting. New contributors must run `uv run lefthook install` once after cloning.
 
+### Linting and formatting
+
+**ruff** handles both lint and format (one binary, no separate tools):
+
+```bash
+uv run ruff check .              # lint the whole tree (migrations excluded)
+uv run ruff format --check .     # check formatting without writing
+uv run ruff format .             # reformat in-place
+uv run ruff check --fix .        # lint + apply safe auto-fixes
+```
+
+Two enforcement layers:
+
+- **Pre-commit** (`lefthook.yml`): `format` and `lint` commands run over staged `.py` files with `stage_fixed: true`, so fixable issues are auto-healed and re-staged before the commit lands. A non-fixable finding blocks the commit.
+- **Per-edit agent hook** (`.claude/settings.json`): a `PostToolUse` hook fires on every `Write`/`Edit`, runs ruff format + check --fix on the edited `.py` file, and feeds results back into the agent's context — reformatted files are announced (prompting a re-read); residual non-fixable findings are surfaced as blocking (exit 2).
+
+Hook script lives at `.claude/hooks/ruff-post-edit.sh`. Migrations (`**/migrations/**`) are excluded from all ruff passes.
+
 ### Local dev setup
 
 Local dev uses **Postgres** (not SQLite) for full parity with Railway prod (exclusion constraints require it). Start Postgres first:
@@ -90,7 +108,7 @@ Global templates live in `templates/` (configured in `TEMPLATES[0]["DIRS"]`). `w
 - **The uv-managed `.venv` has no `pip`**, so `pip-audit` cannot use `PIPAPI_PYTHON_LOCATION`. Audit via:
   `uv export --no-hashes | grep -v '^#' | pip-audit -r /dev/stdin`
 - **Railway deploy** is defined in `railway.toml`: Railpack builder (auto-detects `uv.lock` + `.python-version`), runs `collectstatic → migrate → gunicorn` on start. No Dockerfile needed.
-- **No linting tools** are configured in `pyproject.toml` yet — add ruff or similar before wiring up CI.
+- **ruff** is configured in `pyproject.toml` (`[tool.ruff]`) and enforced at two layers: a per-edit agent hook (`.claude/hooks/ruff-post-edit.sh`) and the Lefthook `pre-commit` gate. Migrations are excluded.
 - **`reservations/tests/` is a package** (not a flat `tests.py`). Files: `test_models.py`, `test_forms.py`, `test_services.py`, `test_views.py`. Shared fixtures live in `_helpers.py` (fixed anchor: 2024-01-01 08:00 UTC).
 
 ## Course context
