@@ -3,7 +3,7 @@ project: EnvBooker
 version: 1
 status: draft
 created: 2026-05-27
-updated: 2026-06-13
+updated: 2026-06-14
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -38,7 +38,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | S-06  | admin-reservation-override      | (admin) modify or cancel any reservation, including those owned by other users                                      | S-02, S-01       | FR-014, Access Control                                    | proposed |
 | SPIKE-01 | timezone-calendar-edge-cases | (spike) understand & harden time-window handling against DST gaps/folds, leap years, and other calendar boundaries  | S-02             | NFR §reliability, FR-011, FR-015                          | proposed |
 | Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | done |
-| Q-02  | lint-and-format-gate            | (enabler) a linter/formatter (tool TBD via research) runs locally via a per-edit agent hook + pre-commit, blocking style/lint drift | Q-01             | — (traces to `CLAUDE.md` lint tripwire, `test-plan.md` §5, M3 L3) | proposed |
+| Q-02  | lint-and-format-gate            | (enabler) a linter/formatter (tool TBD via research) runs locally via a per-edit agent hook + pre-commit, blocking style/lint drift | Q-01             | — (traces to `CLAUDE.md` lint tripwire, `test-plan.md` §5, M3 L3) | done     |
 
 ## Streams
 
@@ -194,7 +194,7 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
   - How to handle existing non-compliant files — one-time repo-wide cleanup commit (end fully green), grandfather/changed-files-only enforcement (no bulk diff), or phased per-app adoption? Decide formatting (mechanical, safe to bulk-apply) and lint rules (may need real fixes) separately; mind churn against in-flight S-05/S-06/SPIKE-01. — Owner: research / `/10x-plan`. Block: no.
 - **Risk:** Low blast radius (config + a possibly large one-time auto-format diff, no behaviour change). Real risks: (a) a noisy first-format diff churning against in-flight write-path slices — sequence when quiescent; (b) a slow per-edit hook blocking the agent loop — M3 L3's own rule keeps per-edit hooks to a few seconds, favouring a fast tool (ruff) and scoped single-file runs; (c) scope creep into CI wiring (belongs to Phase 5).
 - **Source:** Lint deferred out of Q-01 (`typing-and-type-check-gate`), which was scoped typing-only (roadmap Q-01 risk note; `test-plan.md` §5). Raised 2026-06-13 to give lint a dedicated home and satisfy the M3 L3 hooks lesson.
-- **Status:** proposed
+- **Status:** done
 
 ## Spikes
 
@@ -249,3 +249,4 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
 - **S-03: filter the env list by availability, purpose / use-case tag, and project — closing the <30s primary success criterion** — Archived 2026-06-07 → `context/archive/2026-06-04-filter-env-list/`. Lesson: —.
 - **S-04: modify or cancel a reservation they own** — Archived 2026-06-07 → `context/archive/2026-06-04-edit-own-reservation/`. Lesson: —.
 - **Q-01: (enabler) Public functions/methods across `accounts/`, `catalog/`, `reservations/`, and `envbooker/` carry type annotations, and `mypy` (with the `django-stubs` plugin) runs clean under an agreed baseline strictness, wired as a gate so future untyped drift is caught. Closes the gap between the stack commitment ("explicit typing ... mitigated downstream with type hints and model-level schemas", `tech-stack.md` §Why this stack) and the codebase, where 0 of ~125 functions are currently annotated.** — Archived 2026-06-13 → `context/archive/2026-06-10-typing-and-type-check-gate/`. Lesson: —.
+- **Q-02: (enabler) A linter/formatter is selected (via research) and wired so style/lint violations are caught automatically at two local layers: a per-edit Claude Code agent hook (`PostToolUse` on `Write|Edit`) that surfaces fixes mid-session, and the existing lefthook `pre-commit` gate over staged files. Closes the `CLAUDE.md` lint tripwire and fulfils the lint half of the `test-plan.md` §5 `lint + typecheck` gate, which Q-01 left typing-only.** — Archived 2026-06-14 → `context/archive/2026-06-13-lint-and-format-gate/`. Lesson: —.
