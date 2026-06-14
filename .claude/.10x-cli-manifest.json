@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.6.1",
   "manifestVersion": 2,
-  "lastApplied": "2026-06-09T21:53:53.560Z",
-  "lessonId": "m3l3",
+  "lastApplied": "2026-06-14T13:26:01.559Z",
+  "lessonId": "m3l4",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -134,6 +134,16 @@
       },
       "10x-tdd": {
         "files": [
+          "SKILL.md"
+        ]
+      },
+      "10x-e2e": {
+        "files": [
+          "references/browser-driven-generation.md",
+          "references/e2e-anti-patterns.md",
+          "references/e2e-prompt-template.md",
+          "references/e2e-quality-rules.md",
+          "references/seed-test-pattern.md",
           "SKILL.md"
         ]
       }
