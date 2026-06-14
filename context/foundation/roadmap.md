@@ -3,7 +3,7 @@ project: EnvBooker
 version: 1
 status: draft
 created: 2026-05-27
-updated: 2026-06-07
+updated: 2026-06-13
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -37,7 +37,8 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | proposed |
 | S-06  | admin-reservation-override      | (admin) modify or cancel any reservation, including those owned by other users                                      | S-02, S-01       | FR-014, Access Control                                    | proposed |
 | SPIKE-01 | timezone-calendar-edge-cases | (spike) understand & harden time-window handling against DST gaps/folds, leap years, and other calendar boundaries  | S-02             | NFR §reliability, FR-011, FR-015                          | proposed |
-| Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | proposed |
+| Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | done |
+| Q-02  | lint-and-format-gate            | (enabler) a linter/formatter (tool TBD via research) runs locally via a per-edit agent hook + pre-commit, blocking style/lint drift | Q-01             | — (traces to `CLAUDE.md` lint tripwire, `test-plan.md` §5, M3 L3) | proposed |
 
 ## Streams
 
@@ -48,7 +49,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | A      | Booking core         | `F-01` → `S-02` → `S-03` / `S-04` / `S-06`           | Carries the north star and the discovery closure; capacity bias keeps `S-03`/`S-04`/`S-06` parallel after `S-02`. |
 | B      | Account lifecycle    | `S-01`                                               | Standalone visible-enabler slice; joins Stream A at `S-02` and Stream C at `S-05`.                |
 | C      | Admin catalogue      | `S-05`                                               | Joins Stream A at `F-01` and Stream B at `S-01`; can run parallel with the rest of Stream A once both are done. |
-| D      | Quality / enablers   | `Q-01`                                               | Cross-cutting; not a vertical slice. Sequenced after the S-02 baseline so it ratchets over shipped code and gates later slices. |
+| D      | Quality / enablers   | `Q-01` → `Q-02`                                      | Cross-cutting; not vertical slices. `Q-01` (typing) lands first and stands up the lefthook `pre-commit` harness + `.claude/` hook conventions; `Q-02` (lint + format) extends that harness and adds the M3 L3 per-edit agent hook. |
 
 ## Baseline
 
@@ -174,6 +175,25 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
   - Does `django-stubs` need extra plugin config for the custom `accounts.User` (`AbstractUser`, `username=None`) and the Postgres `DateTimeRangeField` / `ExclusionConstraint` on `Reservation`? — Owner: TBD (resolves in `/10x-plan`). Block: no.
 - **Risk:** Horizontal change touching nearly every `.py` file — blast radius is wide but shallow (annotations + config, no behavior change). The real risk is scope creep into a strict-everywhere crusade that stalls; cap it at first-party app code with a green baseline and defer test/migration coverage. The ruff/lint CI tripwire (`CLAUDE.md`) is deliberately excluded to keep this item typing-only.
 - **Source:** Drift discovered 2026-06-07 — typing committed in `tech-stack.md` but never implemented (0/125 functions annotated, no checker installed).
+- **Status:** done
+
+### Q-02: Lint + format tooling with pre-commit & agent hooks
+
+- **Outcome:** (enabler) A linter/formatter is selected (via research) and wired so style/lint violations are caught automatically at two local layers: a per-edit Claude Code agent hook (`PostToolUse` on `Write|Edit`) that surfaces fixes mid-session, and the existing lefthook `pre-commit` gate over staged files. Closes the `CLAUDE.md` lint tripwire and fulfils the lint half of the `test-plan.md` §5 `lint + typecheck` gate, which Q-01 left typing-only.
+- **Change ID:** lint-and-format-gate
+- **PRD refs:** — (no direct FR; traces to the `CLAUDE.md` lint tripwire, `test-plan.md` §5 quality gate, and the M3 L3 hooks lesson)
+- **Prerequisites:** Q-01 (extends the lefthook `pre-commit` harness and `.claude/` hook conventions Q-01 established; lints over a green typed baseline)
+- **Parallel with:** S-05, S-06, SPIKE-01 — those slices touch the same `views.py` / `services.py` / `forms.py`, so once Q-02 lands they inherit the lint gate and must pass it; best landed when write-path slices are quiescent or rebased onto Q-02.
+- **Blockers:** —
+- **Scope (M3 L3):** Deliver BOTH local layers — (1) a per-edit agent hook (the only layer that feeds the agent mid-work) and (2) the pre-commit git hook on staged files. CI wiring is out of scope (Phase 5 owns the CI harness, which later consumes this gate).
+- **Unknowns (resolve in research / `/10x-plan`):**
+  - Which tool? `ruff` (lint + format in one; the `CLAUDE.md`-suggested default, fastest, ideal for a per-edit hook) vs `flake8`+`black`+`isort` vs others — Owner: research. Block: no.
+  - Baseline strictness — which rule sets on first-party `accounts/`/`catalog/`/`reservations/`/`envbooker/`, and lenient handling for `migrations/` + tests (as Q-01 did for mypy) — Owner: research / `/10x-plan`. Block: no.
+  - Agent-hook shape — lint just the edited file (`jq -r .tool_input.file_path` from stdin) vs whole tree; auto-`--fix` vs report-only; exit-code/`additionalContext` feedback — Owner: `/10x-plan`. Block: no.
+  - Should format/`--fix` run inside pre-commit or only report? — Owner: `/10x-plan`. Block: no.
+  - How to handle existing non-compliant files — one-time repo-wide cleanup commit (end fully green), grandfather/changed-files-only enforcement (no bulk diff), or phased per-app adoption? Decide formatting (mechanical, safe to bulk-apply) and lint rules (may need real fixes) separately; mind churn against in-flight S-05/S-06/SPIKE-01. — Owner: research / `/10x-plan`. Block: no.
+- **Risk:** Low blast radius (config + a possibly large one-time auto-format diff, no behaviour change). Real risks: (a) a noisy first-format diff churning against in-flight write-path slices — sequence when quiescent; (b) a slow per-edit hook blocking the agent loop — M3 L3's own rule keeps per-edit hooks to a few seconds, favouring a fast tool (ruff) and scoped single-file runs; (c) scope creep into CI wiring (belongs to Phase 5).
+- **Source:** Lint deferred out of Q-01 (`typing-and-type-check-gate`), which was scoped typing-only (roadmap Q-01 risk note; `test-plan.md` §5). Raised 2026-06-13 to give lint a dedicated home and satisfy the M3 L3 hooks lesson.
 - **Status:** proposed
 
 ## Spikes
@@ -206,6 +226,7 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
 | S-06       | admin-reservation-override      | EnvBooker: Admin override of any reservation                                                           | no                    | Promotes to ready once S-02 + S-01 are done       |
 | SPIKE-01   | timezone-calendar-edge-cases    | EnvBooker: Spike — DST/leap-year/calendar edge-case hardening for reservation time windows             | no                    | Deferred from S-02 impl review (F5); ready after S-02 |
 | Q-01       | typing-and-type-check-gate      | EnvBooker: Retrofit type hints + mypy (django-stubs) type-check gate                                    | no                    | Promotes to ready once S-02 is done (baseline to annotate)        |
+| Q-02       | lint-and-format-gate            | EnvBooker: Lint + format tooling (tool TBD) with pre-commit + per-edit agent hook                       | no                    | Promotes to ready once Q-01 is done; start with tool-selection research |
 
 ## Open Roadmap Questions
 
@@ -227,3 +248,4 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
 - **S-02: A signed-in user opens the env list, sees every env with its current state (free / reserved) and the identities + time windows of current and upcoming reservation owners, picks a free env, enters a time window, and confirms. The reservation is created and appears on the list immediately (no page reload); attempts to reserve an overlapping window are rejected with a message naming the conflicting reservation's owner and window.** — Archived 2026-06-03 → `context/archive/2026-05-31-browse-and-reserve/`. Lesson: —.
 - **S-03: filter the env list by availability, purpose / use-case tag, and project — closing the <30s primary success criterion** — Archived 2026-06-07 → `context/archive/2026-06-04-filter-env-list/`. Lesson: —.
 - **S-04: modify or cancel a reservation they own** — Archived 2026-06-07 → `context/archive/2026-06-04-edit-own-reservation/`. Lesson: —.
+- **Q-01: (enabler) Public functions/methods across `accounts/`, `catalog/`, `reservations/`, and `envbooker/` carry type annotations, and `mypy` (with the `django-stubs` plugin) runs clean under an agreed baseline strictness, wired as a gate so future untyped drift is caught. Closes the gap between the stack commitment ("explicit typing ... mitigated downstream with type hints and model-level schemas", `tech-stack.md` §Why this stack) and the codebase, where 0 of ~125 functions are currently annotated.** — Archived 2026-06-13 → `context/archive/2026-06-10-typing-and-type-check-gate/`. Lesson: —.

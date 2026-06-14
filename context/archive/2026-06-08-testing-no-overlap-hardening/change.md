@@ -1,10 +1,10 @@
 ---
 change_id: testing-no-overlap-hardening
 title: Testing no overlap hardening
-status: implemented
+status: archived
 created: 2026-06-08
 updated: 2026-06-09
-archived_at: null
+archived_at: 2026-06-09T21:49:40Z
 ---
 
 ## Notes

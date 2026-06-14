@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.urls import reverse
 
 from .models import AllowedEmailDomain, User
 
@@ -56,6 +55,7 @@ class AllowedEmailDomainTests(TestCase):
     def test_domain_uniqueness(self):
         AllowedEmailDomain.objects.create(domain="acme.com")
         from django.db import IntegrityError
+
         with self.assertRaises(IntegrityError):
             AllowedEmailDomain.objects.create(domain="acme.com")
 
@@ -72,24 +72,28 @@ class SignUpFormTests(TestCase):
 
     def test_accepts_any_domain_when_table_empty(self):
         from .forms import SignUpForm
+
         form = SignUpForm(data=self._form_data("user@anydomain.org"))
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_accepts_matching_domain(self):
         AllowedEmailDomain.objects.create(domain="allowed.com")
         from .forms import SignUpForm
+
         form = SignUpForm(data=self._form_data("user@allowed.com"))
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_rejects_disallowed_domain(self):
         AllowedEmailDomain.objects.create(domain="allowed.com")
         from .forms import SignUpForm
+
         form = SignUpForm(data=self._form_data("user@other.com"))
         self.assertFalse(form.is_valid())
         self.assertIn("email", form.errors)
 
     def test_first_and_last_name_required(self):
         from .forms import SignUpForm
+
         data = self._form_data()
         data["first_name"] = ""
         form = SignUpForm(data=data)
@@ -101,13 +105,17 @@ class SignUpViewTests(TestCase):
     SIGNUP_URL = "/accounts/signup/"
 
     def _post(self, email="user@example.com", first="Alice", last="Smith"):
-        return self.client.post(self.SIGNUP_URL, {
-            "email": email,
-            "first_name": first,
-            "last_name": last,
-            "password1": "N0t-a-simple-pass!",
-            "password2": "N0t-a-simple-pass!",
-        }, secure=True)
+        return self.client.post(
+            self.SIGNUP_URL,
+            {
+                "email": email,
+                "first_name": first,
+                "last_name": last,
+                "password1": "N0t-a-simple-pass!",
+                "password2": "N0t-a-simple-pass!",
+            },
+            secure=True,
+        )
 
     def test_successful_signup_creates_user_with_names(self):
         response = self._post()
@@ -143,18 +151,26 @@ class AuthFlowTests(TestCase):
         self.assertIn("/accounts/login/", response["Location"])
 
     def test_login_redirects_to_home(self):
-        response = self.client.post("/accounts/login/", {
-            "username": "alice@example.com",
-            "password": "N0t-a-simple-pass!",
-        }, secure=True)
+        response = self.client.post(
+            "/accounts/login/",
+            {
+                "username": "alice@example.com",
+                "password": "N0t-a-simple-pass!",
+            },
+            secure=True,
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["Location"], "/")
 
     def test_login_is_case_insensitive(self):
-        response = self.client.post("/accounts/login/", {
-            "username": "Alice@Example.COM",
-            "password": "N0t-a-simple-pass!",
-        }, secure=True)
+        response = self.client.post(
+            "/accounts/login/",
+            {
+                "username": "Alice@Example.COM",
+                "password": "N0t-a-simple-pass!",
+            },
+            secure=True,
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
 

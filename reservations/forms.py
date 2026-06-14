@@ -1,12 +1,16 @@
-from datetime import timedelta
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Any
 
 from django import forms
 from django.utils import timezone
 from psycopg.types.range import Range
 
 from catalog.models import Environment
-from . import services
 
+from . import services
 
 DURATION_CHOICES = [
     ("1h", "1 hour"),
@@ -36,8 +40,10 @@ class ReservationForm(forms.Form):
         label="Custom hours",
     )
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
+        if cleaned_data is None:
+            return cleaned_data
         start = cleaned_data.get("start")
         duration = cleaned_data.get("duration")
         env = cleaned_data.get("environment")
@@ -47,7 +53,9 @@ class ReservationForm(forms.Form):
             return cleaned_data
 
         if duration == "custom" and not custom_hours:
-            self.add_error("custom_hours", "Enter the number of hours for a custom duration.")
+            self.add_error(
+                "custom_hours", "Enter the number of hours for a custom duration."
+            )
             return cleaned_data
 
         if timezone.is_naive(start):
@@ -60,7 +68,9 @@ class ReservationForm(forms.Form):
         end = services.compute_end(env, start, duration, custom_hours=custom_hours)
 
         if end <= start:
-            raise forms.ValidationError("Computed end time is not after start — choose a longer duration.")
+            raise forms.ValidationError(
+                "Computed end time is not after start — choose a longer duration."
+            )
 
         cleaned_data["during"] = Range(start, end, "[)")
         return cleaned_data
@@ -75,20 +85,24 @@ class ReservationEditForm(forms.Form):
         label="Duration (hours)",
     )
 
-    def __init__(self, *args, start, **kwargs):
+    def __init__(self, *args: Any, start: datetime, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._start = start
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
-        hours = cleaned_data.get("hours")
+        if cleaned_data is None:
+            return cleaned_data
+        hours: Decimal | None = cleaned_data.get("hours")
         if hours is None:
             return cleaned_data
 
         end = self._start + timedelta(hours=float(hours))
 
         if end <= self._start:
-            raise forms.ValidationError("Computed end time is not after start — choose a longer duration.")
+            raise forms.ValidationError(
+                "Computed end time is not after start — choose a longer duration."
+            )
 
         if end <= timezone.now():
             raise forms.ValidationError(

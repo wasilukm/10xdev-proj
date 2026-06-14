@@ -1,5 +1,4 @@
-from datetime import datetime, timezone as dt_timezone
-from unittest.mock import patch
+from datetime import UTC, datetime
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -12,7 +11,7 @@ from reservations.models import Reservation
 
 
 def make_dt(hour, minute=0):
-    return datetime(2024, 6, 15, hour, minute, tzinfo=dt_timezone.utc)
+    return datetime(2024, 6, 15, hour, minute, tzinfo=UTC)
 
 
 def make_range(start_hour, end_hour):
@@ -53,13 +52,18 @@ class DashboardGroupingTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="owner@example.com", password="pass")
         self.env = Environment.objects.create(
-            name="env-a", version="1.0", purpose="test",
-            project="proj", use_case_tag="ci", owner=self.user,
+            name="env-a",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user,
         )
 
     def _reserve(self, start_h, end_h):
         return Reservation.objects.create(
-            owner=self.user, environment=self.env,
+            owner=self.user,
+            environment=self.env,
             during=make_range(start_h, end_h),
         )
 
@@ -79,10 +83,11 @@ class DashboardGroupingTest(TestCase):
 
     def test_beyond_24h_excluded(self):
         now = make_dt(10)
-        beyond = datetime(2024, 6, 17, 12, 0, tzinfo=dt_timezone.utc)
-        beyond_end = datetime(2024, 6, 17, 14, 0, tzinfo=dt_timezone.utc)
+        beyond = datetime(2024, 6, 17, 12, 0, tzinfo=UTC)
+        beyond_end = datetime(2024, 6, 17, 14, 0, tzinfo=UTC)
         Reservation.objects.create(
-            owner=self.user, environment=self.env,
+            owner=self.user,
+            environment=self.env,
             during=Range(lower=beyond, upper=beyond_end, bounds="[)"),
         )
         ctx = build_row_context(self.env, now=now)
@@ -101,16 +106,28 @@ class FilterEnvironmentsTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="filt@example.com", password="pass")
         self.env_alpha = Environment.objects.create(
-            name="alpha", version="1.0", purpose="test",
-            project="alpha-proj", use_case_tag="ci", owner=self.user,
+            name="alpha",
+            version="1.0",
+            purpose="test",
+            project="alpha-proj",
+            use_case_tag="ci",
+            owner=self.user,
         )
         self.env_beta = Environment.objects.create(
-            name="beta", version="1.0", purpose="staging",
-            project="beta-proj", use_case_tag="perf", owner=self.user,
+            name="beta",
+            version="1.0",
+            purpose="staging",
+            project="beta-proj",
+            use_case_tag="perf",
+            owner=self.user,
         )
         self.env_gamma = Environment.objects.create(
-            name="gamma", version="1.0", purpose="test",
-            project="alpha-proj", use_case_tag="perf", owner=self.user,
+            name="gamma",
+            version="1.0",
+            purpose="test",
+            project="alpha-proj",
+            use_case_tag="perf",
+            owner=self.user,
         )
 
     def _qs(self):
@@ -134,7 +151,8 @@ class FilterEnvironmentsTest(TestCase):
         now = make_dt(10)
         # Reserve alpha — busy at now
         Reservation.objects.create(
-            owner=self.user, environment=self.env_alpha,
+            owner=self.user,
+            environment=self.env_alpha,
             during=make_range(9, 12),
         )
         result = list(filter_environments(self._qs(), availability="free", now=now))
@@ -145,7 +163,8 @@ class FilterEnvironmentsTest(TestCase):
     def test_filter_availability_busy(self):
         now = make_dt(10)
         Reservation.objects.create(
-            owner=self.user, environment=self.env_alpha,
+            owner=self.user,
+            environment=self.env_alpha,
             during=make_range(9, 12),
         )
         result = list(filter_environments(self._qs(), availability="busy", now=now))
@@ -155,9 +174,14 @@ class FilterEnvironmentsTest(TestCase):
 
     def test_filter_and_combination(self):
         now = make_dt(10)
-        result = list(filter_environments(
-            self._qs(), project="alpha-proj", use_case_tag="perf", now=now,
-        ))
+        result = list(
+            filter_environments(
+                self._qs(),
+                project="alpha-proj",
+                use_case_tag="perf",
+                now=now,
+            )
+        )
         self.assertEqual(result, [self.env_gamma])
 
     def test_blank_availability_no_constraint(self):
@@ -185,16 +209,28 @@ class FilterOptionsTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="opts@example.com", password="pass")
         Environment.objects.create(
-            name="e1", version="1.0", purpose="test",
-            project="zeta", use_case_tag="perf", owner=self.user,
+            name="e1",
+            version="1.0",
+            purpose="test",
+            project="zeta",
+            use_case_tag="perf",
+            owner=self.user,
         )
         Environment.objects.create(
-            name="e2", version="1.0", purpose="test",
-            project="alpha", use_case_tag="ci", owner=self.user,
+            name="e2",
+            version="1.0",
+            purpose="test",
+            project="alpha",
+            use_case_tag="ci",
+            owner=self.user,
         )
         Environment.objects.create(
-            name="e3", version="1.0", purpose="test",
-            project="alpha", use_case_tag="perf", owner=self.user,
+            name="e3",
+            version="1.0",
+            purpose="test",
+            project="alpha",
+            use_case_tag="perf",
+            owner=self.user,
         )
 
     def test_filter_options_distinct_sorted_projects(self):
@@ -206,21 +242,33 @@ class FilterOptionsTest(TestCase):
         self.assertEqual(opts["use_case_tags"], ["ci", "perf"])
 
 
-@override_settings(STORAGES={
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-})
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
+)
 class FilterUITest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(email="ui@example.com", password="pass")
         self.client.login(username="ui@example.com", password="pass")
         self.env1 = Environment.objects.create(
-            name="ui-alpha", version="1.0", purpose="test",
-            project="alpha", use_case_tag="ci", owner=self.user,
+            name="ui-alpha",
+            version="1.0",
+            purpose="test",
+            project="alpha",
+            use_case_tag="ci",
+            owner=self.user,
         )
         self.env2 = Environment.objects.create(
-            name="ui-beta", version="1.0", purpose="staging",
-            project="beta", use_case_tag="perf", owner=self.user,
+            name="ui-beta",
+            version="1.0",
+            purpose="staging",
+            project="beta",
+            use_case_tag="perf",
+            owner=self.user,
         )
 
     def test_full_page_renders_filter_form_with_options(self):
@@ -300,15 +348,20 @@ class DashboardOwnerVisibilityTest(TestCase):
             last_name="Jones",
         )
         self.env = Environment.objects.create(
-            name="vis-env", version="1.0", purpose="test",
-            project="proj", use_case_tag="ci", owner=self.owner,
+            name="vis-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.owner,
         )
 
     def test_current_reservation_owner_available(self):
         """Row context exposes owner identity on current reservation."""
         now = make_dt(10)
         Reservation.objects.create(
-            owner=self.owner, environment=self.env,
+            owner=self.owner,
+            environment=self.env,
             during=Range(lower=make_dt(9), upper=make_dt(12), bounds="[)"),
         )
         ctx = build_row_context(self.env, now=now)
@@ -320,9 +373,12 @@ class DashboardOwnerVisibilityTest(TestCase):
         """Row context exposes owner identity on upcoming reservations."""
         now = make_dt(10)
         Reservation.objects.create(
-            owner=self.owner, environment=self.env,
+            owner=self.owner,
+            environment=self.env,
             during=Range(lower=make_dt(15), upper=make_dt(17), bounds="[)"),
         )
         ctx = build_row_context(self.env, now=now)
         self.assertEqual(len(ctx["upcoming_reservations"]), 1)
-        self.assertEqual(ctx["upcoming_reservations"][0].owner.get_full_name(), "Bob Jones")
+        self.assertEqual(
+            ctx["upcoming_reservations"][0].owner.get_full_name(), "Bob Jones"
+        )

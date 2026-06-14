@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import DateTimeRangeField, RangeOperators
@@ -39,5 +41,5 @@ class Reservation(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.environment} / {self.owner} / {self.during}"

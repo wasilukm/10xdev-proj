@@ -1,9 +1,19 @@
 {
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/ruff-post-edit.sh"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
-      "Bash(npm *)",
-      "Bash(npx *)",
-      "Bash(node *)",
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git diff *)",
