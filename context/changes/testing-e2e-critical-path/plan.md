@@ -152,6 +152,14 @@ automatically.
 registered marker for e2e tests. No change to the Django test runner used by
 `manage.py test` (the existing unittest suite keeps working unchanged).
 
+**Addendum (2026-06-16, impl-review F1)**: implementation also added `pytest-env`
+(dev group) and a `[tool.pytest.ini_options].env` block providing `D:`-default
+`DJANGO_SECRET_KEY` + `DATABASE_URL` (so pytest runs without manual secret export),
+plus two discovered workarounds — `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64`
+(Ubuntu 26.04 / Playwright 1.60 ABI) and `DJANGO_ALLOW_ASYNC_UNSAFE=true` (Playwright
+event loop trips Django's sync-from-async guard). `DJANGO_DEBUG=True` is deliberately
+*not* baked in and stays on the run command. Documented in test-plan §6.3/§6.6.
+
 ### Success Criteria:
 
 #### Automated Verification:

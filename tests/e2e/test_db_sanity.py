@@ -1,12 +1,9 @@
 """Trivial DB-touching test — verifies pytest-django + Postgres wiring only."""
 
-import pytest
-
 from accounts.models import User
 
 
-@pytest.mark.django_db(transaction=True)
-def test_db_round_trip():
+def test_db_round_trip(transactional_db):
     user = User.objects.create_user(
         email="sanity@example.com",
         password="testpass123",

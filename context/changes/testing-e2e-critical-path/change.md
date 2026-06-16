@@ -1,7 +1,7 @@
 ---
 change_id: testing-e2e-critical-path
 title: Critical-path e2e — prove find → filter → reserve → appears-without-reload in a real browser
-status: implemented
+status: impl_reviewed
 created: 2026-06-14
 updated: 2026-06-16
 archived_at: null

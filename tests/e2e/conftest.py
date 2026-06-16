@@ -14,6 +14,10 @@ from catalog.models import Environment
 from reservations.models import Reservation
 
 
+# Mirrors the _dt/_range idiom in reservations/tests/_helpers.py
+# (psycopg Range, bounds="[)", 2024-01-01 anchor). Re-defined locally rather
+# than imported to avoid a cross-package dependency from tests/e2e on
+# reservations.tests; keep the two in sync if the idiom changes.
 def _dt(year: int, month: int, day: int, hour: int) -> datetime:
     return datetime(year, month, day, hour, tzinfo=UTC)
 

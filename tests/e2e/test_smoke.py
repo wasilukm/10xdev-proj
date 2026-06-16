@@ -6,11 +6,9 @@ The Risk #2 test (find → filter → reserve → appears) is owned by /10x-e2e.
 
 import re
 
-import pytest
 from playwright.sync_api import Page, expect
 
 
-@pytest.mark.django_db(transaction=True)
 def test_smoke_authenticated(
     live_server, transactional_db, page: Page, auth_cookie, seeded_environment
 ):
@@ -19,7 +17,6 @@ def test_smoke_authenticated(
     expect(page.get_by_text(seeded_environment.name)).to_be_visible()
 
 
-@pytest.mark.django_db(transaction=True)
 def test_smoke_unauthenticated(live_server, transactional_db, page: Page):
     page.goto(live_server.url)
     expect(page).to_have_url(re.compile(r"/login"))
