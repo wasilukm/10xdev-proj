@@ -363,12 +363,12 @@ unittest suite is untouched and continues to run independently of pytest.
 
 #### Automated
 
-- [x] 2.1 Smoke test passes headless, both cases (`pytest tests/e2e/test_smoke.py`)
-- [x] 2.2 Unauthenticated test asserts gated dashboard redirects to `/login`
-- [x] 2.3 Single-test invocation works as documented
-- [x] 2.4 Re-run is deterministic (two consecutive passes)
-- [x] 2.5 No `wait_for_timeout` in e2e tree; `ruff check tests/` clean
-- [x] 2.6 Existing unittest suite still green
+- [x] 2.1 Smoke test passes headless, both cases (`pytest tests/e2e/test_smoke.py`) — 696a880
+- [x] 2.2 Unauthenticated test asserts gated dashboard redirects to `/login` — 696a880
+- [x] 2.3 Single-test invocation works as documented — 696a880
+- [x] 2.4 Re-run is deterministic (two consecutive passes) — 696a880
+- [x] 2.5 No `wait_for_timeout` in e2e tree; `ruff check tests/` clean — 696a880
+- [x] 2.6 Existing unittest suite still green — 696a880
 
 #### Manual
 
