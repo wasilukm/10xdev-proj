@@ -348,11 +348,11 @@ unittest suite is untouched and continues to run independently of pytest.
 
 #### Automated
 
-- [x] 1.1 Dependencies resolve and lock (`uv sync` with new dev group)
-- [x] 1.2 Chromium installed (`uv run playwright install chromium`)
-- [x] 1.3 pytest discovers Django + suite (`pytest --collect-only` exits 0)
-- [x] 1.4 Trivial `transactional_db` test passes against Postgres test DB
-- [x] 1.5 Existing unittest suite still green (`manage.py test`)
+- [x] 1.1 Dependencies resolve and lock (`uv sync` with new dev group) — 8403577
+- [x] 1.2 Chromium installed (`uv run playwright install chromium`) — 8403577
+- [x] 1.3 pytest discovers Django + suite (`pytest --collect-only` exits 0) — 8403577
+- [x] 1.4 Trivial `transactional_db` test passes against Postgres test DB — 8403577
+- [x] 1.5 Existing unittest suite still green (`manage.py test`) — 8403577
 
 #### Manual
 
@@ -363,12 +363,12 @@ unittest suite is untouched and continues to run independently of pytest.
 
 #### Automated
 
-- [ ] 2.1 Smoke test passes headless, both cases (`pytest tests/e2e/test_smoke.py`)
-- [ ] 2.2 Unauthenticated test asserts gated dashboard redirects to `/login`
-- [ ] 2.3 Single-test invocation works as documented
-- [ ] 2.4 Re-run is deterministic (two consecutive passes)
-- [ ] 2.5 No `wait_for_timeout` in e2e tree; `ruff check tests/` clean
-- [ ] 2.6 Existing unittest suite still green
+- [x] 2.1 Smoke test passes headless, both cases (`pytest tests/e2e/test_smoke.py`)
+- [x] 2.2 Unauthenticated test asserts gated dashboard redirects to `/login`
+- [x] 2.3 Single-test invocation works as documented
+- [x] 2.4 Re-run is deterministic (two consecutive passes)
+- [x] 2.5 No `wait_for_timeout` in e2e tree; `ruff check tests/` clean
+- [x] 2.6 Existing unittest suite still green
 
 #### Manual
 

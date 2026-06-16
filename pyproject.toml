@@ -73,6 +73,9 @@ env = [
     # Ubuntu 26.04 is not yet officially supported by Playwright 1.60;
     # the ubuntu24.04 binaries are ABI-compatible and work correctly.
     "D:PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64",
+    # Playwright's internal event loop triggers Django's async-unsafe guard
+    # when ORM fixtures run inside a playwright test. This is safe for tests.
+    "D:DJANGO_ALLOW_ASYNC_UNSAFE=true",
 ]
 
 [tool.ruff.format]
