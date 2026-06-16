@@ -348,11 +348,11 @@ unittest suite is untouched and continues to run independently of pytest.
 
 #### Automated
 
-- [ ] 1.1 Dependencies resolve and lock (`uv sync` with new dev group)
-- [ ] 1.2 Chromium installed (`uv run playwright install chromium`)
-- [ ] 1.3 pytest discovers Django + suite (`pytest --collect-only` exits 0)
-- [ ] 1.4 Trivial `transactional_db` test passes against Postgres test DB
-- [ ] 1.5 Existing unittest suite still green (`manage.py test`)
+- [x] 1.1 Dependencies resolve and lock (`uv sync` with new dev group)
+- [x] 1.2 Chromium installed (`uv run playwright install chromium`)
+- [x] 1.3 pytest discovers Django + suite (`pytest --collect-only` exits 0)
+- [x] 1.4 Trivial `transactional_db` test passes against Postgres test DB
+- [x] 1.5 Existing unittest suite still green (`manage.py test`)
 
 #### Manual
 
