@@ -67,7 +67,7 @@ orchestrator updates Status as artifacts appear on disk.
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | No-overlap hardening | Prove a concurrent or constraint-violating overlapping reservation is rejected with a clean user-facing error — not a 500, not a silent second row — on both the create and edit write paths. | #1 | integration (+ concurrency, scoped by research) | complete | `context/changes/testing-no-overlap-hardening/` |
 | 2 | Authorization & endpoint access | Prove every gated route enforces authentication and ownership, and that admin-only actions reject non-admins. | #3 | integration / view | not started | — |
-| 3 | Critical-path e2e | Prove the find → filter → reserve → appears-without-reload flow works in a real browser within the 30s success criterion. | #2 | e2e (browser; runner config owned by M3 L4) + optional single-screen visual review | not started | — |
+| 3 | Critical-path e2e | Prove the find → filter → reserve → appears-without-reload flow works in a real browser within the 30s success criterion. | #2 | e2e (browser; this phase **builds** the Playwright harness — the `/10x-e2e` skill discovers but does not create it) + optional single-screen visual review | change opened | `context/changes/testing-e2e-critical-path/` |
 | 4 | Calendar reliability | Turn the DST gap/fold 500 into a graceful, user-visible outcome and map the calendar edge-case class. | #4 | unit | not started | — |
 | 5 | Quality-gates wiring | Lock the floor: stand up the CI harness so the unit+integration suite (and the Phase 3 e2e gate) block merges, and adopt the mypy/django-stubs gate defined by roadmap Q-01. Ratchets over Phases 1–4. | #6 | gates | not started | — |
 
@@ -90,7 +90,7 @@ The classic test base for this project. AI-native tools (if any) carry a
 | unit + integration | Django test runner (`unittest`) | Django 6.0.5 | `uv run python manage.py test`; 87 `test_*` methods across the three apps. No pytest configured. |
 | database (test) | PostgreSQL | 17 (local), Railway (prod) | Postgres-on-Postgres parity is mandatory — the `ExclusionConstraint` / `btree_gist` no-overlap rule is Postgres-only; SQLite is unsupported even in tests. |
 | concurrency | Django `TransactionTestCase` | Django 6.0.5 | Needed if Phase 1 research justifies a true concurrent-insert test (default `TestCase` wraps each test in one transaction and cannot exercise the race). |
-| e2e | none yet — see §3 Phase 3 | — | No browser layer exists; runner/config is owned by Module 3 Lesson 4. |
+| e2e | **Playwright Python** — `pytest-playwright` + `pytest-django` (planned, Phase 3) | sync API | No browser layer exists yet. Phase 3 **builds** the harness: install + `playwright install`, pytest↔Django config, app-start via pytest-django `live_server` (+ `transactional_db`) on the Postgres test DB, auth via an injected `sessionid` cookie fixture, ORM seed fixtures. The `/10x-e2e` skill (M3 L4, adapted to Python in this repo) *discovers* this infra and STOPs if absent — it only creates the `tests/e2e/test_seed.py` + E2E-rules levers, not the runner/config. |
 | visual review | none yet — see §3 Phase 3 | — | Selective, 1–2 critical screens only (the dashboard), never every page. |
 
 **Stack grounding tools (current session):**
