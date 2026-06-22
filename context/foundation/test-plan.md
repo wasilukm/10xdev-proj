@@ -67,7 +67,7 @@ orchestrator updates Status as artifacts appear on disk.
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | No-overlap hardening | Prove a concurrent or constraint-violating overlapping reservation is rejected with a clean user-facing error — not a 500, not a silent second row — on both the create and edit write paths. | #1 | integration (+ concurrency, scoped by research) | complete | `context/changes/testing-no-overlap-hardening/` |
 | 2 | Authorization & endpoint access | Prove every gated route enforces authentication and ownership, and that admin-only actions reject non-admins. | #3 | integration / view | not started | — |
-| 3 | Critical-path e2e | Prove the find → filter → reserve → appears-without-reload flow works in a real browser within the 30s success criterion. | #2 | e2e (browser; runner config owned by M3 L4) + optional single-screen visual review | not started | — |
+| 3 | Critical-path e2e | Prove the find → filter → reserve → appears-without-reload flow works in a real browser within the 30s success criterion. | #2 | e2e (browser; this phase **builds** the Playwright harness — the `/10x-e2e` skill discovers but does not create it) + optional single-screen visual review | change opened | `context/changes/testing-e2e-critical-path/` |
 | 4 | Calendar reliability | Turn the DST gap/fold 500 into a graceful, user-visible outcome and map the calendar edge-case class. | #4 | unit | not started | — |
 | 5 | Quality-gates wiring | Lock the floor: stand up the CI harness so the unit+integration suite (and the Phase 3 e2e gate) block merges, and adopt the mypy/django-stubs gate defined by roadmap Q-01. Ratchets over Phases 1–4. | #6 | gates | not started | — |
 
@@ -90,7 +90,7 @@ The classic test base for this project. AI-native tools (if any) carry a
 | unit + integration | Django test runner (`unittest`) | Django 6.0.5 | `uv run python manage.py test`; 87 `test_*` methods across the three apps. No pytest configured. |
 | database (test) | PostgreSQL | 17 (local), Railway (prod) | Postgres-on-Postgres parity is mandatory — the `ExclusionConstraint` / `btree_gist` no-overlap rule is Postgres-only; SQLite is unsupported even in tests. |
 | concurrency | Django `TransactionTestCase` | Django 6.0.5 | Needed if Phase 1 research justifies a true concurrent-insert test (default `TestCase` wraps each test in one transaction and cannot exercise the race). |
-| e2e | none yet — see §3 Phase 3 | — | No browser layer exists; runner/config is owned by Module 3 Lesson 4. |
+| e2e | **Playwright Python** — `pytest-playwright` + `pytest-django` (planned, Phase 3) | sync API | No browser layer exists yet. Phase 3 **builds** the harness: install + `playwright install`, pytest↔Django config, app-start via pytest-django `live_server` (+ `transactional_db`) on the Postgres test DB, auth via an injected `sessionid` cookie fixture, ORM seed fixtures. The `/10x-e2e` skill (M3 L4, adapted to Python in this repo) *discovers* this infra and STOPs if absent — it only creates the `tests/e2e/test_seed.py` + E2E-rules levers, not the runner/config. |
 | visual review | none yet — see §3 Phase 3 | — | Selective, 1–2 critical screens only (the dashboard), never every page. |
 
 **Stack grounding tools (current session):**
@@ -160,7 +160,18 @@ stays as-is.
 
 ### 6.3 Adding an e2e test
 
-- TBD — see §3 Phase 3.
+- **Location**: `tests/e2e/test_*.py`. Fixtures live in `tests/e2e/conftest.py`.
+- **Run a single test**: `DJANGO_DEBUG=True uv run pytest tests/e2e/test_<x>.py::test_<y>` — `DJANGO_DEBUG=True` is required; without it `SECURE_SSL_REDIRECT` returns a 301 before any view runs (see §6.6 Phase 1 note and Phase 3 note).
+- **Run the whole e2e suite**: `DJANGO_DEBUG=True uv run pytest tests/e2e/`.
+- **Fixtures**: request `auth_cookie` for a pre-authenticated browser context and `seeded_environment` for a collision-free `Environment` (+ existing `Reservation`). Both depend on `transactional_db` so the live-server thread sees committed rows.
+- **Auth**: add the `auth_cookie` to the browser context **before the first `page.goto`** — `page.context.add_cookies([auth_cookie])` — or the cookie is silently dropped and the app redirects to login.
+- **Row scoping**: future reserve interactions must be scoped to `#env-row-{pk}` (e.g. `page.locator(f"#env-row-{env.pk}")`). The dashboard renders one `<form>` per row and each has auto-generated `id` attributes — using an unscoped selector hits the first row regardless of which environment is targeted.
+- **Locators**: prefer `get_by_role` / `get_by_label` / `get_by_text`; use `get_by_test_id` only when accessibility attributes are ambiguous. Never CSS selectors, XPath, or DOM structure.
+- **No `page.wait_for_timeout()`**: wait on state — `expect(...).to_be_visible()`, `page.wait_for_url()`, `page.wait_for_response()`.
+- **Reference tests**: `tests/e2e/test_smoke.py` (harness prove-out) and `tests/e2e/test_seed.py` (Risk #2 critical-path test, created by `/10x-e2e`).
+- **Ubuntu 26.04 note**: Playwright 1.60 does not officially support Ubuntu 26.04. The harness is configured to use the ABI-compatible `ubuntu24.04-x64` binaries; `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64` is set automatically via `[tool.pytest.ini_options].env` in `pyproject.toml`. To install the browser on a fresh machine: `PLAYWRIGHT_HOST_PLATFORM_OVERRIDE=ubuntu24.04-x64 uv run playwright install chromium`.
+- **`DJANGO_ALLOW_ASYNC_UNSAFE`**: Playwright's internal event loop triggers Django's sync-from-async guard when ORM fixtures run inside a Playwright test. `DJANGO_ALLOW_ASYNC_UNSAFE=true` is set automatically in `[tool.pytest.ini_options].env`. This is safe in the test context.
+- **Static files / JS must load (htmx)**: production storage is whitenoise `CompressedManifestStaticFilesStorage`, whose `{% static %}` URLs are content-hashed and only exist after `collectstatic`. `live_server` serves static via the staticfiles *finders* (source names), so the hashed names 404, htmx never loads, and the `<form hx-post>` silently does a native full-page GET — every HTMX assertion then fails for a non-obvious reason. The autouse `_servable_static` fixture in `conftest.py` swaps `STORAGES["staticfiles"]` to the plain `StaticFilesStorage` for the test run so `{% static %}` emits finder-resolvable names. Any test that depends on JS needs this (it is autouse, so you get it for free); do not remove it. Note: the smoke test asserts nothing about JS and will pass even when static serving is broken — it is not a guard for this.
 
 ### 6.4 Adding a test for a new endpoint / view
 
@@ -171,6 +182,13 @@ stays as-is.
 - TBD — see §3 Phase 2. Seed pattern today: `reservations/tests/test_views.py::ReservationEditViewTest::test_non_owner_404` and `::test_auth_required`.
 
 ### 6.6 Per-rollout-phase notes
+
+**Phase 3 — Critical-path e2e harness (2026-06-16)**
+
+- Playwright Python harness landed (`pytest-playwright` + `pytest-django` + `pytest-env` in `[dependency-groups] dev`; `[tool.pytest.ini_options]` in `pyproject.toml`; `tests/e2e/` package). `DJANGO_DEBUG=True` is mandatory — without it `SECURE_SSL_REDIRECT` returns a 301 before any view runs.
+- `/10x-e2e` now passes its setup gate: `pytest-playwright` + `pytest-django` installed, `tests/e2e/test_*.py` present, `conftest.py` `auth_cookie` + `seeded_environment` fixtures present. Run `/10x-e2e testing-e2e-critical-path` to generate the Risk #2 test.
+- **Risk #2 scope for `/10x-e2e`**: happy path (filter → pick → reserve → row appears without reload) **and** conflict rejection (second attempt on overlapping window shows named-conflict message in-page). Both cases must be covered; the conflict rejection is not optional.
+- **Deferred follow-ups** (record here so `/10x-e2e` author is aware): (1) Optional dashboard snapshot for visual regression — deferred; use `toMatchSnapshot`, Argos, or Lost Pixel if/when added. (2) `role="alert"`/`aria-live` on the conflict `<p>` — a11y improvement, out of scope for the harness phase; future locator can use `get_by_text` as a fallback.
 
 **Phase 1 — No-overlap hardening (2026-06-09)**
 
