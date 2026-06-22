@@ -364,8 +364,8 @@ unittest suite is untouched and continues to run independently of pytest.
 
 #### Manual
 
-- [ ] 1.6 `test_envbooker` created and torn down cleanly by the run
-- [ ] 1.7 `uv.lock` diff contains only intended additions
+- [x] 1.6 `test_envbooker` created and torn down cleanly by the run
+- [x] 1.7 `uv.lock` diff contains only intended additions
 
 ### Phase 2: Fixtures, smoke test & handoff
 
@@ -380,5 +380,5 @@ unittest suite is untouched and continues to run independently of pytest.
 
 #### Manual
 
-- [ ] 2.7 `/10x-e2e` setup gate would pass on the new tree (read SKILL.md against tree)
-- [ ] 2.8 test-plan §6.3/§6.6 read correctly; run command copy-pasteable
+- [x] 2.7 `/10x-e2e` setup gate would pass on the new tree (read SKILL.md against tree)
+- [x] 2.8 test-plan §6.3/§6.6 read correctly; run command copy-pasteable
