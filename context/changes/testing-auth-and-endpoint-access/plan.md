@@ -399,29 +399,29 @@ None — no schema or data changes.
 
 #### Automated
 
-- [x] 1.1 New tests pass: `manage.py test reservations.tests.test_views`
-- [x] 1.2 Full suite still green: `manage.py test`
-- [x] 1.3 Type check clean (mypy)
-- [x] 1.4 Lint/format clean (ruff)
+- [x] 1.1 New tests pass: `manage.py test reservations.tests.test_views` — ab26586
+- [x] 1.2 Full suite still green: `manage.py test` — ab26586
+- [x] 1.3 Type check clean (mypy) — ab26586
+- [x] 1.4 Lint/format clean (ruff) — ab26586
 
 #### Manual
 
-- [x] 1.5 Removing `filter(owner=...)` makes `test_lists_only_own_reservations` fail (anti-tautology check)
+- [x] 1.5 Removing `filter(owner=...)` makes `test_lists_only_own_reservations` fail (anti-tautology check) — ab26586
 
 ### Phase 2: Cross-Cutting Authorization Module
 
 #### Automated
 
-- [ ] 2.1 New module discovered and runs: `manage.py test tests.test_authorization`
-- [ ] 2.2 Full suite green, count increased
-- [ ] 2.3 Skipped admin marker shows as skipped, not error/fail
-- [ ] 2.4 Type check clean (mypy)
-- [ ] 2.5 Lint/format clean (ruff)
+- [x] 2.1 New module discovered and runs: `manage.py test tests.test_authorization`
+- [x] 2.2 Full suite green, count increased
+- [x] 2.3 Skipped admin marker shows as skipped, not error/fail
+- [x] 2.4 Type check clean (mypy)
+- [x] 2.5 Lint/format clean (ruff)
 
 #### Manual
 
-- [ ] 2.6 Removing `@login_required` from `environment_list` fails the inventory test
-- [ ] 2.7 POST-only route reported denied via GET→405→POST fallback (not a 405 false-pass)
+- [x] 2.6 Removing `@login_required` from `environment_list` fails the inventory test
+- [x] 2.7 POST-only route reported denied via GET→405→POST fallback (not a 405 false-pass)
 
 ### Phase 3: Cookbook & Test-Plan Documentation
 
