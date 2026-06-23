@@ -427,10 +427,10 @@ None — no schema or data changes.
 
 #### Automated
 
-- [x] 3.1 No TBD remains in §6.4/§6.5: `grep -n "TBD" context/foundation/test-plan.md`
-- [x] 3.2 Phase 2 status reads `complete` in §3 table
-- [x] 3.3 Full suite still green: `manage.py test`
+- [x] 3.1 No TBD remains in §6.4/§6.5: `grep -n "TBD" context/foundation/test-plan.md` — 1597adc
+- [x] 3.2 Phase 2 status reads `complete` in §3 table — 1597adc
+- [x] 3.3 Full suite still green: `manage.py test` — 1597adc
 
 #### Manual
 
-- [x] 3.4 §6.4/§6.5/§6.6 references resolve to tests that exist after Phases 1–2
+- [x] 3.4 §6.4/§6.5/§6.6 references resolve to tests that exist after Phases 1–2 — 1597adc
