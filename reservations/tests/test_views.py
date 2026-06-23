@@ -360,3 +360,77 @@ class ReservationCancelViewTest(TestCase):
         url = reverse("reservations:cancel", args=[past.pk])
         response = self.client.post(url)
         self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# View: my_reservations (auth + cross-user ownership isolation — Risk #3)
+# ---------------------------------------------------------------------------
+
+
+class MyReservationsViewTest(TestCase):
+    """Risk #3: reservations:mine is the only ownership-*filtered* GET.
+
+    Prove (a) anonymous access is denied and (b) one user's list never leaks
+    another user's data. The my_reservations template renders each reservation's
+    *environment name* (the owner name is never rendered), so isolation is asserted
+    on environment-name presence/absence in the rendered list — user A sees only
+    their own environment's reservation, never user B's. now is frozen to _FIXED_NOW
+    so the future-windowed reservations stay in the upper_bound__gt=now list.
+    """
+
+    def setUp(self):
+        self.user_a = User.objects.create_user(
+            email="alice@example.com",
+            password="pass",
+            first_name="Alice",
+            last_name="Smith",
+        )
+        self.user_b = User.objects.create_user(
+            email="bob@example.com",
+            password="pass",
+            first_name="Bob",
+            last_name="Jones",
+        )
+        self.env_a = Environment.objects.create(
+            name="alice-only-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user_a,
+        )
+        self.env_b = Environment.objects.create(
+            name="bob-only-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user_b,
+        )
+        self.url = reverse("reservations:mine")
+
+    def test_auth_required(self):
+        """Unauthenticated GET redirects to login."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response["Location"])
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_lists_only_own_reservations(self, _):
+        """A's list shows A's reservation and never B's (the IDOR-shaped gap)."""
+        Reservation.objects.create(
+            owner=self.user_a,
+            environment=self.env_a,
+            during=_range(10, 12),
+        )
+        Reservation.objects.create(
+            owner=self.user_b,
+            environment=self.env_b,
+            during=_range(10, 12),
+        )
+        self.client.login(email="alice@example.com", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("alice-only-env", content)  # own reservation present
+        self.assertNotIn("bob-only-env", content)  # other user's data absent

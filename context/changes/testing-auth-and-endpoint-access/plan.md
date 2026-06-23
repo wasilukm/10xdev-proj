@@ -399,14 +399,14 @@ None — no schema or data changes.
 
 #### Automated
 
-- [ ] 1.1 New tests pass: `manage.py test reservations.tests.test_views`
-- [ ] 1.2 Full suite still green: `manage.py test`
-- [ ] 1.3 Type check clean (mypy)
-- [ ] 1.4 Lint/format clean (ruff)
+- [x] 1.1 New tests pass: `manage.py test reservations.tests.test_views`
+- [x] 1.2 Full suite still green: `manage.py test`
+- [x] 1.3 Type check clean (mypy)
+- [x] 1.4 Lint/format clean (ruff)
 
 #### Manual
 
-- [ ] 1.5 Removing `filter(owner=...)` makes `test_lists_only_own_reservations` fail (anti-tautology check)
+- [x] 1.5 Removing `filter(owner=...)` makes `test_lists_only_own_reservations` fail (anti-tautology check)
 
 ### Phase 2: Cross-Cutting Authorization Module
 
