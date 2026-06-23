@@ -66,7 +66,7 @@ orchestrator updates Status as artifacts appear on disk.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | No-overlap hardening | Prove a concurrent or constraint-violating overlapping reservation is rejected with a clean user-facing error — not a 500, not a silent second row — on both the create and edit write paths. | #1 | integration (+ concurrency, scoped by research) | complete | `context/changes/testing-no-overlap-hardening/` |
-| 2 | Authorization & endpoint access | Prove every gated route enforces authentication and ownership, and that admin-only actions reject non-admins. | #3 | integration / view | change opened | `context/changes/testing-auth-and-endpoint-access/` |
+| 2 | Authorization & endpoint access | Prove every gated route enforces authentication and ownership, and that admin-only actions reject non-admins. | #3 | integration / view | complete | `context/changes/testing-auth-and-endpoint-access/` |
 | 3 | Critical-path e2e | Prove the find → filter → reserve → appears-without-reload flow works in a real browser within the 30s success criterion. | #2 | e2e (browser; this phase **builds** the Playwright harness — the `/10x-e2e` skill discovers but does not create it) + optional single-screen visual review | complete | `context/changes/testing-e2e-critical-path/` |
 | 4 | Calendar reliability | Turn the DST gap/fold 500 into a graceful, user-visible outcome and map the calendar edge-case class. | #4 | unit | not started | — |
 | 5 | Quality-gates wiring | Lock the floor: stand up the CI harness so the unit+integration suite (and the Phase 3 e2e gate) block merges, and adopt the mypy/django-stubs gate defined by roadmap Q-01. Ratchets over Phases 1–4. | #6 | gates | not started | — |
@@ -175,15 +175,26 @@ stays as-is.
 
 ### 6.4 Adding a test for a new endpoint / view
 
-- TBD — see §3 Phase 2 (authorization patterns) and the §6.2 reference for the write-path shape.
+- **Where it lives**: a view test for a single surface goes in that app's `<app>/tests/test_views.py` (the owning surface — see §6.2 for the entry-point placement rule). A *cross-cutting* guard that spans apps — e.g. "every gated route denies the unauthenticated" — has no single owning app, so it lives in the project-level `tests/` package (`tests/test_authorization.py`), also discoverable by the default runner.
+- **Reference tests**: `reservations/tests/test_views.py::MyReservationsViewTest` (single-surface view test: auth + ownership-filtered list isolation) and `tests/test_authorization.py::GatedRouteAuthTest` (cross-cutting route-auth inventory).
+- **Inventory-maintenance rule**: when you add a new `@login_required` view, add its route to the `GATED_ROUTES` inventory in `tests/test_authorization.py`. The data-driven test then proves the new route denies anonymous access automatically — this is the antidote to the "siblings are guarded too" anti-pattern (a new view forgetting its decorator stays invisible until someone tests it).
+- **Run locally**: `uv run python manage.py test <app>` (single surface) or `uv run python manage.py test tests.test_authorization` (the cross-cutting module).
 
 ### 6.5 Adding an authorization / ownership test
 
-- TBD — see §3 Phase 2. Seed pattern today: `reservations/tests/test_views.py::ReservationEditViewTest::test_non_owner_404` and `::test_auth_required`.
+- **Assert the observable outcome, never the guard**: assert the status code / redirect the user actually sees — a `302` to `reverse("login")` for the unauthenticated, a `404` for a non-owner (the ownership queryset filter makes the row invisible, so it is a 404, not a 403), a `403` where a hard permission check applies. Never copy the view's own permission check (`filter(owner=...)`, the decorator) into the assertion — that is the oracle problem; test what the browser receives.
+- **Cover the non-owner and anonymous cases, not just the happy-path owner**: "authenticated implies authorized" and "one guarded view implies the siblings are guarded" are the two anti-patterns (§2 Risk #3). Each gated route needs an explicit anonymous-denial; each ownership-guarded write path needs an explicit non-owner case.
+- **For an ownership-*filtered* list view, assert absence of other users' data**: a `filter(owner=request.user)` list never 403s — a non-owner just sees their own (or an empty) list. The test must assert another user's data is *absent* from the rendered output (here, by environment name, since the template renders no owner name), not a status code.
+- **Reference tests**: `reservations/tests/test_views.py::ReservationEditViewTest::test_non_owner_404` (non-owner → 404 on a write path); `::MyReservationsViewTest::test_lists_only_own_reservations` (cross-user list isolation — the IDOR-shaped gap); `tests/test_authorization.py::GatedRouteAuthTest` (anonymous denial across every gated route).
 
 ### 6.6 Per-rollout-phase notes
 
-**Phase 3 — Critical-path e2e harness (2026-06-16)**
+**Phase 2 — Authorization & endpoint access (2026-06-23)**
+
+- **Cross-cutting route-auth inventory** landed at `tests/test_authorization.py::GatedRouteAuthTest`. It holds an explicit `GATED_ROUTES` list (`home`, `reservations:create`, `reservations:mine`, `reservations:edit`, `reservations:cancel`) and a data-driven test asserting each denies anonymous access. Keep the inventory in sync with `catalog/urls.py` + `reservations/urls.py` — add every new `@login_required` route. A separate test guards against an empty inventory silently passing.
+- **GET→405→POST helper convention**: `_anon_denied` issues a GET, and on a `405` retries with POST, so method-constrained (`@require_POST`) routes need no per-route method column. In practice `login_required` is the outermost decorator, so an anonymous request gets the `302→login` redirect for *either* method before `require_POST` can return its 405 — verified 2026-06-23 (anonymous GET to `reservations:create` → `302 /accounts/login/`, not 405). The POST fallback is dormant insurance against a future route that flips the decorator ordering.
+- **`reservations:mine` isolation** (`reservations/tests/test_views.py::MyReservationsViewTest`): the only ownership-*filtered* GET. The template renders the environment name, not the owner, so cross-user isolation is asserted on environment-name presence/absence — never on the view's `filter(owner=...)`.
+- **Admin-vs-non-admin boundary deferred to S-06.** No first-party admin surface exists yet (today's admin is Django's `/admin/`, excluded by §7). The clause is recorded as a `@unittest.skip` marker (`GatedRouteAuthTest::test_admin_only_action_rejects_non_admin`) naming the S-06 dependency, so it surfaces as `skipped` in verbose runs rather than being silently absent. When S-06 (admin-reservation-override) lands, that marker is the obvious home to fill.
 
 - Playwright Python harness landed (`pytest-playwright` + `pytest-django` + `pytest-env` in `[dependency-groups] dev`; `[tool.pytest.ini_options]` in `pyproject.toml`; `tests/e2e/` package). `DJANGO_DEBUG=True` is mandatory — without it `SECURE_SSL_REDIRECT` returns a 301 before any view runs.
 - `/10x-e2e` now passes its setup gate: `pytest-playwright` + `pytest-django` installed, `tests/e2e/test_*.py` present, `conftest.py` `auth_cookie` + `seeded_environment` fixtures present. Run `/10x-e2e testing-e2e-critical-path` to generate the Risk #2 test.

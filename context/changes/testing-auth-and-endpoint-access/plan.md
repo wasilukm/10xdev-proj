@@ -412,25 +412,25 @@ None — no schema or data changes.
 
 #### Automated
 
-- [x] 2.1 New module discovered and runs: `manage.py test tests.test_authorization`
-- [x] 2.2 Full suite green, count increased
-- [x] 2.3 Skipped admin marker shows as skipped, not error/fail
-- [x] 2.4 Type check clean (mypy)
-- [x] 2.5 Lint/format clean (ruff)
+- [x] 2.1 New module discovered and runs: `manage.py test tests.test_authorization` — 4d1ae4c
+- [x] 2.2 Full suite green, count increased — 4d1ae4c
+- [x] 2.3 Skipped admin marker shows as skipped, not error/fail — 4d1ae4c
+- [x] 2.4 Type check clean (mypy) — 4d1ae4c
+- [x] 2.5 Lint/format clean (ruff) — 4d1ae4c
 
 #### Manual
 
-- [x] 2.6 Removing `@login_required` from `environment_list` fails the inventory test
-- [x] 2.7 POST-only route reported denied via GET→405→POST fallback (not a 405 false-pass)
+- [x] 2.6 Removing `@login_required` from `environment_list` fails the inventory test — 4d1ae4c
+- [x] 2.7 POST-only route reported denied via GET→405→POST fallback (not a 405 false-pass) — 4d1ae4c
 
 ### Phase 3: Cookbook & Test-Plan Documentation
 
 #### Automated
 
-- [ ] 3.1 No TBD remains in §6.4/§6.5: `grep -n "TBD" context/foundation/test-plan.md`
-- [ ] 3.2 Phase 2 status reads `complete` in §3 table
-- [ ] 3.3 Full suite still green: `manage.py test`
+- [x] 3.1 No TBD remains in §6.4/§6.5: `grep -n "TBD" context/foundation/test-plan.md`
+- [x] 3.2 Phase 2 status reads `complete` in §3 table
+- [x] 3.3 Full suite still green: `manage.py test`
 
 #### Manual
 
-- [ ] 3.4 §6.4/§6.5/§6.6 references resolve to tests that exist after Phases 1–2
+- [x] 3.4 §6.4/§6.5/§6.6 references resolve to tests that exist after Phases 1–2
