@@ -1,9 +1,9 @@
 ---
 change_id: testing-auth-and-endpoint-access
 title: Authorization and endpoint access tests (Phase 2)
-status: implemented
+status: impl_reviewed
 created: 2026-06-22
-updated: 2026-06-23
+updated: 2026-06-24
 archived_at: null
 ---
 
