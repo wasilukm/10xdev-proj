@@ -1,13 +1,16 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
+from django.contrib import admin
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from psycopg.types.range import Range
 
 from accounts.models import User
 from catalog.models import Environment
 from catalog.services import build_row_context, filter_environments, filter_options
 from reservations.models import Reservation
+from reservations.services import active_or_upcoming_reservations
 
 
 def make_dt(hour, minute=0):
@@ -382,3 +385,43 @@ class DashboardOwnerVisibilityTest(TestCase):
         self.assertEqual(
             ctx["upcoming_reservations"][0].owner.get_full_name(), "Bob Jones"
         )
+
+
+class EnvironmentAdminUnregisteredTest(TestCase):
+    """S-05: Environment is retired from the Django admin; the manage UI owns CRUD."""
+
+    def test_environment_not_registered(self):
+        self.assertNotIn(Environment, admin.site._registry)
+
+
+class ActiveOrUpcomingReservationsTest(TestCase):
+    """active_or_upcoming_reservations: excludes past, includes active + upcoming."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email="aou@example.com", password="pass")
+        self.env = Environment.objects.create(
+            name="aou-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user,
+        )
+
+    def _reserve(self, start, end):
+        return Reservation.objects.create(
+            owner=self.user,
+            environment=self.env,
+            during=Range(lower=start, upper=end, bounds="[)"),
+        )
+
+    def test_partitions_by_window(self):
+        now = timezone.now()
+        past = self._reserve(now - timedelta(hours=3), now - timedelta(hours=1))
+        active = self._reserve(now - timedelta(hours=1), now + timedelta(hours=1))
+        upcoming = self._reserve(now + timedelta(hours=2), now + timedelta(hours=3))
+
+        result = list(active_or_upcoming_reservations(self.env, now=now))
+
+        self.assertEqual(result, [active, upcoming])
+        self.assertNotIn(past, result)

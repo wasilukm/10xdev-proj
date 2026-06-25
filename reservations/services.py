@@ -6,6 +6,7 @@ from typing import Literal, cast
 
 from django.db.models import Func, QuerySet
 from django.db.models.fields import DateTimeField
+from django.utils import timezone
 from psycopg.types.range import Range
 
 from catalog.models import Environment
@@ -13,6 +14,28 @@ from catalog.models import Environment
 from .models import Reservation
 
 MAX_DURATION = timedelta(hours=4)
+
+
+def active_or_upcoming_reservations(
+    env: Environment, now: datetime | None = None
+) -> QuerySet[Reservation]:
+    """Reservations for env that have not yet ended (active or upcoming), ordered by start.
+
+    "Not yet ended" means the range upper bound is strictly after `now`. Used by
+    the edit-warning (Ph3) and delete-guard (Ph4) paths. DateTimeRangeField has no
+    'upper__gt' lookup — annotate the bound via Func and filter on that.
+    """
+    if now is None:
+        now = timezone.now()
+    return (
+        Reservation.objects.annotate(
+            upper_bound=Func("during", function="upper", output_field=DateTimeField()),
+            lower_bound=Func("during", function="lower", output_field=DateTimeField()),
+        )
+        .filter(environment=env, upper_bound__gt=now)
+        .select_related("owner")
+        .order_by("lower_bound")
+    )
 
 
 def _qs_starting_at_or_after(

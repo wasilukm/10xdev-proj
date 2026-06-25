@@ -1,10 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin  # noqa: F401
 
-from .models import Environment
-
-
-@admin.register(Environment)
-class EnvironmentAdmin(admin.ModelAdmin):
-    list_display = ("name", "version", "project", "owner")
-    list_filter = ("project", "purpose", "use_case_tag")
-    search_fields = ("name",)
+# Environment is intentionally not registered in the Django admin. Its catalog
+# CRUD lives in the staff-gated /manage/environments/ UI (S-05), which is the
+# single guarded write path. See context/changes/admin-env-catalog/.

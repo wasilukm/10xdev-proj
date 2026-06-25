@@ -12,7 +12,10 @@ from .models import Reservation
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
     list_display = ("environment", "owner", "during_local", "created_at")
-    autocomplete_fields = ["environment", "owner"]
+    # "environment" is not autocompleted: Environment is no longer registered in
+    # the admin (retired in favor of the /manage/environments/ UI, S-05), so an
+    # autocomplete reference to it would fail admin.E039. Falls back to a select.
+    autocomplete_fields = ["owner"]
 
     @admin.display(description="During (local)")
     def during_local(self, obj: Reservation) -> str:

@@ -15,6 +15,7 @@ class Environment(models.Model):
         on_delete=models.PROTECT,
         related_name="owned_environments",
     )
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["name"]
