@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from django.db.models import Func, QuerySet
 from django.db.models.fields import DateTimeField
@@ -12,7 +12,20 @@ from catalog.models import Environment
 
 from .models import Reservation
 
+if TYPE_CHECKING:
+    from django.contrib.auth.models import AnonymousUser
+
+    from accounts.models import User
+
 MAX_DURATION = timedelta(hours=4)
+
+
+def is_reservation_admin(user: User | AnonymousUser) -> bool:
+    """Return True if the user may manage any user's reservation (not just their own).
+
+    Admins are authenticated staff or superusers. Anonymous users are never admins.
+    """
+    return bool(user.is_authenticated and (user.is_staff or user.is_superuser))
 
 
 def _qs_starting_at_or_after(

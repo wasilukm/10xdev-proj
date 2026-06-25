@@ -40,6 +40,18 @@ def _row_response(
     return render(request, "catalog/_environment_row.html", ctx)
 
 
+def _reservation_for_request(request: HttpRequest, pk: int) -> Reservation:
+    """Fetch a reservation the request is allowed to mutate.
+
+    Admins (staff/superuser) may manage any reservation; everyone else is
+    scoped to their own. A non-admin requesting another user's reservation
+    gets a 404 via the owner filter.
+    """
+    if services.is_reservation_admin(request.user):
+        return get_object_or_404(Reservation, pk=pk)
+    return get_object_or_404(Reservation, pk=pk, owner=request.user)
+
+
 def _item_context(
     reservation: Reservation,
     form: ReservationEditForm | None = None,
@@ -137,7 +149,7 @@ def my_reservations(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_POST
 def reservation_edit(request: HttpRequest, pk: int) -> HttpResponse:
-    reservation = get_object_or_404(Reservation, pk=pk, owner=request.user)
+    reservation = _reservation_for_request(request, pk)
     now = timezone.now()
     if reservation.during.upper <= now:
         raise Http404
@@ -172,7 +184,7 @@ def reservation_edit(request: HttpRequest, pk: int) -> HttpResponse:
 @login_required
 @require_POST
 def reservation_cancel(request: HttpRequest, pk: int) -> HttpResponse:
-    reservation = get_object_or_404(Reservation, pk=pk, owner=request.user)
+    reservation = _reservation_for_request(request, pk)
     if reservation.during.upper <= timezone.now():
         raise Http404
     reservation.delete()

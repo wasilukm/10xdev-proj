@@ -434,3 +434,107 @@ class MyReservationsViewTest(TestCase):
         content = response.content.decode()
         self.assertIn("alice-only-env", content)  # own reservation present
         self.assertNotIn("bob-only-env", content)  # other user's data absent
+
+
+# ---------------------------------------------------------------------------
+# Admin override: staff/superuser may edit/cancel any user's reservation
+# ---------------------------------------------------------------------------
+
+
+class ReservationAdminOverrideViewTest(TestCase):
+    """Staff/superusers can edit and cancel reservations they do not own.
+
+    timezone.now frozen to 2024-01-01 08:00 UTC. The target reservation
+    [10:00, 12:00) is future and owned by `owner`; the admin acts on it.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="owner@example.com",
+            password="pass",
+            first_name="Olive",
+            last_name="Owner",
+        )
+        self.admin = User.objects.create_user(
+            email="admin@example.com",
+            password="pass",
+            is_staff=True,
+        )
+        self.env = Environment.objects.create(
+            name="override-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.owner,
+        )
+        self.reservation = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(10, 12),
+        )
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_can_edit_other_users_reservation(self, _):
+        """Staff edits another user's reservation duration."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4"})  # start=10:00, end=14:00
+        self.assertEqual(response.status_code, 200)
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(14))
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_can_cancel_other_users_reservation(self, _):
+        """Staff cancels another user's reservation; row deleted, empty body."""
+        self.client.login(email="admin@example.com", password="pass")
+        pk = self.reservation.pk
+        url = reverse("reservations:cancel", args=[pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"")
+        self.assertFalse(Reservation.objects.filter(pk=pk).exists())
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_cannot_edit_past_reservation(self, _):
+        """The past-block time rule applies to admins too."""
+        past = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(4, 6),
+        )
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[past.pk])
+        response = self.client.post(url, {"hours": "2"})
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_cannot_cancel_past_reservation(self, _):
+        """The past-block time rule applies to admins on cancel too."""
+        past = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(4, 6),
+        )
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:cancel", args=[past.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_non_admin_still_cannot_edit_others(self, _):
+        """Regression guard: a regular non-owner still gets 404 on edit."""
+        User.objects.create_user(email="bystander@example.com", password="pass")
+        self.client.login(email="bystander@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4"})
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_non_admin_still_cannot_cancel_others(self, _):
+        """Regression guard: a regular non-owner still gets 404 on cancel."""
+        User.objects.create_user(email="bystander2@example.com", password="pass")
+        self.client.login(email="bystander2@example.com", password="pass")
+        url = reverse("reservations:cancel", args=[self.reservation.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
