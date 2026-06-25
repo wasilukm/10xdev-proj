@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}EnvBooker — Manage environments{% endblock %}
+
+{% block content %}
+<h1>Manage environments</h1>
+
+<p><a href="{% url 'env_create' %}">New environment</a></p>
+
+{% if environments %}
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Version</th>
+      <th>Purpose</th>
+      <th>Project</th>
+      <th>Tag</th>
+      <th>Owner</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for env in environments %}
+    <tr>
+      <td>{{ env.name }}</td>
+      <td>{{ env.version }}</td>
+      <td>{{ env.purpose }}</td>
+      <td>{{ env.project }}</td>
+      <td>{{ env.use_case_tag }}</td>
+      <td>{{ env.owner.get_full_name|default:env.owner.email }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No environments yet.</p>
+{% endif %}
+{% endblock %}

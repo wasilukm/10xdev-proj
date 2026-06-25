@@ -286,23 +286,23 @@ to `env_manage` with a success note.
 ### Phase 1: Data model + access scaffolding
 
 #### Automated
-- [x] 1.1 `makemigrations --check` clean after generating; `migrate` applies cleanly
-- [x] 1.2 `mypy` + `ruff` clean
-- [x] 1.3 `Environment` not in `admin.site._registry` (test)
-- [x] 1.4 `active_or_upcoming_reservations` excludes past, includes active + upcoming (test)
+- [x] 1.1 `makemigrations --check` clean after generating; `migrate` applies cleanly — 70bf657
+- [x] 1.2 `mypy` + `ruff` clean — 70bf657
+- [x] 1.3 `Environment` not in `admin.site._registry` (test) — 70bf657
+- [x] 1.4 `active_or_upcoming_reservations` excludes past, includes active + upcoming (test) — 70bf657
 
 #### Manual
-- [x] 1.5 `/admin/` no longer lists Environments
+- [x] 1.5 `/admin/` no longer lists Environments — 70bf657
 
 ### Phase 2: Create + manage list + nav (FR-005)
 
 #### Automated
-- [ ] 2.1 anon → login redirect; non-staff → 403; staff GET → 200
-- [ ] 2.2 staff POST creates one Environment (owner default self + selectable); invalid POST re-renders, creates nothing
-- [ ] 2.3 `mypy` + `ruff` clean
+- [x] 2.1 anon → login redirect; non-staff → 403; staff GET → 200
+- [x] 2.2 staff POST creates one Environment (owner default self + selectable); invalid POST re-renders, creates nothing
+- [x] 2.3 `mypy` + `ruff` clean
 
 #### Manual
-- [ ] 2.4 Nav link staff-only; create flow works end-to-end
+- [x] 2.4 Nav link staff-only; create flow works end-to-end
 
 ### Phase 3: Edit with pre-save warning + change badge (FR-006)
 

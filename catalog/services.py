@@ -95,6 +95,11 @@ def filter_options() -> dict[str, list[str]]:
     return {"projects": projects, "use_case_tags": use_case_tags}
 
 
+def manage_environments() -> QuerySet[Environment]:
+    """Return the environment queryset for the staff manage table."""
+    return Environment.objects.select_related("owner").order_by("name")
+
+
 def prefetch_reservations_for_list(now: datetime) -> Prefetch:
     """Return a Prefetch for the 24h reservation window, for use on an Environment queryset."""
     horizon = now + timedelta(hours=24)

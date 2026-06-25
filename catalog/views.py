@@ -2,18 +2,22 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from reservations.forms import ReservationForm
 
+from .forms import EnvironmentForm
 from .models import Environment
+from .permissions import staff_required
 from .services import (
     build_row_context,
     filter_environments,
     filter_options,
+    manage_environments,
     prefetch_reservations_for_list,
 )
 
@@ -68,4 +72,31 @@ def environment_list(request: HttpRequest) -> HttpResponse:
             "filters": filters,
             "options": filter_options(),
         },
+    )
+
+
+@staff_required
+def environment_manage(request: HttpRequest) -> HttpResponse:
+    return render(
+        request,
+        "catalog/environment_manage.html",
+        {"environments": manage_environments()},
+    )
+
+
+@staff_required
+def environment_create(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        form = EnvironmentForm(request.POST)
+        if form.is_valid():
+            env = form.save()
+            messages.success(request, f"Environment “{env.name}” created.")
+            return redirect("env_manage")
+    else:
+        form = EnvironmentForm(initial={"owner": request.user})
+
+    return render(
+        request,
+        "catalog/environment_form.html",
+        {"form": form, "mode": "create"},
     )

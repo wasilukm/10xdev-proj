@@ -425,3 +425,87 @@ class ActiveOrUpcomingReservationsTest(TestCase):
 
         self.assertEqual(result, [active, upcoming])
         self.assertNotIn(past, result)
+
+
+class ManageAccessControlTest(TestCase):
+    """S-05 FR-005: manage routes are staff-gated."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            email="staff@example.com", password="pass", is_staff=True
+        )
+        self.plain = User.objects.create_user(
+            email="plain@example.com", password="pass"
+        )
+
+    def test_anonymous_redirects_to_login(self):
+        for name in ("env_manage", "env_create"):
+            response = self.client.get(reverse(name))
+            self.assertRedirects(
+                response,
+                f"{reverse('login')}?next={reverse(name)}",
+                fetch_redirect_response=False,
+            )
+
+    def test_non_staff_forbidden(self):
+        self.client.login(username="plain@example.com", password="pass")
+        for name in ("env_manage", "env_create"):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 403)
+
+    def test_staff_gets_200(self):
+        self.client.login(username="staff@example.com", password="pass")
+        for name in ("env_manage", "env_create"):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 200)
+
+
+class EnvironmentCreateTest(TestCase):
+    """S-05 FR-005: staff create with owner default + selectable; invalid re-renders."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            email="staff@example.com", password="pass", is_staff=True
+        )
+        self.other = User.objects.create_user(
+            email="other@example.com", password="pass"
+        )
+        self.client.login(username="staff@example.com", password="pass")
+
+    def _payload(self, **overrides):
+        data = {
+            "name": "new-env",
+            "version": "1.0",
+            "purpose": "testing",
+            "project": "alpha",
+            "use_case_tag": "ci",
+            "owner": self.staff.pk,
+        }
+        data.update(overrides)
+        return data
+
+    def test_owner_initial_defaults_to_self(self):
+        response = self.client.get(reverse("env_create"))
+        self.assertEqual(response.context["form"].initial["owner"], self.staff)
+
+    def test_post_creates_one_environment_owner_self(self):
+        response = self.client.post(reverse("env_create"), self._payload())
+        self.assertRedirects(response, reverse("env_manage"))
+        self.assertEqual(Environment.objects.count(), 1)
+        env = Environment.objects.get()
+        self.assertEqual(env.name, "new-env")
+        self.assertEqual(env.owner, self.staff)
+
+    def test_owner_is_selectable_to_another_user(self):
+        response = self.client.post(
+            reverse("env_create"), self._payload(owner=self.other.pk)
+        )
+        self.assertRedirects(response, reverse("env_manage"))
+        env = Environment.objects.get()
+        self.assertEqual(env.owner, self.other)
+
+    def test_invalid_post_re_renders_and_creates_nothing(self):
+        response = self.client.post(reverse("env_create"), self._payload(name=""))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+        self.assertEqual(Environment.objects.count(), 0)
