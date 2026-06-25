@@ -434,3 +434,38 @@ class MyReservationsViewTest(TestCase):
         content = response.content.decode()
         self.assertIn("alice-only-env", content)  # own reservation present
         self.assertNotIn("bob-only-env", content)  # other user's data absent
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_definition_changed_badge(self, _):
+        """FR-006: badge shows on a reservation created before its env was edited,
+        and is absent on one created after. updated_at/created_at are set
+        explicitly (bypassing auto_now/auto_now_add) to make the derivation
+        deterministic: env.updated_at sits between the two created_at values."""
+        before = Reservation.objects.create(
+            owner=self.user_a,
+            environment=self.env_a,
+            during=_range(10, 12),
+        )
+        after = Reservation.objects.create(
+            owner=self.user_a,
+            environment=self.env_a,
+            during=_range(13, 15),
+        )
+        # before.created_at < env.updated_at < after.created_at
+        Reservation.objects.filter(pk=before.pk).update(created_at=_dt(7))
+        Environment.objects.filter(pk=self.env_a.pk).update(updated_at=_dt(7, 30))
+        Reservation.objects.filter(pk=after.pk).update(created_at=_dt(8))
+
+        self.client.login(email="alice@example.com", password="pass")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        flags = {
+            item["reservation"].pk: item["definition_changed"]
+            for item in response.context["items"]
+        }
+        self.assertTrue(flags[before.pk])
+        self.assertFalse(flags[after.pk])
+        self.assertIn(
+            "Definition changed since you reserved", response.content.decode()
+        )

@@ -509,3 +509,87 @@ class EnvironmentCreateTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].errors)
         self.assertEqual(Environment.objects.count(), 0)
+
+
+class EnvironmentEditTest(TestCase):
+    """S-05 FR-006: edit with two-step warning over active/upcoming reservations."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            email="staff@example.com", password="pass", is_staff=True
+        )
+        self.owner = User.objects.create_user(
+            email="resowner@example.com",
+            password="pass",
+            first_name="Carol",
+            last_name="Vega",
+        )
+        self.env = Environment.objects.create(
+            name="edit-env",
+            version="1.0",
+            purpose="testing",
+            project="alpha",
+            use_case_tag="ci",
+            owner=self.staff,
+        )
+        self.client.login(username="staff@example.com", password="pass")
+
+    def _payload(self, **overrides):
+        data = {
+            "name": "edit-env",
+            "version": "2.0",
+            "purpose": "testing",
+            "project": "alpha",
+            "use_case_tag": "ci",
+            "owner": self.staff.pk,
+        }
+        data.update(overrides)
+        return data
+
+    def _reserve_upcoming(self):
+        now = timezone.now()
+        return Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=Range(
+                lower=now + timedelta(hours=1),
+                upper=now + timedelta(hours=2),
+                bounds="[)",
+            ),
+        )
+
+    def test_non_staff_forbidden(self):
+        self.client.logout()
+        self.client.login(username="resowner@example.com", password="pass")
+        response = self.client.get(reverse("env_edit", args=[self.env.pk]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_edit_without_reservations_saves_one_step(self):
+        response = self.client.post(
+            reverse("env_edit", args=[self.env.pk]), self._payload(version="2.0")
+        )
+        self.assertRedirects(response, reverse("env_manage"))
+        self.env.refresh_from_db()
+        self.assertEqual(self.env.version, "2.0")
+
+    def test_edit_with_active_upcoming_warns_and_does_not_save(self):
+        self._reserve_upcoming()
+        response = self.client.post(
+            reverse("env_edit", args=[self.env.pk]), self._payload(version="9.9")
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["needs_confirm"])
+        content = response.content.decode()
+        self.assertIn("Carol Vega", content)
+        self.env.refresh_from_db()
+        self.assertEqual(self.env.version, "1.0")
+
+    def test_resubmit_with_confirm_saves(self):
+        self._reserve_upcoming()
+        response = self.client.post(
+            reverse("env_edit", args=[self.env.pk]),
+            self._payload(version="9.9", confirm="1"),
+        )
+        self.assertRedirects(response, reverse("env_manage"))
+        self.env.refresh_from_db()
+        self.assertEqual(self.env.version, "9.9")

@@ -297,24 +297,24 @@ to `env_manage` with a success note.
 ### Phase 2: Create + manage list + nav (FR-005)
 
 #### Automated
-- [x] 2.1 anon → login redirect; non-staff → 403; staff GET → 200
-- [x] 2.2 staff POST creates one Environment (owner default self + selectable); invalid POST re-renders, creates nothing
-- [x] 2.3 `mypy` + `ruff` clean
+- [x] 2.1 anon → login redirect; non-staff → 403; staff GET → 200 — 3a07b90
+- [x] 2.2 staff POST creates one Environment (owner default self + selectable); invalid POST re-renders, creates nothing — 3a07b90
+- [x] 2.3 `mypy` + `ruff` clean — 3a07b90
 
 #### Manual
-- [x] 2.4 Nav link staff-only; create flow works end-to-end
+- [x] 2.4 Nav link staff-only; create flow works end-to-end — 3a07b90
 
 ### Phase 3: Edit with pre-save warning + change badge (FR-006)
 
 #### Automated
-- [ ] 3.1 Edit with no active/upcoming reservation saves one-step
-- [ ] 3.2 Edit with active/upcoming + no `confirm` re-renders warning (names affected owner), does not save
-- [ ] 3.3 Resubmit with `confirm=1` saves
-- [ ] 3.4 Badge present for pre-existing reservation, absent for one created after the edit
-- [ ] 3.5 `mypy` + `ruff` clean
+- [x] 3.1 Edit with no active/upcoming reservation saves one-step
+- [x] 3.2 Edit with active/upcoming + no `confirm` re-renders warning (names affected owner), does not save
+- [x] 3.3 Resubmit with `confirm=1` saves
+- [x] 3.4 Badge present for pre-existing reservation, absent for one created after the edit
+- [x] 3.5 `mypy` + `ruff` clean
 
 #### Manual
-- [ ] 3.6 Warning lists correct reservations; badge visible to owner in My reservations
+- [x] 3.6 Warning lists correct reservations; badge visible to owner in My reservations
 
 ### Phase 4: Delete guard with cascade (FR-007)
 

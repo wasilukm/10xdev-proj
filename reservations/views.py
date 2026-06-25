@@ -61,6 +61,9 @@ def _item_context(
         "conflict_message": conflict_message,
         "is_editable": reservation.during.upper > now,
         "is_active": reservation.during.lower <= now,
+        "definition_changed": (
+            reservation.environment.updated_at > reservation.created_at
+        ),
     }
 
 

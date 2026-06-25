@@ -5,10 +5,11 @@ from typing import Any
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from reservations.forms import ReservationForm
+from reservations.services import active_or_upcoming_reservations
 
 from .forms import EnvironmentForm
 from .models import Environment
@@ -99,4 +100,48 @@ def environment_create(request: HttpRequest) -> HttpResponse:
         request,
         "catalog/environment_form.html",
         {"form": form, "mode": "create"},
+    )
+
+
+# Number of affected reservations to list inline in the edit warning before
+# collapsing the remainder into a "+N more" note.
+_AFFECTED_PREVIEW = 5
+
+
+@staff_required
+def environment_edit(request: HttpRequest, pk: int) -> HttpResponse:
+    env = get_object_or_404(Environment, pk=pk)
+
+    if request.method == "POST":
+        form = EnvironmentForm(request.POST, instance=env)
+        if form.is_valid():
+            affected = active_or_upcoming_reservations(env)
+            # Two-step warning: when active/upcoming reservations exist and the
+            # staff user hasn't yet confirmed, re-render the form with the list
+            # of affected reservations and a hidden confirm flag instead of saving.
+            if not request.POST.get("confirm") and affected.exists():
+                preview = list(affected[: _AFFECTED_PREVIEW + 1])
+                more = len(preview) - _AFFECTED_PREVIEW
+                return render(
+                    request,
+                    "catalog/environment_form.html",
+                    {
+                        "form": form,
+                        "mode": "edit",
+                        "env": env,
+                        "affected": preview[:_AFFECTED_PREVIEW],
+                        "affected_more": more if more > 0 else 0,
+                        "needs_confirm": True,
+                    },
+                )
+            env = form.save()
+            messages.success(request, f"Environment “{env.name}” updated.")
+            return redirect("env_manage")
+    else:
+        form = EnvironmentForm(instance=env)
+
+    return render(
+        request,
+        "catalog/environment_form.html",
+        {"form": form, "mode": "edit", "env": env},
     )

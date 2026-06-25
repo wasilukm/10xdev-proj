@@ -5,10 +5,34 @@
 {% block content %}
 <h1>{% if mode == "create" %}New environment{% else %}Edit environment{% endif %}</h1>
 
+{% if needs_confirm %}
+  <div class="warning">
+    <p><strong>This environment has active or upcoming reservations.</strong>
+       Saving these changes will affect:</p>
+    <ul>
+      {% for reservation in affected %}
+        <li>
+          {{ reservation.owner.get_full_name|default:reservation.owner.email }}
+          &mdash; {{ reservation.during.lower|date:"Y-m-d H:i" }}
+          to {{ reservation.during.upper|date:"Y-m-d H:i" }}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if affected_more %}
+      <p>+{{ affected_more }} more</p>
+    {% endif %}
+  </div>
+{% endif %}
+
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}
-  <button type="submit">Save</button>
+  {% if needs_confirm %}
+    <input type="hidden" name="confirm" value="1">
+    <button type="submit">Save anyway</button>
+  {% else %}
+    <button type="submit">Save</button>
+  {% endif %}
   <a href="{% url 'env_manage' %}">Cancel</a>
 </form>
 {% endblock %}

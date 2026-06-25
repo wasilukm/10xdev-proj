@@ -4,6 +4,9 @@
     &mdash; Start: {{ reservation.during.lower|date:"Y-m-d H:i" }}
     &mdash; End: {{ reservation.during.upper|date:"Y-m-d H:i" }}
     &mdash; {% if is_active %}In progress{% else %}Upcoming{% endif %}
+    {% if definition_changed %}
+      <span class="badge">Definition changed since you reserved</span>
+    {% endif %}
   </p>
   {% if conflict_message %}
     <p><strong>{{ conflict_message }}</strong></p>

@@ -17,6 +17,7 @@
       <th>Project</th>
       <th>Tag</th>
       <th>Owner</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -28,6 +29,7 @@
       <td>{{ env.project }}</td>
       <td>{{ env.use_case_tag }}</td>
       <td>{{ env.owner.get_full_name|default:env.owner.email }}</td>
+      <td><a href="{% url 'env_edit' env.pk %}">Edit</a></td>
     </tr>
     {% endfor %}
   </tbody>
