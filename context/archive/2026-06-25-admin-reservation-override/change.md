@@ -1,10 +1,10 @@
 ---
 change_id: admin-reservation-override
 title: Admin reservation override
-status: impl_reviewed
+status: archived
 created: 2026-06-25
 updated: 2026-06-28
-archived_at: null
+archived_at: 2026-06-28T10:35:00Z
 ---
 
 ## Notes
