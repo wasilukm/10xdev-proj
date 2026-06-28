@@ -1,5 +1,5 @@
 <tr id="env-row-{{ env.pk }}" class="env-row {% if is_busy %}env-row--busy{% else %}env-row--free{% endif %}">
-  <td>{{ env.name }}</td>
+  <td><span class="env-name" title="Version: {{ env.version }} · Owner: {{ env.owner.get_full_name|default:env.owner.email }}">{{ env.name }}</span></td>
   <td>
     {% if is_busy %}
       <span class="badge badge--busy">Busy</span>

@@ -137,10 +137,11 @@ h3 {
   --color-focus: #3b3fbf;
 }
 
-/* Dark theme tokens. Applied when the user manually selects dark
-   (:root[data-theme="dark"]) OR when the OS prefers dark and the user has not
-   forced light. The `--dark-*` values are defined once and remapped by both
-   selectors to avoid duplicating the palette. */
+/* Dark theme tokens. The no-FOUC head script in base.html resolves the active
+   theme (saved choice, else OS preference) and always sets data-theme, so a
+   single `:root[data-theme="dark"]` block covers both the manual toggle and the
+   OS-dark default — no duplicate prefers-color-scheme copy to keep in sync.
+   The `--dark-*` palette values are defined once here and remapped below. */
 :root {
   --dark-bg: #0e1419;
   --dark-surface: #18222b;
@@ -189,34 +190,6 @@ h3 {
   --color-focus: var(--dark-focus);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg: var(--dark-bg);
-    --color-surface: var(--dark-surface);
-    --color-surface-alt: var(--dark-surface-alt);
-    --color-text: var(--dark-text);
-    --color-text-muted: var(--dark-text-muted);
-    --color-border: var(--dark-border);
-    --color-border-strong: var(--dark-border-strong);
-    --color-accent: var(--dark-accent);
-    --color-accent-hover: var(--dark-accent-hover);
-    --color-accent-bg: var(--dark-accent-bg);
-    --color-free: var(--dark-free);
-    --color-free-bg: var(--dark-free-bg);
-    --color-busy: var(--dark-busy);
-    --color-busy-bg: var(--dark-busy-bg);
-    --color-warn-text: var(--dark-warn-text);
-    --color-warn-bg: var(--dark-warn-bg);
-    --color-warn-border: var(--dark-warn-border);
-    --color-danger: var(--dark-danger);
-    --color-danger-hover: var(--dark-danger-hover);
-    --color-danger-bg: var(--dark-danger-bg);
-    --color-focus: var(--dark-focus);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
-  }
 }
 
 /* ===========================================================================
@@ -456,6 +429,13 @@ p {
   color: var(--color-warn-text);
   background: var(--color-warn-bg);
   border-color: var(--color-warn-border);
+}
+
+/* --- env name (hover reveals version + owner via title) ---------------- */
+.env-name[title] {
+  cursor: help;
+  text-decoration: underline dotted var(--color-border);
+  text-underline-offset: 3px;
 }
 
 /* --- owner cue --------------------------------------------------------- */

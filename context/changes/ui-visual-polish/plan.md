@@ -60,8 +60,9 @@ colored left **status spine** per env row (free=teal, busy=clay) that makes the 
 free/busy pattern scannable at a glance and is the exact color a future timeline block fills
 with. Palette deliberately avoids the three generic AI defaults: console near-white
 `#F5F7F9`, ink `#16202A`, indigo accent `#3B3FBF`, free `#0E8C6A`, busy `#B5651D`, danger kept
-distinct at `#C2362F`. Tokens are CSS custom properties; the dark theme overrides only the
-`--color-*` tokens under `prefers-color-scheme: dark`.
+distinct at `#C2362F`. Tokens are CSS custom properties; the dark theme overrides the
+`--color-*` tokens (and the `--shadow-*` tokens, which read differently on a dark canvas)
+under `prefers-color-scheme: dark`.
 
 ## Critical Implementation Details
 
@@ -88,7 +89,7 @@ block), and component classes (nav, tables, badges, forms, buttons, alerts, filt
 reservation/auth cards, the env-row status spine).
 **Contract**: `:root` token names are the stable contract a future timeline view inherits
 (`--color-free`, `--color-busy`, `--color-owner-accent`, spacing/type scales). Dark theme
-overrides only `--color-*` under `@media (prefers-color-scheme: dark)`.
+overrides `--color-*` (and `--shadow-*`) under `@media (prefers-color-scheme: dark)`.
 
 #### 2. Base layout wiring
 **File**: `templates/base.html`
@@ -214,3 +215,19 @@ start command already runs it).
 - [x] 3.3 State matrix walked (conflict, warning, blocked delete, changed badge) — 74ae95c
 - [x] 3.4 Dark mode legible; free/busy distinct in both themes — 74ae95c, d607838
 - [x] 3.5 Chrome + Firefox spot-check — 74ae95c
+
+## Addendum (2026-06-28) — user-requested deviations
+
+Two changes landed during manual review that diverge from the plan body above;
+both were user-requested and are also recorded in `change.md`. Noted here so the
+plan matches the shipped reality:
+
+- **Dark-mode toggle (supersedes "no JS added", Performance Considerations).** Plan
+  committed dark via `prefers-color-scheme` only. Added a nav `◐ Theme` toggle: a
+  small vanilla-JS snippet (no build step) that sets `data-theme` on `<html>` and
+  persists to `localStorage`, plus a no-FOUC head script; a manual choice overrides
+  the OS default. `base.html:8-18,52-70`. Still no framework/build step.
+- **Env-list table slimmed (supersedes "no markup restructure beyond classes").**
+  Dropped the Version and Owner columns (neither is a filter axis) and moved Status
+  beside Name to cut horizontal scroll. Env owner still shows in the admin Manage
+  table; Duration pinned to 5.5rem. `b166d76`.

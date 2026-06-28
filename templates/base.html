@@ -5,15 +5,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}EnvBooker{% endblock %}</title>
+  {% comment %}
+  Inline scripts: if a Content-Security-Policy is ever added, both this head
+  script and the toggle script below will need a per-request nonce/hash. The
+  head script must stay inline (runs pre-paint to avoid a theme flash).
+  {% endcomment %}
   <script>
-    // Apply a saved theme before first paint to avoid a flash of the wrong theme.
+    // Resolve the theme before first paint to avoid a flash of the wrong theme:
+    // saved choice wins, else fall back to the OS preference. Always sets
+    // data-theme so the stylesheet needs only one dark block (no media-query copy).
     (function () {
+      var t;
       try {
-        var t = localStorage.getItem("theme");
-        if (t === "dark" || t === "light") {
-          document.documentElement.setAttribute("data-theme", t);
-        }
+        t = localStorage.getItem("theme");
       } catch (e) {}
+      if (t !== "dark" && t !== "light") {
+        t = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+      }
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
