@@ -37,6 +37,7 @@ def _row_response(
             "next_free": next_free,
         }
     )
+    ctx.update(admin_row_items(request, ctx))
     return render(request, "catalog/_environment_row.html", ctx)
 
 
@@ -52,7 +53,7 @@ def _reservation_for_request(request: HttpRequest, pk: int) -> Reservation:
     return get_object_or_404(Reservation, pk=pk, owner=request.user)
 
 
-def _item_context(
+def build_reservation_item(
     reservation: Reservation,
     form: ReservationEditForm | None = None,
     conflict_message: str | None = None,
@@ -76,6 +77,23 @@ def _item_context(
     }
 
 
+def admin_row_items(request: HttpRequest, row_ctx: dict[str, Any]) -> dict[str, Any]:
+    """Build per-reservation item contexts for the env row, for admin viewers only.
+
+    Returns {current_item, upcoming_items} so the row template can render the
+    edit/cancel controls inline. Non-admins get an empty dict (template falls
+    back to the plain-text listing).
+    """
+    if not services.is_reservation_admin(request.user):
+        return {}
+    current = row_ctx.get("current_reservation")
+    upcoming = row_ctx.get("upcoming_reservations", [])
+    return {
+        "current_item": build_reservation_item(current) if current else None,
+        "upcoming_items": [build_reservation_item(r) for r in upcoming],
+    }
+
+
 def _item_response(
     request: HttpRequest,
     reservation: Reservation,
@@ -85,7 +103,7 @@ def _item_response(
     return render(
         request,
         "reservations/_reservation_item.html",
-        _item_context(reservation, form, conflict_message),
+        build_reservation_item(reservation, form, conflict_message),
     )
 
 
@@ -142,7 +160,7 @@ def my_reservations(request: HttpRequest) -> HttpResponse:
         .select_related("environment")
         .order_by("lower_bound")
     )
-    items = [_item_context(r) for r in reservations]
+    items = [build_reservation_item(r) for r in reservations]
     return render(request, "reservations/my_reservations.html", {"items": items})
 
 

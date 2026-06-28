@@ -185,27 +185,27 @@ None — no model or schema changes.
 
 #### Automated
 
-- [x] 1.1 Type checking passes (mypy)
-- [x] 1.2 Linting passes (ruff check + format --check)
-- [x] 1.3 reservation view tests pass
-- [x] 1.4 service test for is_reservation_admin passes
+- [x] 1.1 Type checking passes (mypy) — cba4f86
+- [x] 1.2 Linting passes (ruff check + format --check) — cba4f86
+- [x] 1.3 reservation view tests pass — cba4f86
+- [x] 1.4 service test for is_reservation_admin passes — cba4f86
 
 #### Manual
 
-- [x] 1.5 Staff can cancel another user's not-yet-ended reservation via direct POST
-- [x] 1.6 Normal user still 404s on the same POST
+- [x] 1.5 Staff can cancel another user's not-yet-ended reservation via direct POST — cba4f86
+- [x] 1.6 Normal user still 404s on the same POST — cba4f86
 
 ### Phase 2: Inline admin controls in the environment row
 
 #### Automated
 
-- [ ] 2.1 Type checking passes (mypy)
-- [ ] 2.2 Linting passes (ruff check + format --check)
-- [ ] 2.3 View/template tests pass
-- [ ] 2.4 Full test suite passes
+- [x] 2.1 Type checking passes (mypy)
+- [x] 2.2 Linting passes (ruff check + format --check)
+- [x] 2.3 View/template tests pass
+- [x] 2.4 Full test suite passes
 
 #### Manual
 
-- [ ] 2.5 Staff sees and can use edit/cancel controls on others' reservations in the browse page
-- [ ] 2.6 Normal user sees unchanged plain-text listing, no controls
-- [ ] 2.7 Stale Busy/Free badge after inline cancel confirmed acceptable
+- [x] 2.5 Staff sees and can use edit/cancel controls on others' reservations in the browse page
+- [x] 2.6 Normal user sees unchanged plain-text listing, no controls
+- [ ] 2.7 Stale Busy/Free badge after inline cancel confirmed acceptable (superseded by Phase 3)

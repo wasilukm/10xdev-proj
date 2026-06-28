@@ -17,7 +17,7 @@
     </thead>
     <tbody>
       {% for row in rows %}
-        {% with env=row.env is_busy=row.is_busy current_reservation=row.current_reservation upcoming_reservations=row.upcoming_reservations booking_form=row.booking_form %}
+        {% with env=row.env is_busy=row.is_busy current_reservation=row.current_reservation upcoming_reservations=row.upcoming_reservations booking_form=row.booking_form current_item=row.current_item upcoming_items=row.upcoming_items %}
           {% include "catalog/_environment_row.html" %}
         {% endwith %}
       {% endfor %}
