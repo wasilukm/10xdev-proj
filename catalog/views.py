@@ -121,8 +121,8 @@ def environment_edit(request: HttpRequest, pk: int) -> HttpResponse:
             # staff user hasn't yet confirmed, re-render the form with the list
             # of affected reservations and a hidden confirm flag instead of saving.
             if not request.POST.get("confirm") and affected.exists():
-                preview = list(affected[: _AFFECTED_PREVIEW + 1])
-                more = len(preview) - _AFFECTED_PREVIEW
+                preview = list(affected[:_AFFECTED_PREVIEW])
+                more = max(affected.count() - _AFFECTED_PREVIEW, 0)
                 return render(
                     request,
                     "catalog/environment_form.html",
@@ -130,8 +130,8 @@ def environment_edit(request: HttpRequest, pk: int) -> HttpResponse:
                         "form": form,
                         "mode": "edit",
                         "env": env,
-                        "affected": preview[:_AFFECTED_PREVIEW],
-                        "affected_more": more if more > 0 else 0,
+                        "affected": preview,
+                        "affected_more": more,
                         "needs_confirm": True,
                     },
                 )

@@ -15,3 +15,10 @@
 - **Problem**: When triage is chosen directly, no report file is written, so findings/decisions/rationale aren't persisted and /10x-archive later warns "no impl-review found".
 - **Rule**: Always write the review report to reviews/impl-review.md and set change.md status to impl_reviewed before finishing a review — even when the user triages directly without choosing a save option.
 - **Applies to**: impl-review
+
+## Cross-app data migrations need an explicit dependency, and must be verified on a fresh DB
+
+- **Context**: Any Django data migration (RunPython) that reads a model from another app via a relation — e.g. `catalog/migrations/0003_backfill_environment_updated_at.py` annotating `Min("reservations__created_at")` from within the catalog app.
+- **Problem**: 0003 declared only `dependencies = [("catalog", "0002_...")]`. On a fresh-DB build the executor ordered it before the reservations FK existed in the historical project state, so the reverse accessor was unknown → `FieldError: Cannot resolve keyword 'reservations'`. This broke `create_test_db` (the entire suite couldn't run) and would fail a clean CI/prod `migrate`. It was missed because the authoring "migrate clean" check ran against an already-migrated dev DB (a single-pending-node state that includes every app's tables), which masks the missing dependency — and tests were not re-run after the migration was written.
+- **Rule**: When a data migration references another app's model (FK, reverse relation, or `apps.get_model` from a sibling app), add that app's relevant migration to `dependencies` so ordering is deterministic. Always verify migration changes by building a fresh test/throwaway DB (`manage.py test`, or migrate on an empty DB), never by `migrate` on the existing dev DB.
+- **Applies to**: implement, impl-review
