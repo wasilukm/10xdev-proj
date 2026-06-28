@@ -36,6 +36,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | S-04  | edit-own-reservation            | modify or cancel a reservation they own                                                                             | S-02             | FR-012, FR-013, FR-015, Access Control                    | done     |
 | S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | done     |
 | S-06  | admin-reservation-override      | (admin) modify or cancel any reservation, including those owned by other users                                      | S-02, S-01       | FR-014, Access Control                                    | done     |
+| S-07  | ui-visual-polish                | see a visually polished, legible UI across every page — color, clear row/column structure, state badges, consistent type & spacing — built on a reusable design-token layer | S-02, S-03, S-04, S-05, S-06 | — (SC §Primary <30s legibility, §Secondary horizon, NFR §response) | proposed |
 | SPIKE-01 | timezone-calendar-edge-cases | (spike) understand & harden time-window handling against DST gaps/folds, leap years, and other calendar boundaries  | S-02             | NFR §reliability, FR-011, FR-015                          | proposed |
 | Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | done |
 | Q-02  | lint-and-format-gate            | (enabler) a linter/formatter (tool TBD via research) runs locally via a per-edit agent hook + pre-commit, blocking style/lint drift | Q-01             | — (traces to `CLAUDE.md` lint tripwire, `test-plan.md` §5, M3 L3) | done     |
@@ -50,6 +51,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | B      | Account lifecycle    | `S-01`                                               | Standalone visible-enabler slice; joins Stream A at `S-02` and Stream C at `S-05`.                |
 | C      | Admin catalogue      | `S-05`                                               | Joins Stream A at `F-01` and Stream B at `S-01`; can run parallel with the rest of Stream A once both are done. |
 | D      | Quality / enablers   | `Q-01` → `Q-02`                                      | Cross-cutting; not vertical slices. `Q-01` (typing) lands first and stands up the lefthook `pre-commit` harness + `.claude/` hook conventions; `Q-02` (lint + format) extends that harness and adds the M3 L3 per-edit agent hook. |
+| E      | Presentation / UX    | `S-07`                                               | Cross-cutting visual polish over the pages Stream A/B/C produced; ready once the user-facing slices it restyles are done. Establishes the design-token layer a future timeline-reservations view will inherit. |
 
 ## Baseline
 
@@ -157,6 +159,24 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 - **Risk:** The audit-trail question — "should admin overrides be logged so the original owner can see who cancelled their reservation?" — is not in scope per PRD §Non-Goals (no notifications) but is the natural next concern. Keep this slice strictly to the FR-014 capability; do not grow it.
 - **Status:** done
 
+### S-07: Visual / UX polish across all pages
+
+- **Outcome:** Every existing page reads as an intentionally designed product rather than raw Django output: a coherent color palette, clear visual structure for the env-list and reservations tables (legible row/column separation, hover/selected row states), colored availability **state badges** (free / busy) and reservation-owner cues, consistent typography and spacing, and styled forms/buttons across the booking, my-reservations, auth, and admin (manage / form / confirm-delete) surfaces. No new end-user capability — this restyles what S-02–S-06 already deliver so the <30-second find-and-reserve flow is fast to *scan*, not just functionally complete.
+- **Change ID:** ui-visual-polish
+- **PRD refs:** — (no direct FR; traces to Success Criteria §Primary — legibility serves the <30s scan-and-reserve target — §Secondary at-a-glance 24h horizon, and NFR §user-perceived response / browser support)
+- **Prerequisites:** S-02, S-03, S-04, S-05, S-06 (polishes the pages those slices created; all done)
+- **Parallel with:** SPIKE-01 — but both touch templates; coordinate to avoid churn if SPIKE-01's form-layer hardening lands concurrently
+- **Approach (committed):** Hand-rolled design system, **no CSS framework and no build step** — a single static stylesheet served by the existing whitenoise pipeline. Three layers: (1) a modern CSS **reset/normalize** at the top; (2) a **design-token layer expressed as CSS custom properties** (color palette incl. `--color-free` / `--color-busy` / owner-accent, spacing scale, type scale, radii); (3) **component classes** (table + row states, badges, form fields, buttons, nav). Rejected: a utility framework (Tailwind) because it adds a Node build to a deliberately uv-only, build-step-free stack; a classless framework (Pico/Water) because it yields a templated look and gives nothing for the row/column-legibility and state-badge work that is the actual ask. See the styling-approach decision discussion (2026-06-28) and the `frontend-design` skill.
+- **Forward-compat (timeline view):** A timeline / calendar reservations view is a planned **future** feature (its own slice + `/10x-plan`; likely a JS calendar library and new data shaping — explicitly **not** part of S-07). S-07 must leave a clean seam for it: define the design tokens as CSS custom properties from day one, and choose the **free / busy / owner color semantics so they read well as a filled time-block, not only as a badge** — those same tokens and state colors are what a future timeline (hand-built CSS-grid or a themed calendar lib) will inherit for visual consistency.
+- **Blockers:** —
+- **Unknowns:**
+  - Exact palette, type scale, and component visual language — Owner: user / research (the `frontend-design` skill drives the aesthetic direction). Block: no.
+  - Does any page need a layout change (e.g. the env-list table → cards on narrow viewports), or is this purely a styling pass over existing markup? — Owner: `/10x-plan`. Block: no.
+  - Light-only, or also a dark-mode token set (cheap to leave room for given CSS-custom-property tokens)? — Owner: user. Block: no.
+- **Risk:** Low blast radius (CSS + template class attributes, no behavior change), but two traps: (a) scope creep into re-architecting templates or sneaking in the timeline view — keep it a styling pass with a token seam; (b) inconsistency from styling page-by-page without the token layer first — land the reset + tokens before the per-page component classes so everything shares one source of truth.
+- **Source:** Raised 2026-06-28 — end-user functionality is complete (S-01–S-06 done) but pages render as raw, uncolored Django output with no clear table structure. First user-experience-quality slice; sequenced after the functional slices it restyles.
+- **Status:** proposed
+
 ## Quality / Enablers
 
 Cross-cutting engineering-quality work that is not a user-visible slice. Items here harden the codebase against the agent-friendliness quality bar set in `context/foundation/tech-stack.md` rather than delivering a new user outcome.
@@ -224,6 +244,7 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
 | S-04       | edit-own-reservation            | EnvBooker: Modify and cancel own reservation                                                           | no                    | Promotes to ready once S-02 is done               |
 | S-05       | admin-env-catalog               | EnvBooker: Admin env-catalogue UI (create / modify-with-warning / delete-if-no-active)                 | no                    | Promotes to ready once F-01 + S-01 are done       |
 | S-06       | admin-reservation-override      | EnvBooker: Admin override of any reservation                                                           | no                    | Promotes to ready once S-02 + S-01 are done       |
+| S-07       | ui-visual-polish                | EnvBooker: Visual / UX polish across all pages (hand-rolled design-token CSS)                          | yes                   | All prereqs (S-02–S-06) done. Run `/10x-new ui-visual-polish` then `/10x-plan`. Timeline view stays a separate future slice |
 | SPIKE-01   | timezone-calendar-edge-cases    | EnvBooker: Spike — DST/leap-year/calendar edge-case hardening for reservation time windows             | no                    | Deferred from S-02 impl review (F5); ready after S-02 |
 | Q-01       | typing-and-type-check-gate      | EnvBooker: Retrofit type hints + mypy (django-stubs) type-check gate                                    | no                    | Promotes to ready once S-02 is done (baseline to annotate)        |
 | Q-02       | lint-and-format-gate            | EnvBooker: Lint + format tooling (tool TBD) with pre-commit + per-edit agent hook                       | no                    | Promotes to ready once Q-01 is done; start with tool-selection research |
