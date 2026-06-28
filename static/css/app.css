@@ -137,35 +137,83 @@ h3 {
   --color-focus: #3b3fbf;
 }
 
+/* Dark theme tokens. Applied when the user manually selects dark
+   (:root[data-theme="dark"]) OR when the OS prefers dark and the user has not
+   forced light. The `--dark-*` values are defined once and remapped by both
+   selectors to avoid duplicating the palette. */
+:root {
+  --dark-bg: #0e1419;
+  --dark-surface: #18222b;
+  --dark-surface-alt: #1d2832;
+  --dark-text: #e4ecf2;
+  --dark-text-muted: #93a3b3;
+  --dark-border: #2a3742;
+  --dark-border-strong: #3a4956;
+  --dark-accent: #7c84ff;
+  --dark-accent-hover: #9aa1ff;
+  --dark-accent-bg: #232846;
+  --dark-free: #2fd08e;
+  --dark-free-bg: #11302660;
+  --dark-busy: #e0934a;
+  --dark-busy-bg: #33240f80;
+  --dark-warn-text: #f0c890;
+  --dark-warn-bg: #2c2412;
+  --dark-warn-border: #5c4a23;
+  --dark-danger: #ff6b61;
+  --dark-danger-hover: #ff8a82;
+  --dark-danger-bg: #3a1d1b;
+  --dark-focus: #9aa1ff;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: var(--dark-bg);
+  --color-surface: var(--dark-surface);
+  --color-surface-alt: var(--dark-surface-alt);
+  --color-text: var(--dark-text);
+  --color-text-muted: var(--dark-text-muted);
+  --color-border: var(--dark-border);
+  --color-border-strong: var(--dark-border-strong);
+  --color-accent: var(--dark-accent);
+  --color-accent-hover: var(--dark-accent-hover);
+  --color-accent-bg: var(--dark-accent-bg);
+  --color-free: var(--dark-free);
+  --color-free-bg: var(--dark-free-bg);
+  --color-busy: var(--dark-busy);
+  --color-busy-bg: var(--dark-busy-bg);
+  --color-warn-text: var(--dark-warn-text);
+  --color-warn-bg: var(--dark-warn-bg);
+  --color-warn-border: var(--dark-warn-border);
+  --color-danger: var(--dark-danger);
+  --color-danger-hover: var(--dark-danger-hover);
+  --color-danger-bg: var(--dark-danger-bg);
+  --color-focus: var(--dark-focus);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0e1419;
-    --color-surface: #18222b;
-    --color-surface-alt: #1d2832;
-    --color-text: #e4ecf2;
-    --color-text-muted: #93a3b3;
-    --color-border: #2a3742;
-    --color-border-strong: #3a4956;
-
-    --color-accent: #7c84ff;
-    --color-accent-hover: #9aa1ff;
-    --color-accent-bg: #232846;
-
-    --color-free: #2fd08e;
-    --color-free-bg: #11302660;
-    --color-busy: #e0934a;
-    --color-busy-bg: #33240f80;
-
-    --color-warn-text: #f0c890;
-    --color-warn-bg: #2c2412;
-    --color-warn-border: #5c4a23;
-
-    --color-danger: #ff6b61;
-    --color-danger-hover: #ff8a82;
-    --color-danger-bg: #3a1d1b;
-
-    --color-focus: #9aa1ff;
-
+  :root:not([data-theme="light"]) {
+    --color-bg: var(--dark-bg);
+    --color-surface: var(--dark-surface);
+    --color-surface-alt: var(--dark-surface-alt);
+    --color-text: var(--dark-text);
+    --color-text-muted: var(--dark-text-muted);
+    --color-border: var(--dark-border);
+    --color-border-strong: var(--dark-border-strong);
+    --color-accent: var(--dark-accent);
+    --color-accent-hover: var(--dark-accent-hover);
+    --color-accent-bg: var(--dark-accent-bg);
+    --color-free: var(--dark-free);
+    --color-free-bg: var(--dark-free-bg);
+    --color-busy: var(--dark-busy);
+    --color-busy-bg: var(--dark-busy-bg);
+    --color-warn-text: var(--dark-warn-text);
+    --color-warn-bg: var(--dark-warn-bg);
+    --color-warn-border: var(--dark-warn-border);
+    --color-danger: var(--dark-danger);
+    --color-danger-hover: var(--dark-danger-hover);
+    --color-danger-bg: var(--dark-danger-bg);
+    --color-focus: var(--dark-focus);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
   }
@@ -669,8 +717,26 @@ p {
 .reservation-card__forms {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-4);
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+}
+/* lay the edit form out as a tidy inline row (scoped so the env-list booking
+   form, which uses form.as_p, is unaffected) */
+.reservation-card__forms .form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+.reservation-card__forms .form label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+.reservation-card__forms .form input {
+  max-width: 7rem;
 }
 
 /* --- auth card --------------------------------------------------------- */

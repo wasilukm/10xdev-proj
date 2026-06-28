@@ -5,6 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}EnvBooker{% endblock %}</title>
+  <script>
+    // Apply a saved theme before first paint to avoid a flash of the wrong theme.
+    (function () {
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "dark" || t === "light") {
+          document.documentElement.setAttribute("data-theme", t);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="{% static 'vendor/htmx.min.js' %}"></script>
   {% block extra_head %}{% endblock %}
@@ -27,6 +38,8 @@
     <a class="site-nav__link" href="{% url 'login' %}">Sign in</a>
     <a class="site-nav__link" href="{% url 'signup' %}">Sign up</a>
   {% endif %}
+  <button class="btn btn--sm" type="button" data-theme-toggle
+          aria-label="Toggle light or dark theme" title="Toggle light / dark">◐ Theme</button>
 </nav>
 {% if messages %}
 <ul class="messages">
@@ -36,5 +49,24 @@
 <main class="site-main">
 {% block content %}{% endblock %}
 </main>
+<script>
+  // Theme toggle. Delegated on document so it keeps working after htmx swaps.
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-theme-toggle]");
+    if (!btn) return;
+    var root = document.documentElement;
+    var current = root.getAttribute("data-theme");
+    if (current !== "dark" && current !== "light") {
+      current = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    var next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("theme", next);
+    } catch (err) {}
+  });
+</script>
 </body>
 </html>
