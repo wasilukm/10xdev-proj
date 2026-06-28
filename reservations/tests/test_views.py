@@ -469,3 +469,213 @@ class MyReservationsViewTest(TestCase):
         self.assertIn(
             "Definition changed since you reserved", response.content.decode()
         )
+
+
+# ---------------------------------------------------------------------------
+# Admin override: staff/superuser may edit/cancel any user's reservation
+# ---------------------------------------------------------------------------
+
+
+class ReservationAdminOverrideViewTest(TestCase):
+    """Staff/superusers can edit and cancel reservations they do not own.
+
+    timezone.now frozen to 2024-01-01 08:00 UTC. The target reservation
+    [10:00, 12:00) is future and owned by `owner`; the admin acts on it.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="owner@example.com",
+            password="pass",
+            first_name="Olive",
+            last_name="Owner",
+        )
+        self.admin = User.objects.create_user(
+            email="admin@example.com",
+            password="pass",
+            is_staff=True,
+        )
+        self.env = Environment.objects.create(
+            name="override-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.owner,
+        )
+        self.reservation = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(10, 12),
+        )
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_can_edit_other_users_reservation(self, _):
+        """Staff edits another user's reservation duration."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4"})  # start=10:00, end=14:00
+        self.assertEqual(response.status_code, 200)
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(14))
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_can_cancel_other_users_reservation(self, _):
+        """Staff cancels another user's reservation; row deleted, empty body."""
+        self.client.login(email="admin@example.com", password="pass")
+        pk = self.reservation.pk
+        url = reverse("reservations:cancel", args=[pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"")
+        self.assertFalse(Reservation.objects.filter(pk=pk).exists())
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_cannot_edit_past_reservation(self, _):
+        """The past-block time rule applies to admins too."""
+        past = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(4, 6),
+        )
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[past.pk])
+        response = self.client.post(url, {"hours": "2"})
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_cannot_cancel_past_reservation(self, _):
+        """The past-block time rule applies to admins on cancel too."""
+        past = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(4, 6),
+        )
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:cancel", args=[past.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_non_admin_still_cannot_edit_others(self, _):
+        """Regression guard: a regular non-owner still gets 404 on edit."""
+        User.objects.create_user(email="bystander@example.com", password="pass")
+        self.client.login(email="bystander@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4"})
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_non_admin_still_cannot_cancel_others(self, _):
+        """Regression guard: a regular non-owner still gets 404 on cancel."""
+        User.objects.create_user(email="bystander2@example.com", password="pass")
+        self.client.login(email="bystander2@example.com", password="pass")
+        url = reverse("reservations:cancel", args=[self.reservation.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Whole-row re-render: admin edit/cancel from the browse env-row (the hidden
+# `row` marker) re-renders the entire row so the badge + owner/time update in
+# place, instead of swapping only the item partial.
+# ---------------------------------------------------------------------------
+
+
+class ReservationRowRerenderViewTest(TestCase):
+    """Admin edit/cancel carrying the `row` marker re-renders the env row.
+
+    timezone.now frozen to 2024-01-01 08:00 UTC; [10:00, 12:00) is a future
+    reservation owned by `owner`, and the admin acts on it from the browse page.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="owner@example.com",
+            password="pass",
+            first_name="Olive",
+            last_name="Owner",
+        )
+        self.admin = User.objects.create_user(
+            email="admin@example.com",
+            password="pass",
+            is_staff=True,
+        )
+        self.env = Environment.objects.create(
+            name="override-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.owner,
+        )
+        self.reservation = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(10, 12),
+        )
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_edit_with_row_marker_rerenders_whole_row(self, _):
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4", "row": self.env.pk})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f'id="env-row-{self.env.pk}"', content)
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(14))
+        # The re-rendered row carries the reservation's inline controls.
+        self.assertIn(f'id="reservation-{self.reservation.pk}"', content)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_cancel_with_row_marker_rerenders_whole_row(self, _):
+        self.client.login(email="admin@example.com", password="pass")
+        pk = self.reservation.pk
+        url = reverse("reservations:cancel", args=[pk])
+        response = self.client.post(url, {"row": self.env.pk})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f'id="env-row-{self.env.pk}"', content)
+        self.assertFalse(Reservation.objects.filter(pk=pk).exists())
+        # The cancelled reservation's controls are gone from the re-rendered row.
+        self.assertNotIn(f'id="reservation-{pk}"', content)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_edit_without_row_marker_returns_item_partial(self, _):
+        """Regression: My Reservations edit (no marker) still swaps the item."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4"})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f'id="reservation-{self.reservation.pk}"', content)
+        self.assertNotIn(f'id="env-row-{self.env.pk}"', content)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_cancel_without_row_marker_returns_empty(self, _):
+        """Regression: My Reservations cancel (no marker) still returns empty."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:cancel", args=[self.reservation.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"")
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_invalid_edit_with_row_marker_rerenders_row_with_error(self, _):
+        """An invalid inline edit re-renders the whole row (not a bare item div),
+        keeping the table well-formed, and still surfaces the validation error."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        # hours below the 0.25 minimum -> form invalid.
+        response = self.client.post(url, {"hours": "0", "row": self.env.pk})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        # Whole row, not a bare item partial, so the <tr> swap stays valid.
+        self.assertIn(f'id="env-row-{self.env.pk}"', content)
+        self.assertIn(f'id="reservation-{self.reservation.pk}"', content)
+        # The validation error rode along into the re-rendered row.
+        self.assertIn("Ensure this value is greater than or equal to 0.25", content)
+        # Reservation unchanged.
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(12))

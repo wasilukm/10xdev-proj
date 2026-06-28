@@ -8,19 +8,33 @@
   <td>{% if is_busy %}<strong>Busy</strong>{% else %}Free{% endif %}</td>
   <td>
     {% if current_reservation %}
-      {{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}
-      {{ current_reservation.during.lower }} – {{ current_reservation.during.upper }}
+      {% if user.is_staff and current_item %}
+        {{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}:
+        {% include "reservations/_reservation_item.html" with reservation=current_item.reservation form=current_item.form is_editable=current_item.is_editable is_active=current_item.is_active conflict_message=current_item.conflict_message row_env_pk=env.pk %}
+      {% else %}
+        {{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}
+        {{ current_reservation.during.lower }} – {{ current_reservation.during.upper }}
+      {% endif %}
     {% else %}
       —
     {% endif %}
   </td>
   <td>
-    {% for r in upcoming_reservations %}
-      {{ r.owner.get_full_name|default:r.owner.email }}
-      {{ r.during.lower }} – {{ r.during.upper }}<br>
-    {% empty %}
-      —
-    {% endfor %}
+    {% if user.is_staff %}
+      {% for item in upcoming_items %}
+        {{ item.reservation.owner.get_full_name|default:item.reservation.owner.email }}:
+        {% include "reservations/_reservation_item.html" with reservation=item.reservation form=item.form is_editable=item.is_editable is_active=item.is_active conflict_message=item.conflict_message row_env_pk=env.pk %}
+      {% empty %}
+        —
+      {% endfor %}
+    {% else %}
+      {% for r in upcoming_reservations %}
+        {{ r.owner.get_full_name|default:r.owner.email }}
+        {{ r.during.lower }} – {{ r.during.upper }}<br>
+      {% empty %}
+        —
+      {% endfor %}
+    {% endif %}
   </td>
   <td>
     {% if booking_form %}

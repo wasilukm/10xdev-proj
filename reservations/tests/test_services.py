@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 
 from accounts.models import User
@@ -8,11 +9,31 @@ from reservations.models import Reservation
 from reservations.services import (
     MAX_DURATION,
     compute_end,
+    is_reservation_admin,
     next_free_window,
     next_reservation_after,
 )
 
 from ._helpers import _dt, _range
+
+
+class IsReservationAdminTest(TestCase):
+    def test_staff_is_admin(self):
+        user = User.objects.create_user(
+            email="staff@example.com", password="pass", is_staff=True
+        )
+        self.assertTrue(is_reservation_admin(user))
+
+    def test_superuser_is_admin(self):
+        user = User.objects.create_superuser(email="super@example.com", password="pass")
+        self.assertTrue(is_reservation_admin(user))
+
+    def test_regular_user_is_not_admin(self):
+        user = User.objects.create_user(email="plain@example.com", password="pass")
+        self.assertFalse(is_reservation_admin(user))
+
+    def test_anonymous_is_not_admin(self):
+        self.assertFalse(is_reservation_admin(AnonymousUser()))
 
 
 class ComputeEndTest(TestCase):

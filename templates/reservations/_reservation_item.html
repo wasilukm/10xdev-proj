@@ -13,9 +13,10 @@
   {% endif %}
   {% if is_editable %}
     <form hx-post="{% url 'reservations:edit' reservation.pk %}"
-          hx-target="#reservation-{{ reservation.pk }}"
+          hx-target="{% if row_env_pk %}#env-row-{{ row_env_pk }}{% else %}#reservation-{{ reservation.pk }}{% endif %}"
           hx-swap="outerHTML">
       {% csrf_token %}
+      {% if row_env_pk %}<input type="hidden" name="row" value="{{ row_env_pk }}">{% endif %}
       <label>{{ form.hours.label }}: {{ form.hours }}</label>
       {% if form.hours.errors %}
         <span> &mdash; {{ form.hours.errors|join:", " }}</span>
@@ -26,10 +27,11 @@
       <button type="submit">Update duration</button>
     </form>
     <form hx-post="{% url 'reservations:cancel' reservation.pk %}"
-          hx-target="#reservation-{{ reservation.pk }}"
+          hx-target="{% if row_env_pk %}#env-row-{{ row_env_pk }}{% else %}#reservation-{{ reservation.pk }}{% endif %}"
           hx-swap="outerHTML"
           hx-confirm="Cancel this reservation?">
       {% csrf_token %}
+      {% if row_env_pk %}<input type="hidden" name="row" value="{{ row_env_pk }}">{% endif %}
       <button type="submit">Cancel reservation</button>
     </form>
   {% endif %}

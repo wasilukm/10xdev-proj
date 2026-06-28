@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from reservations.forms import ReservationForm
 from reservations.services import active_or_upcoming_reservations
+from reservations.views import admin_row_items
 
 from .forms import EnvironmentForm
 from .models import Environment
@@ -54,6 +55,7 @@ def environment_list(request: HttpRequest) -> HttpResponse:
     for env in envs:
         row: dict[str, Any] = dict(build_row_context(env, now=now))
         row["booking_form"] = ReservationForm(initial={"environment": env.pk})
+        row.update(admin_row_items(request, row))
         rows.append(row)
 
     if request.headers.get("HX-Request"):

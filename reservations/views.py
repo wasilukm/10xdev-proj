@@ -26,6 +26,8 @@ def _row_response(
     form: ReservationForm | None = None,
     conflict_message: str | None = None,
     next_free: datetime | None = None,
+    edit_pk: int | None = None,
+    edit_form: ReservationEditForm | None = None,
 ) -> HttpResponse:
     if form is None:
         form = ReservationForm(initial={"environment": env.pk})
@@ -37,10 +39,33 @@ def _row_response(
             "next_free": next_free,
         }
     )
+    ctx.update(admin_row_items(request, ctx, edit_pk=edit_pk, edit_form=edit_form))
     return render(request, "catalog/_environment_row.html", ctx)
 
 
-def _item_context(
+def _reservation_for_request(request: HttpRequest, pk: int) -> Reservation:
+    """Fetch a reservation the request is allowed to mutate.
+
+    Admins (staff/superuser) may manage any reservation; everyone else is
+    scoped to their own. A non-admin requesting another user's reservation
+    gets a 404 via the owner filter.
+    """
+    if services.is_reservation_admin(request.user):
+        return get_object_or_404(Reservation, pk=pk)
+    return get_object_or_404(Reservation, pk=pk, owner=request.user)
+
+
+def _is_row_request(request: HttpRequest) -> bool:
+    """True when an admin acts on a reservation from the browse env-row.
+
+    The inline env-row controls post a hidden ``row`` field; on those requests
+    edit/cancel re-render the whole env row instead of the item partial, so the
+    Busy/Free badge and owner/time line update in place.
+    """
+    return bool(request.POST.get("row")) and services.is_reservation_admin(request.user)
+
+
+def build_reservation_item(
     reservation: Reservation,
     form: ReservationEditForm | None = None,
     conflict_message: str | None = None,
@@ -67,6 +92,37 @@ def _item_context(
     }
 
 
+def admin_row_items(
+    request: HttpRequest,
+    row_ctx: dict[str, Any],
+    edit_pk: int | None = None,
+    edit_form: ReservationEditForm | None = None,
+) -> dict[str, Any]:
+    """Build per-reservation item contexts for the env row, for admin viewers only.
+
+    Returns {current_item, upcoming_items} so the row template can render the
+    edit/cancel controls inline. Non-admins get an empty dict (template falls
+    back to the plain-text listing).
+
+    When ``edit_pk``/``edit_form`` are given, the matching reservation's item
+    uses that bound form instead of a fresh one, so a rejected inline edit
+    re-renders the whole row with the validation error still attached.
+    """
+    if not services.is_reservation_admin(request.user):
+        return {}
+    current = row_ctx.get("current_reservation")
+    upcoming = row_ctx.get("upcoming_reservations", [])
+
+    def _item(reservation: Reservation) -> dict[str, Any]:
+        form = edit_form if edit_pk is not None and reservation.pk == edit_pk else None
+        return build_reservation_item(reservation, form=form)
+
+    return {
+        "current_item": _item(current) if current else None,
+        "upcoming_items": [_item(r) for r in upcoming],
+    }
+
+
 def _item_response(
     request: HttpRequest,
     reservation: Reservation,
@@ -76,7 +132,7 @@ def _item_response(
     return render(
         request,
         "reservations/_reservation_item.html",
-        _item_context(reservation, form, conflict_message),
+        build_reservation_item(reservation, form, conflict_message),
     )
 
 
@@ -133,20 +189,27 @@ def my_reservations(request: HttpRequest) -> HttpResponse:
         .select_related("environment")
         .order_by("lower_bound")
     )
-    items = [_item_context(r) for r in reservations]
+    items = [build_reservation_item(r) for r in reservations]
     return render(request, "reservations/my_reservations.html", {"items": items})
 
 
 @login_required
 @require_POST
 def reservation_edit(request: HttpRequest, pk: int) -> HttpResponse:
-    reservation = get_object_or_404(Reservation, pk=pk, owner=request.user)
+    reservation = _reservation_for_request(request, pk)
     now = timezone.now()
     if reservation.during.upper <= now:
         raise Http404
 
     form = ReservationEditForm(request.POST, start=reservation.during.lower)
     if not form.is_valid():
+        if _is_row_request(request):
+            return _row_response(
+                request,
+                reservation.environment,
+                edit_pk=reservation.pk,
+                edit_form=form,
+            )
         return _item_response(request, reservation, form=form)
 
     during = form.cleaned_data["during"]
@@ -169,14 +232,21 @@ def reservation_edit(request: HttpRequest, pk: int) -> HttpResponse:
         else:
             raise
 
+    if _is_row_request(request):
+        return _row_response(
+            request, reservation.environment, conflict_message=conflict_message
+        )
     return _item_response(request, reservation, conflict_message=conflict_message)
 
 
 @login_required
 @require_POST
 def reservation_cancel(request: HttpRequest, pk: int) -> HttpResponse:
-    reservation = get_object_or_404(Reservation, pk=pk, owner=request.user)
+    reservation = _reservation_for_request(request, pk)
     if reservation.during.upper <= timezone.now():
         raise Http404
+    environment = reservation.environment
     reservation.delete()
+    if _is_row_request(request):
+        return _row_response(request, environment)
     return HttpResponse("")

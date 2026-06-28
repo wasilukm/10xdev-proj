@@ -698,3 +698,61 @@ class EnvironmentDeleteViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["is_blocked"])
         self.assertTrue(Environment.objects.filter(pk=self.env.pk).exists())
+
+
+class AdminInlineControlsTest(TestCase):
+    """Phase 2: staff see inline edit/cancel controls on other users' reservations
+    in the browse list; non-staff see the unchanged plain-text listing."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="rowowner@example.com",
+            password="pass",
+            first_name="Bob",
+            last_name="Jones",
+        )
+        self.admin = User.objects.create_user(
+            email="rowadmin@example.com",
+            password="pass",
+            is_staff=True,
+        )
+        self.plain = User.objects.create_user(
+            email="rowplain@example.com",
+            password="pass",
+        )
+        self.env = Environment.objects.create(
+            name="row-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.owner,
+        )
+        # Upcoming reservation within the 24h window (relative to real now).
+        now = timezone.now()
+        self.reservation = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=Range(
+                lower=now + timedelta(hours=1),
+                upper=now + timedelta(hours=3),
+                bounds="[)",
+            ),
+        )
+        self.cancel_url = reverse("reservations:cancel", args=[self.reservation.pk])
+
+    def test_staff_sees_inline_controls_for_other_users_reservation(self):
+        self.client.login(email="rowadmin@example.com", password="pass")
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(self.cancel_url, content)
+        self.assertIn("Update duration", content)
+
+    def test_non_staff_sees_no_controls(self):
+        self.client.login(email="rowplain@example.com", password="pass")
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn(self.cancel_url, content)
+        self.assertNotIn("Update duration", content)
