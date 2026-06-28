@@ -1,30 +1,34 @@
-<div id="reservation-{{ reservation.pk }}">
-  <p>
-    <strong>{{ reservation.environment.name }}</strong>
-    &mdash; Start: {{ reservation.during.lower|date:"Y-m-d H:i" }}
-    &mdash; End: {{ reservation.during.upper|date:"Y-m-d H:i" }}
-    &mdash; {% if is_active %}In progress{% else %}Upcoming{% endif %}
-    {% if definition_changed %}
-      <span class="badge">Definition changed since you reserved</span>
+<div id="reservation-{{ reservation.pk }}" class="reservation-card {% if is_active %}reservation-card--active{% endif %}">
+  <div class="reservation-card__head">
+    <span class="reservation-card__env">{{ reservation.environment.name }}</span>
+    <span class="reservation-card__time">{{ reservation.during.lower|date:"Y-m-d H:i" }} – {{ reservation.during.upper|date:"Y-m-d H:i" }}</span>
+    {% if is_active %}
+      <span class="badge badge--active">In progress</span>
+    {% else %}
+      <span class="badge badge--upcoming">Upcoming</span>
     {% endif %}
-  </p>
+    {% if definition_changed %}
+      <span class="badge badge--changed">Definition changed since you reserved</span>
+    {% endif %}
+  </div>
   {% if conflict_message %}
-    <p><strong>{{ conflict_message }}</strong></p>
+    <p class="alert alert--conflict">{{ conflict_message }}</p>
   {% endif %}
   {% if is_editable %}
-    <form hx-post="{% url 'reservations:edit' reservation.pk %}"
+  <div class="reservation-card__forms">
+    <form class="form form--inline" hx-post="{% url 'reservations:edit' reservation.pk %}"
           hx-target="{% if row_env_pk %}#env-row-{{ row_env_pk }}{% else %}#reservation-{{ reservation.pk }}{% endif %}"
           hx-swap="outerHTML">
       {% csrf_token %}
       {% if row_env_pk %}<input type="hidden" name="row" value="{{ row_env_pk }}">{% endif %}
       <label>{{ form.hours.label }}: {{ form.hours }}</label>
       {% if form.hours.errors %}
-        <span> &mdash; {{ form.hours.errors|join:", " }}</span>
+        <span class="field__error">{{ form.hours.errors|join:", " }}</span>
       {% endif %}
       {% if form.non_field_errors %}
-        <p>{{ form.non_field_errors|join:", " }}</p>
+        <span class="field__error">{{ form.non_field_errors|join:", " }}</span>
       {% endif %}
-      <button type="submit">Update duration</button>
+      <button class="btn btn--sm" type="submit">Update duration</button>
     </form>
     <form hx-post="{% url 'reservations:cancel' reservation.pk %}"
           hx-target="{% if row_env_pk %}#env-row-{{ row_env_pk }}{% else %}#reservation-{{ reservation.pk }}{% endif %}"
@@ -32,7 +36,8 @@
           hx-confirm="Cancel this reservation?">
       {% csrf_token %}
       {% if row_env_pk %}<input type="hidden" name="row" value="{{ row_env_pk }}">{% endif %}
-      <button type="submit">Cancel reservation</button>
+      <button class="btn btn--danger btn--sm" type="submit">Cancel reservation</button>
     </form>
+  </div>
   {% endif %}
 </div>

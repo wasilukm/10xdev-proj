@@ -1,0 +1,712 @@
+/* ==========================================================================
+   EnvBooker — app.css
+   A hand-rolled design system. No framework, no build step.
+   Identity: "operations console" — an instrument panel for a contended pool
+   of shared test environments. Monospace carries data + labels; a colored
+   status spine down each env row makes the pool's free/busy pattern scannable
+   at a glance (and is the seam a future timeline view inherits).
+
+   Layers:  1) reset  ·  2) design tokens  ·  3) components
+   ========================================================================== */
+
+/* ===========================================================================
+   1. RESET / NORMALIZE
+   =========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  font-weight: 650;
+}
+
+/* ===========================================================================
+   2. DESIGN TOKENS
+   Semantic CSS custom properties. The color-* tokens are the only thing the
+   dark theme overrides, so everything below layer 2 is theme-agnostic.
+   Free/busy are saturated enough to read as a filled timeline block, not only
+   a badge — the forward-compat contract for the future timeline view.
+   =========================================================================== */
+:root {
+  color-scheme: light dark;
+
+  /* — type — */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code",
+    Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem; /* 15px — console density */
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  /* — spacing — */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* — radii / elevation / lines — */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --border-width: 1px;
+  --spine-width: 4px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 33, 0.06),
+    0 1px 3px rgba(16, 24, 33, 0.08);
+  --shadow-md: 0 4px 12px rgba(16, 24, 33, 0.1);
+
+  /* — color (light) — */
+  --color-bg: #f5f7f9;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fafbfc; /* zebra rows */
+  --color-text: #16202a;
+  --color-text-muted: #5b6b7a;
+  --color-border: #dce3ea;
+  --color-border-strong: #c3cdd7;
+
+  --color-accent: #3b3fbf; /* primary actions, brand, owner cue */
+  --color-accent-hover: #3034a3;
+  --color-accent-bg: #ecedfb;
+
+  --color-free: #0e8c6a;
+  --color-free-bg: #dcf3ea;
+  --color-busy: #b5651d;
+  --color-busy-bg: #fbebd8;
+
+  --color-warn-text: #7a4a12;
+  --color-warn-bg: #fdf3e2;
+  --color-warn-border: #e6c489;
+
+  --color-danger: #c2362f;
+  --color-danger-hover: #a52a24;
+  --color-danger-bg: #fbe7e6;
+
+  --color-focus: #3b3fbf;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0e1419;
+    --color-surface: #18222b;
+    --color-surface-alt: #1d2832;
+    --color-text: #e4ecf2;
+    --color-text-muted: #93a3b3;
+    --color-border: #2a3742;
+    --color-border-strong: #3a4956;
+
+    --color-accent: #7c84ff;
+    --color-accent-hover: #9aa1ff;
+    --color-accent-bg: #232846;
+
+    --color-free: #2fd08e;
+    --color-free-bg: #11302660;
+    --color-busy: #e0934a;
+    --color-busy-bg: #33240f80;
+
+    --color-warn-text: #f0c890;
+    --color-warn-bg: #2c2412;
+    --color-warn-border: #5c4a23;
+
+    --color-danger: #ff6b61;
+    --color-danger-hover: #ff8a82;
+    --color-danger-bg: #3a1d1b;
+
+    --color-focus: #9aa1ff;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ===========================================================================
+   3. COMPONENTS
+   =========================================================================== */
+
+/* — base document — */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+h1 {
+  font-size: var(--text-2xl);
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-size: var(--text-xl);
+}
+
+p {
+  margin: 0;
+}
+
+/* --- top navigation: the console header bar ---------------------------- */
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.site-nav__brand {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--text-base);
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
+  text-decoration: none;
+  margin-right: var(--space-2);
+}
+
+.site-nav__link {
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-weight: 550;
+  padding: var(--space-1) 0;
+  border-bottom: 2px solid transparent;
+}
+.site-nav__link:hover {
+  color: var(--color-text);
+}
+.site-nav__link--active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
+.site-nav__spacer {
+  margin-left: auto;
+}
+
+.site-nav__user {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.site-nav__form {
+  display: inline;
+}
+
+/* --- main content column ----------------------------------------------- */
+.site-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-7);
+}
+
+.site-main > h1 {
+  margin-bottom: var(--space-5);
+}
+
+/* --- Django messages --------------------------------------------------- */
+.messages {
+  list-style: none;
+  padding: 0;
+  max-width: 1200px;
+  margin: var(--space-4) auto 0;
+  padding-inline: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.messages li {
+  background: var(--color-accent-bg);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border);
+  border-left: var(--spine-width) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* --- eyebrow / section label ------------------------------------------- */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+
+/* --- data tables ------------------------------------------------------- */
+.table-scroll {
+  overflow-x: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  font-size: var(--text-sm);
+}
+
+.data-table thead th {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+  white-space: nowrap;
+}
+
+.data-table tbody td {
+  padding: var(--space-3) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border);
+  vertical-align: top;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background: var(--color-accent-bg);
+}
+
+/* monospace cells for data-like columns (version, times) */
+.data-table .cell-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.cell-actions {
+  white-space: nowrap;
+}
+
+/* --- the signature: env-row status spine ------------------------------- */
+/* A colored left edge keyed to availability. Scanning the left of the table
+   reveals the whole pool's free/busy pattern; the spine color is the same
+   token a future timeline block will fill with. */
+.env-row td:first-child {
+  border-left: var(--spine-width) solid transparent;
+  font-weight: 600;
+}
+.env-row--free td:first-child {
+  border-left-color: var(--color-free);
+}
+.env-row--busy td:first-child {
+  border-left-color: var(--color-busy);
+}
+
+/* --- badges ------------------------------------------------------------ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid transparent;
+  white-space: nowrap;
+}
+.badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 2px; /* square dot — reads as a mini time-block */
+  background: currentColor;
+}
+.badge--free {
+  color: var(--color-free);
+  background: var(--color-free-bg);
+  border-color: var(--color-free);
+}
+.badge--busy {
+  color: var(--color-busy);
+  background: var(--color-busy-bg);
+  border-color: var(--color-busy);
+}
+.badge--active {
+  color: var(--color-busy);
+  background: var(--color-busy-bg);
+  border-color: var(--color-busy);
+}
+.badge--upcoming {
+  color: var(--color-accent);
+  background: var(--color-accent-bg);
+  border-color: var(--color-accent);
+}
+.badge--changed {
+  color: var(--color-warn-text);
+  background: var(--color-warn-bg);
+  border-color: var(--color-warn-border);
+}
+
+/* --- owner cue --------------------------------------------------------- */
+.owner {
+  font-weight: 600;
+  color: var(--color-text);
+}
+.owner::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--color-accent);
+  vertical-align: middle;
+}
+
+/* --- reservation rows inside table cells ------------------------------- */
+.res-line {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.res-line + .res-line {
+  margin-top: var(--space-1);
+}
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* --- forms ------------------------------------------------------------- */
+/* Works with Django's {{ form.as_p }} (each field in a <p>) by styling the
+   element selectors scoped under .form — no widget rewrite needed. */
+.form p {
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.form label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
+  max-width: 26rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+.form input[type="datetime-local"],
+.form input[type="number"] {
+  font-family: var(--font-mono);
+}
+.form input:focus-visible,
+.form select:focus-visible,
+.form textarea:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.form .helptext,
+.form .helptext li {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  list-style: none;
+  padding: 0;
+}
+
+.form ul.errorlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.form .errorlist li,
+.field__error {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* compact inline forms (booking cell, edit-duration) */
+.form--inline p {
+  margin-bottom: var(--space-2);
+}
+.form--inline input,
+.form--inline select {
+  max-width: 14rem;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* --- buttons ----------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.btn:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-text-muted);
+}
+
+.btn--primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+.btn--primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.btn--danger {
+  background: var(--color-surface);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+.btn--danger:hover {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.btn--sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: none;
+  padding: var(--space-2) 0;
+}
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+/* --- alerts / callouts ------------------------------------------------- */
+.alert {
+  border: var(--border-width) solid var(--color-border);
+  border-left: var(--spine-width) solid var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+.alert ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+.alert--warn {
+  background: var(--color-warn-bg);
+  border-color: var(--color-warn-border);
+  border-left-color: var(--color-busy);
+  color: var(--color-warn-text);
+}
+.alert--conflict {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger);
+  border-left-color: var(--color-danger);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+.alert--info {
+  background: var(--color-free-bg);
+  border-color: var(--color-free);
+  border-left-color: var(--color-free);
+  color: var(--color-free);
+}
+
+/* --- filter bar -------------------------------------------------------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.filters label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+.filters select {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+/* --- reservation card (my-reservations) -------------------------------- */
+.reservation-card {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-left: var(--spine-width) solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+.reservation-card--active {
+  border-left-color: var(--color-busy);
+}
+.reservation-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.reservation-card__env {
+  font-weight: 700;
+  font-size: var(--text-base);
+}
+.reservation-card__time {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.reservation-card__forms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+/* --- auth card --------------------------------------------------------- */
+.auth-card {
+  max-width: 26rem;
+  margin: var(--space-6) auto 0;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+.auth-card h1 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-5);
+}
+.auth-card .form-actions {
+  margin-top: var(--space-5);
+}
+.auth-alt {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* --- utility ----------------------------------------------------------- */
+.toolbar {
+  margin-bottom: var(--space-4);
+}
+.empty-state {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

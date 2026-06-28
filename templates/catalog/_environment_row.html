@@ -1,51 +1,56 @@
-<tr id="env-row-{{ env.pk }}">
+<tr id="env-row-{{ env.pk }}" class="env-row {% if is_busy %}env-row--busy{% else %}env-row--free{% endif %}">
   <td>{{ env.name }}</td>
-  <td>{{ env.version }}</td>
+  <td class="cell-mono">{{ env.version }}</td>
   <td>{{ env.project }}</td>
   <td>{{ env.purpose }}</td>
   <td>{{ env.use_case_tag }}</td>
-  <td>{{ env.owner.get_full_name|default:env.owner.email }}</td>
-  <td>{% if is_busy %}<strong>Busy</strong>{% else %}Free{% endif %}</td>
+  <td><span class="owner">{{ env.owner.get_full_name|default:env.owner.email }}</span></td>
+  <td>
+    {% if is_busy %}
+      <span class="badge badge--busy">Busy</span>
+    {% else %}
+      <span class="badge badge--free">Free</span>
+    {% endif %}
+  </td>
   <td>
     {% if current_reservation %}
       {% if user.is_staff and current_item %}
-        {{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}:
+        <span class="owner">{{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}</span>
         {% include "reservations/_reservation_item.html" with reservation=current_item.reservation form=current_item.form is_editable=current_item.is_editable is_active=current_item.is_active conflict_message=current_item.conflict_message row_env_pk=env.pk %}
       {% else %}
-        {{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}
-        {{ current_reservation.during.lower }} – {{ current_reservation.during.upper }}
+        <span class="owner">{{ current_reservation.owner.get_full_name|default:current_reservation.owner.email }}</span>
+        <span class="res-line">{{ current_reservation.during.lower }} – {{ current_reservation.during.upper }}</span>
       {% endif %}
     {% else %}
-      —
+      <span class="muted">—</span>
     {% endif %}
   </td>
   <td>
     {% if user.is_staff %}
       {% for item in upcoming_items %}
-        {{ item.reservation.owner.get_full_name|default:item.reservation.owner.email }}:
+        <span class="owner">{{ item.reservation.owner.get_full_name|default:item.reservation.owner.email }}</span>
         {% include "reservations/_reservation_item.html" with reservation=item.reservation form=item.form is_editable=item.is_editable is_active=item.is_active conflict_message=item.conflict_message row_env_pk=env.pk %}
       {% empty %}
-        —
+        <span class="muted">—</span>
       {% endfor %}
     {% else %}
       {% for r in upcoming_reservations %}
-        {{ r.owner.get_full_name|default:r.owner.email }}
-        {{ r.during.lower }} – {{ r.during.upper }}<br>
+        <span class="res-line"><span class="owner">{{ r.owner.get_full_name|default:r.owner.email }}</span> {{ r.during.lower }} – {{ r.during.upper }}</span>
       {% empty %}
-        —
+        <span class="muted">—</span>
       {% endfor %}
     {% endif %}
   </td>
   <td>
     {% if booking_form %}
-      {% if conflict_message %}<p>{{ conflict_message }}</p>{% endif %}
-      {% if next_free %}<p>Next free: {{ next_free }}</p>{% endif %}
-      <form hx-post="{% url 'reservations:create' %}"
+      {% if conflict_message %}<p class="alert alert--conflict">{{ conflict_message }}</p>{% endif %}
+      {% if next_free %}<p class="alert alert--info">Next free: {{ next_free }}</p>{% endif %}
+      <form class="form form--inline" hx-post="{% url 'reservations:create' %}"
             hx-target="#env-row-{{ env.pk }}"
             hx-swap="outerHTML">
         {% csrf_token %}
         {{ booking_form.as_p }}
-        <button type="submit">Book</button>
+        <button class="btn btn--primary btn--sm" type="submit">Book</button>
       </form>
     {% endif %}
   </td>

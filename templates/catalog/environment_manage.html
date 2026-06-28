@@ -5,10 +5,11 @@
 {% block content %}
 <h1>Manage environments</h1>
 
-<p><a href="{% url 'env_create' %}">New environment</a></p>
+<p class="toolbar"><a class="btn btn--primary" href="{% url 'env_create' %}">New environment</a></p>
 
 {% if environments %}
-<table>
+<div class="table-scroll">
+<table class="data-table">
   <thead>
     <tr>
       <th>Name</th>
@@ -24,20 +25,21 @@
     {% for env in environments %}
     <tr>
       <td>{{ env.name }}</td>
-      <td>{{ env.version }}</td>
+      <td class="cell-mono">{{ env.version }}</td>
       <td>{{ env.purpose }}</td>
       <td>{{ env.project }}</td>
       <td>{{ env.use_case_tag }}</td>
-      <td>{{ env.owner.get_full_name|default:env.owner.email }}</td>
-      <td>
-        <a href="{% url 'env_edit' env.pk %}">Edit</a>
-        <a href="{% url 'env_delete' env.pk %}">Delete</a>
+      <td><span class="owner">{{ env.owner.get_full_name|default:env.owner.email }}</span></td>
+      <td class="cell-actions">
+        <a class="btn btn--sm" href="{% url 'env_edit' env.pk %}">Edit</a>
+        <a class="btn btn--sm btn--danger" href="{% url 'env_delete' env.pk %}">Delete</a>
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
-<p>No environments yet.</p>
+<p class="empty-state">No environments yet.</p>
 {% endif %}
 {% endblock %}

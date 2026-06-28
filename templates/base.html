@@ -3,30 +3,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}EnvBooker{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="{% static 'vendor/htmx.min.js' %}"></script>
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
-<nav>
+<nav class="site-nav">
+  <a class="site-nav__brand" href="{% url 'home' %}">EnvBooker</a>
   {% if user.is_authenticated %}
-    <a href="{% url 'home' %}">Environments</a> |
-    <a href="{% url 'reservations:mine' %}">My reservations</a> |
-    {% if user.is_staff %}<a href="{% url 'env_manage' %}">Manage environments</a> |{% endif %}
-    {{ user.get_full_name|default:user.email }}
-    <form method="post" action="{% url 'logout' %}" style="display:inline">
+    <a class="site-nav__link" href="{% url 'home' %}">Environments</a>
+    <a class="site-nav__link" href="{% url 'reservations:mine' %}">My reservations</a>
+    {% if user.is_staff %}<a class="site-nav__link" href="{% url 'env_manage' %}">Manage environments</a>{% endif %}
+    <span class="site-nav__spacer"></span>
+    <span class="site-nav__user">{{ user.get_full_name|default:user.email }}</span>
+    <form class="site-nav__form" method="post" action="{% url 'logout' %}">
       {% csrf_token %}
-      <button type="submit">Sign out</button>
+      <button class="btn btn--sm" type="submit">Sign out</button>
     </form>
   {% else %}
-    <a href="{% url 'login' %}">Sign in</a> |
-    <a href="{% url 'signup' %}">Sign up</a>
+    <span class="site-nav__spacer"></span>
+    <a class="site-nav__link" href="{% url 'login' %}">Sign in</a>
+    <a class="site-nav__link" href="{% url 'signup' %}">Sign up</a>
   {% endif %}
 </nav>
 {% if messages %}
-<ul>
+<ul class="messages">
   {% for message in messages %}<li>{{ message }}</li>{% endfor %}
 </ul>
 {% endif %}
+<main class="site-main">
 {% block content %}{% endblock %}
+</main>
 </body>
 </html>

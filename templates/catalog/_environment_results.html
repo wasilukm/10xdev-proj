@@ -1,6 +1,7 @@
 <div id="env-results">
 {% if rows %}
-  <table>
+  <div class="table-scroll">
+  <table class="data-table">
     <thead>
       <tr>
         <th>Name</th>
@@ -23,9 +24,10 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 {% elif filters.availability or filters.project or filters.use_case_tag %}
-  <p>No environments match these filters.</p>
+  <p class="empty-state">No environments match these filters.</p>
 {% else %}
-  <p>No environments found.</p>
+  <p class="empty-state">No environments found.</p>
 {% endif %}
 </div>

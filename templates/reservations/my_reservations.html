@@ -9,6 +9,6 @@
     {% include "reservations/_reservation_item.html" with reservation=item.reservation form=item.form is_editable=item.is_editable is_active=item.is_active conflict_message=item.conflict_message definition_changed=item.definition_changed %}
   {% endfor %}
 {% else %}
-  <p>You have no upcoming reservations.</p>
+  <p class="empty-state">You have no upcoming reservations.</p>
 {% endif %}
 {% endblock %}
