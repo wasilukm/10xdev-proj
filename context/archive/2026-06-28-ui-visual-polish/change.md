@@ -1,10 +1,10 @@
 ---
 change_id: ui-visual-polish
 title: Ui visual polish
-status: impl_reviewed
+status: archived
 created: 2026-06-28
-updated: 2026-06-29
-archived_at: null
+updated: 2026-06-28
+archived_at: 2026-06-28T22:42:43Z
 ---
 
 ## Notes
