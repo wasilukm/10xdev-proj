@@ -3,7 +3,7 @@ project: EnvBooker
 version: 1
 status: draft
 created: 2026-05-27
-updated: 2026-06-14
+updated: 2026-06-28
 prd_version: 1
 main_goal: low-complexity
 top_blocker: capacity
@@ -34,7 +34,7 @@ Filtering (FR-009) is deliberately excluded from the north-star slice and lands 
 | S-02  | browse-and-reserve              | sign in, see the env list with owners + upcoming windows, and create a non-overlapping reservation that appears immediately | F-01, S-01       | FR-008, FR-010, FR-011, FR-015, US-01                     | done     |
 | S-03  | filter-env-list                 | filter the env list by availability, purpose / use-case tag, and project — closing the <30s primary success criterion | S-02             | FR-009, US-01, Success Criteria §Primary                  | done     |
 | S-04  | edit-own-reservation            | modify or cancel a reservation they own                                                                             | S-02             | FR-012, FR-013, FR-015, Access Control                    | done     |
-| S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | proposed |
+| S-05  | admin-env-catalog               | (admin) create, modify (with warn + change-badge), and delete (when no active reservations) env definitions via a first-class admin UI | F-01, S-01       | FR-005, FR-006, FR-007, Access Control                    | done     |
 | S-06  | admin-reservation-override      | (admin) modify or cancel any reservation, including those owned by other users                                      | S-02, S-01       | FR-014, Access Control                                    | proposed |
 | SPIKE-01 | timezone-calendar-edge-cases | (spike) understand & harden time-window handling against DST gaps/folds, leap years, and other calendar boundaries  | S-02             | NFR §reliability, FR-011, FR-015                          | proposed |
 | Q-01  | typing-and-type-check-gate      | (enabler) first-party code carries type hints and a `mypy` + `django-stubs` gate blocks untyped drift | F-01, S-01, S-02 | — (traces to `tech-stack.md` typing commitment) | done |
@@ -143,7 +143,7 @@ What's already in place in the codebase as of 2026-05-27 (auto-researched + user
 - **Unknowns:**
   - How long does the "definition changed since you reserved" badge persist on a reservation — until the reservation ends, until the owner acknowledges it, or both? — Owner: user. Block: no.
 - **Risk:** The notify-instead-of-block stance on modify (PRD FR-006 Socratic note) is deliberate but easy to half-implement; getting the badge persistence and pre-save warning right is what makes the resolution coherent rather than just lenient. Can be parked behind the user-flow slices because Django `/admin/` covers seeding in the interim — a deliberate low-complexity sequencing choice.
-- **Status:** proposed
+- **Status:** done
 
 ### S-06: Admin override of any reservation
 
@@ -250,3 +250,4 @@ Cross-cutting engineering-quality work that is not a user-visible slice. Items h
 - **S-04: modify or cancel a reservation they own** — Archived 2026-06-07 → `context/archive/2026-06-04-edit-own-reservation/`. Lesson: —.
 - **Q-01: (enabler) Public functions/methods across `accounts/`, `catalog/`, `reservations/`, and `envbooker/` carry type annotations, and `mypy` (with the `django-stubs` plugin) runs clean under an agreed baseline strictness, wired as a gate so future untyped drift is caught. Closes the gap between the stack commitment ("explicit typing ... mitigated downstream with type hints and model-level schemas", `tech-stack.md` §Why this stack) and the codebase, where 0 of ~125 functions are currently annotated.** — Archived 2026-06-13 → `context/archive/2026-06-10-typing-and-type-check-gate/`. Lesson: —.
 - **Q-02: (enabler) A linter/formatter is selected (via research) and wired so style/lint violations are caught automatically at two local layers: a per-edit Claude Code agent hook (`PostToolUse` on `Write|Edit`) that surfaces fixes mid-session, and the existing lefthook `pre-commit` gate over staged files. Closes the `CLAUDE.md` lint tripwire and fulfils the lint half of the `test-plan.md` §5 `lint + typecheck` gate, which Q-01 left typing-only.** — Archived 2026-06-14 → `context/archive/2026-06-13-lint-and-format-gate/`. Lesson: —.
+- **S-05: An admin can create new env definitions, modify existing definitions (with a pre-save warning if active or upcoming reservations exist, and a "definition changed since you reserved" badge on those reservations post-save), and delete env definitions only when no active or upcoming reservations remain. Replaces the Django `/admin/` fallback that F-01 leaves in place.** — Archived 2026-06-28 → `context/archive/2026-06-24-admin-env-catalog/`. Lesson: —.
