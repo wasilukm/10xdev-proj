@@ -26,6 +26,8 @@ def _row_response(
     form: ReservationForm | None = None,
     conflict_message: str | None = None,
     next_free: datetime | None = None,
+    edit_pk: int | None = None,
+    edit_form: ReservationEditForm | None = None,
 ) -> HttpResponse:
     if form is None:
         form = ReservationForm(initial={"environment": env.pk})
@@ -37,7 +39,7 @@ def _row_response(
             "next_free": next_free,
         }
     )
-    ctx.update(admin_row_items(request, ctx))
+    ctx.update(admin_row_items(request, ctx, edit_pk=edit_pk, edit_form=edit_form))
     return render(request, "catalog/_environment_row.html", ctx)
 
 
@@ -87,20 +89,34 @@ def build_reservation_item(
     }
 
 
-def admin_row_items(request: HttpRequest, row_ctx: dict[str, Any]) -> dict[str, Any]:
+def admin_row_items(
+    request: HttpRequest,
+    row_ctx: dict[str, Any],
+    edit_pk: int | None = None,
+    edit_form: ReservationEditForm | None = None,
+) -> dict[str, Any]:
     """Build per-reservation item contexts for the env row, for admin viewers only.
 
     Returns {current_item, upcoming_items} so the row template can render the
     edit/cancel controls inline. Non-admins get an empty dict (template falls
     back to the plain-text listing).
+
+    When ``edit_pk``/``edit_form`` are given, the matching reservation's item
+    uses that bound form instead of a fresh one, so a rejected inline edit
+    re-renders the whole row with the validation error still attached.
     """
     if not services.is_reservation_admin(request.user):
         return {}
     current = row_ctx.get("current_reservation")
     upcoming = row_ctx.get("upcoming_reservations", [])
+
+    def _item(reservation: Reservation) -> dict[str, Any]:
+        form = edit_form if edit_pk is not None and reservation.pk == edit_pk else None
+        return build_reservation_item(reservation, form=form)
+
     return {
-        "current_item": build_reservation_item(current) if current else None,
-        "upcoming_items": [build_reservation_item(r) for r in upcoming],
+        "current_item": _item(current) if current else None,
+        "upcoming_items": [_item(r) for r in upcoming],
     }
 
 
@@ -184,6 +200,13 @@ def reservation_edit(request: HttpRequest, pk: int) -> HttpResponse:
 
     form = ReservationEditForm(request.POST, start=reservation.during.lower)
     if not form.is_valid():
+        if _is_row_request(request):
+            return _row_response(
+                request,
+                reservation.environment,
+                edit_pk=reservation.pk,
+                edit_form=form,
+            )
         return _item_response(request, reservation, form=form)
 
     during = form.cleaned_data["during"]

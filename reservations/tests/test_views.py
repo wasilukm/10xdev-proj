@@ -625,3 +625,22 @@ class ReservationRowRerenderViewTest(TestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"")
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_invalid_edit_with_row_marker_rerenders_row_with_error(self, _):
+        """An invalid inline edit re-renders the whole row (not a bare item div),
+        keeping the table well-formed, and still surfaces the validation error."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        # hours below the 0.25 minimum -> form invalid.
+        response = self.client.post(url, {"hours": "0", "row": self.env.pk})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        # Whole row, not a bare item partial, so the <tr> swap stays valid.
+        self.assertIn(f'id="env-row-{self.env.pk}"', content)
+        self.assertIn(f'id="reservation-{self.reservation.pk}"', content)
+        # The validation error rode along into the re-rendered row.
+        self.assertIn("Ensure this value is greater than or equal to 0.25", content)
+        # Reservation unchanged.
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(12))
