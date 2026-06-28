@@ -53,6 +53,16 @@ def _reservation_for_request(request: HttpRequest, pk: int) -> Reservation:
     return get_object_or_404(Reservation, pk=pk, owner=request.user)
 
 
+def _is_row_request(request: HttpRequest) -> bool:
+    """True when an admin acts on a reservation from the browse env-row.
+
+    The inline env-row controls post a hidden ``row`` field; on those requests
+    edit/cancel re-render the whole env row instead of the item partial, so the
+    Busy/Free badge and owner/time line update in place.
+    """
+    return bool(request.POST.get("row")) and services.is_reservation_admin(request.user)
+
+
 def build_reservation_item(
     reservation: Reservation,
     form: ReservationEditForm | None = None,
@@ -196,6 +206,10 @@ def reservation_edit(request: HttpRequest, pk: int) -> HttpResponse:
         else:
             raise
 
+    if _is_row_request(request):
+        return _row_response(
+            request, reservation.environment, conflict_message=conflict_message
+        )
     return _item_response(request, reservation, conflict_message=conflict_message)
 
 
@@ -205,5 +219,8 @@ def reservation_cancel(request: HttpRequest, pk: int) -> HttpResponse:
     reservation = _reservation_for_request(request, pk)
     if reservation.during.upper <= timezone.now():
         raise Http404
+    environment = reservation.environment
     reservation.delete()
+    if _is_row_request(request):
+        return _row_response(request, environment)
     return HttpResponse("")

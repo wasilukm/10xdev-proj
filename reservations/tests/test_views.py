@@ -538,3 +538,90 @@ class ReservationAdminOverrideViewTest(TestCase):
         url = reverse("reservations:cancel", args=[self.reservation.pk])
         response = self.client.post(url)
         self.assertEqual(response.status_code, 404)
+
+
+# ---------------------------------------------------------------------------
+# Whole-row re-render: admin edit/cancel from the browse env-row (the hidden
+# `row` marker) re-renders the entire row so the badge + owner/time update in
+# place, instead of swapping only the item partial.
+# ---------------------------------------------------------------------------
+
+
+class ReservationRowRerenderViewTest(TestCase):
+    """Admin edit/cancel carrying the `row` marker re-renders the env row.
+
+    timezone.now frozen to 2024-01-01 08:00 UTC; [10:00, 12:00) is a future
+    reservation owned by `owner`, and the admin acts on it from the browse page.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            email="owner@example.com",
+            password="pass",
+            first_name="Olive",
+            last_name="Owner",
+        )
+        self.admin = User.objects.create_user(
+            email="admin@example.com",
+            password="pass",
+            is_staff=True,
+        )
+        self.env = Environment.objects.create(
+            name="override-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.owner,
+        )
+        self.reservation = Reservation.objects.create(
+            owner=self.owner,
+            environment=self.env,
+            during=_range(10, 12),
+        )
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_edit_with_row_marker_rerenders_whole_row(self, _):
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4", "row": self.env.pk})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f'id="env-row-{self.env.pk}"', content)
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.during.upper, _dt(14))
+        # The re-rendered row carries the reservation's inline controls.
+        self.assertIn(f'id="reservation-{self.reservation.pk}"', content)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_admin_cancel_with_row_marker_rerenders_whole_row(self, _):
+        self.client.login(email="admin@example.com", password="pass")
+        pk = self.reservation.pk
+        url = reverse("reservations:cancel", args=[pk])
+        response = self.client.post(url, {"row": self.env.pk})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f'id="env-row-{self.env.pk}"', content)
+        self.assertFalse(Reservation.objects.filter(pk=pk).exists())
+        # The cancelled reservation's controls are gone from the re-rendered row.
+        self.assertNotIn(f'id="reservation-{pk}"', content)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_edit_without_row_marker_returns_item_partial(self, _):
+        """Regression: My Reservations edit (no marker) still swaps the item."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:edit", args=[self.reservation.pk])
+        response = self.client.post(url, {"hours": "4"})
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f'id="reservation-{self.reservation.pk}"', content)
+        self.assertNotIn(f'id="env-row-{self.env.pk}"', content)
+
+    @mock.patch("django.utils.timezone.now", return_value=_FIXED_NOW)
+    def test_cancel_without_row_marker_returns_empty(self, _):
+        """Regression: My Reservations cancel (no marker) still returns empty."""
+        self.client.login(email="admin@example.com", password="pass")
+        url = reverse("reservations:cancel", args=[self.reservation.pk])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"")

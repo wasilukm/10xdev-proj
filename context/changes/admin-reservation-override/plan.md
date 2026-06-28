@@ -34,7 +34,7 @@ Verified by: the new automated tests pass; manually, an admin can cancel/edit an
 - No audit trail, audit model, or override logging.
 - No changes to the Django admin (`ReservationAdmin`).
 - No object-level permissions (environment-owner-based control); admin = `is_staff or is_superuser` only.
-- No fix for the stale Busy/Free badge after an inline cancel (out of scope; documented limitation).
+- ~~No fix for the stale Busy/Free badge after an inline cancel.~~ Originally out of scope; **rejected on Phase 2 manual review and addressed in Phase 3** (whole-row re-render).
 
 ## Implementation Approach
 
@@ -141,6 +141,63 @@ Surface the existing edit/cancel partial inline in the env row for admin viewers
 
 ---
 
+## Phase 3: Whole-row re-render on inline admin edit/cancel
+
+### Overview
+
+Eliminate the stale-row artifact (originally accepted as a limitation in Phase 2's manual step 2.7, but rejected on review). When an admin edits or cancels a reservation **from the environment row** (browse page), re-render the entire env row instead of swapping only the `#reservation-{pk}` item div. This updates the Busy/Free badge, the plain-text owner/time line, and the controls atomically, and removes the visible duplication where the owner/time text lingers after a cancel. The *My Reservations* flow is unchanged: its edit still swaps the item partial and its cancel still returns an empty body.
+
+### Current State Analysis
+
+- The env row renders each admin reservation **twice**: the owner + time as plain text directly in `_environment_row.html` (`:11-12` current, `:23-24` upcoming), and again via the included `_reservation_item.html` (env name + time + controls). The included partial's edit/cancel forms target `#reservation-{{ reservation.pk }}` with `hx-swap="outerHTML"` (`_reservation_item.html:12-14`, `:25-28`).
+- `reservation_cancel` returns `HttpResponse("")` and `reservation_edit` returns `_item_response(...)` (`reservations/views.py:199`, `:209`) — both swap only the item div. So after an inline admin cancel, the plain-text owner/time line and the row's Busy/Free badge (`_environment_row.html:8`) stay stale until the next filter/refresh; after an inline edit, the plain-text line shows the old times while the partial shows the new ones.
+- `_row_response` (`reservations/views.py:23`) already rebuilds a full row context (badge, booking form, admin item contexts) from `reservation.environment`, so re-rendering a row from an edit/cancel view is a direct reuse.
+
+### Changes Required:
+
+#### 1. Signal "row context" + whole-row swap from the env-row controls
+
+**File**: `templates/reservations/_reservation_item.html`
+
+**Intent**: Let the env row reuse the partial but drive a whole-row swap, without changing the *My Reservations* behavior. Add two optional template vars, defaulting to today's behavior when absent.
+
+**Contract**: Introduce one optional var `row_env_pk` (default empty). When set, both forms' `hx-target` becomes `#env-row-{{ row_env_pk }}` and a hidden `<input type="hidden" name="row" value="{{ row_env_pk }}">` is added to each form; when absent (the *My Reservations* include), `hx-target` stays `#reservation-{{ reservation.pk }}` with no hidden input — markup and behavior byte-for-byte identical to today. (A single var avoids a string+int `add` in the template.)
+
+#### 2. Pass the row-context vars from the env row
+
+**File**: `templates/catalog/_environment_row.html`
+
+**Intent**: For the staff-only inline includes (current + each upcoming), tell the partial to swap the whole row and mark the request as row-originated. Keep the owner label (it is the only place the owner is shown — the partial renders env name + time, not owner) but drop the duplicate plain-text time for admin viewers; the non-staff plain-text branch is unchanged.
+
+**Contract**: In the staff branches, render the reservation owner label followed by the `{% include %}` with `row_env_pk=env.pk` (and the existing item-context vars). Drop the separate plain-text `during.lower – during.upper` for the admin branch (the partial shows it). The non-staff branches are untouched.
+
+#### 3. Re-render the whole row for row-originated admin edit/cancel
+
+**File**: `reservations/views.py`
+
+**Intent**: When an edit/cancel POST carries the `row` marker (admin acting from the browse page), return the re-rendered env row; otherwise preserve the existing *My Reservations* responses exactly.
+
+**Contract**: In `reservation_edit` and `reservation_cancel`, after the existing mutation + past-block + conflict handling, branch on `request.POST.get("row")`: when present (and the user is a reservation admin), return `_row_response(request, reservation.environment, conflict_message=...)` so the swap replaces `#env-row-{pk}`; otherwise return today's response (`_item_response(...)` / `HttpResponse("")`). For cancel, capture `reservation.environment` before `delete()`. Non-row callers and all non-admins are byte-for-byte unchanged.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Type checking passes: `DJANGO_SECRET_KEY=mypy DATABASE_URL=postgres://u:p@localhost:5432/db uv run mypy .`
+- Linting passes: `uv run ruff check . && uv run ruff format --check .`
+- View/template tests pass: `uv run python manage.py test reservations.tests.test_views catalog.tests`
+- Full suite passes: `uv run python manage.py test`
+
+#### Manual Verification:
+
+- As a staff user on the browse page, cancelling another user's reservation inline removes it **and** the row's Busy/Free badge and owner/time text update immediately (no stale row).
+- As a staff user, editing another user's duration inline updates the displayed times and badge in place.
+- *My Reservations*: own edit still updates the item in place; own cancel still removes just that item — no regression.
+
+**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests:
@@ -155,6 +212,12 @@ Surface the existing edit/cancel partial inline in the env row for admin viewers
 - Admin cancelling/editing an already-ended reservation → 404 (time rule preserved).
 - Owner can still edit/cancel their own reservation (no regression).
 - Env-row rendering: a staff request to the list view yields edit/cancel controls (e.g. the cancel URL / `#reservation-<pk>` form) for another user's reservation; a normal-user request does not.
+
+### Phase 3 — whole-row re-render (`reservations/tests/test_views.py`):
+
+- Admin cancel with the `row` marker → response re-renders the env row (contains `id="env-row-<pk>"`, no `#reservation-<pk>` div, reservation deleted).
+- Admin edit with the `row` marker → response re-renders the env row with the updated duration.
+- Regression: *My Reservations* cancel (no `row` marker) still returns an empty body; *My Reservations* edit still returns the item partial.
 
 ### Manual Testing Steps:
 
@@ -199,13 +262,28 @@ None — no model or schema changes.
 
 #### Automated
 
-- [x] 2.1 Type checking passes (mypy)
-- [x] 2.2 Linting passes (ruff check + format --check)
-- [x] 2.3 View/template tests pass
-- [x] 2.4 Full test suite passes
+- [x] 2.1 Type checking passes (mypy) — fb8fcca
+- [x] 2.2 Linting passes (ruff check + format --check) — fb8fcca
+- [x] 2.3 View/template tests pass — fb8fcca
+- [x] 2.4 Full test suite passes — fb8fcca
 
 #### Manual
 
-- [x] 2.5 Staff sees and can use edit/cancel controls on others' reservations in the browse page
-- [x] 2.6 Normal user sees unchanged plain-text listing, no controls
-- [ ] 2.7 Stale Busy/Free badge after inline cancel confirmed acceptable (superseded by Phase 3)
+- [x] 2.5 Staff sees and can use edit/cancel controls on others' reservations in the browse page — fb8fcca
+- [x] 2.6 Normal user sees unchanged plain-text listing, no controls — fb8fcca
+- [x] 2.7 Stale Busy/Free badge after inline cancel confirmed acceptable (resolved by Phase 3 whole-row re-render)
+
+### Phase 3: Whole-row re-render on inline admin edit/cancel
+
+#### Automated
+
+- [x] 3.1 Type checking passes (mypy)
+- [x] 3.2 Linting passes (ruff check + format --check)
+- [x] 3.3 View/template tests pass (whole-row re-render + My Reservations regression)
+- [x] 3.4 Full test suite passes
+
+#### Manual
+
+- [x] 3.5 Inline admin cancel updates badge + owner/time in place (no stale row)
+- [x] 3.6 Inline admin edit updates displayed times + badge in place
+- [x] 3.7 My Reservations edit/cancel unchanged (no regression)
