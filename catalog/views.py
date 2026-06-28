@@ -16,6 +16,7 @@ from .models import Environment
 from .permissions import staff_required
 from .services import (
     build_row_context,
+    delete_environment,
     filter_environments,
     filter_options,
     manage_environments,
@@ -144,4 +145,24 @@ def environment_edit(request: HttpRequest, pk: int) -> HttpResponse:
         request,
         "catalog/environment_form.html",
         {"form": form, "mode": "edit", "env": env},
+    )
+
+
+@staff_required
+def environment_delete(request: HttpRequest, pk: int) -> HttpResponse:
+    env = get_object_or_404(Environment, pk=pk)
+    blocking = active_or_upcoming_reservations(env)
+
+    if request.method == "POST":
+        outcome = delete_environment(env)
+        if outcome == "DELETED":
+            messages.success(request, f"Environment “{env.name}” deleted.")
+            return redirect("env_manage")
+        # BLOCKED: a reservation is (or raced into being) active/upcoming.
+        blocking = active_or_upcoming_reservations(env)
+
+    return render(
+        request,
+        "catalog/environment_confirm_delete.html",
+        {"env": env, "blocking": list(blocking), "is_blocked": blocking.exists()},
     )

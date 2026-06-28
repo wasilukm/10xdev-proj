@@ -11,4 +11,9 @@ urlpatterns = [
         views.environment_edit,
         name="env_edit",
     ),
+    path(
+        "manage/environments/<int:pk>/delete/",
+        views.environment_delete,
+        name="env_delete",
+    ),
 ]

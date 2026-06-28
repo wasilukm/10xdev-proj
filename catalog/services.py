@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import TypedDict, cast
+from typing import Literal, TypedDict, cast
 
-from django.db.models import Exists, OuterRef, Prefetch, QuerySet
+from django.db import transaction
+from django.db.models import Exists, Func, OuterRef, Prefetch, QuerySet
+from django.db.models.deletion import ProtectedError
+from django.db.models.fields import DateTimeField
 from django.utils import timezone
 from psycopg.types.range import Range
 
 from reservations.models import Reservation
+from reservations.services import active_or_upcoming_reservations
 
 from .models import Environment
+
+DeleteOutcome = Literal["DELETED", "BLOCKED"]
 
 
 class RowContext(TypedDict):
@@ -112,3 +118,32 @@ def prefetch_reservations_for_list(now: datetime) -> Prefetch:
             .order_by("during")
         ),
     )
+
+
+def delete_environment(env: Environment, now: datetime | None = None) -> DeleteOutcome:
+    """Delete env iff it has no active/upcoming reservations; cascade its past ones.
+
+    FR-007: an env may only be deleted while no reservation is active or upcoming.
+    `Reservation.environment` is PROTECT, so past reservations would otherwise block
+    deletion — we delete those past rows first, then the env.
+
+    Race safety: the active/upcoming check and the delete run inside one atomic
+    block. If a reservation races in between the check and `env.delete()`, PROTECT
+    raises ProtectedError, which we catch and report as BLOCKED — so the guard holds
+    without row locking.
+    """
+    if now is None:
+        now = timezone.now()
+
+    with transaction.atomic():
+        if active_or_upcoming_reservations(env, now).exists():
+            return "BLOCKED"
+        # Only past reservations remain; clear them so PROTECT permits the delete.
+        Reservation.objects.annotate(
+            upper_bound=Func("during", function="upper", output_field=DateTimeField()),
+        ).filter(environment=env, upper_bound__lte=now).delete()
+        try:
+            env.delete()
+        except ProtectedError:
+            return "BLOCKED"
+    return "DELETED"

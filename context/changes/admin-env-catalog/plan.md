@@ -307,23 +307,23 @@ to `env_manage` with a success note.
 ### Phase 3: Edit with pre-save warning + change badge (FR-006)
 
 #### Automated
-- [x] 3.1 Edit with no active/upcoming reservation saves one-step
-- [x] 3.2 Edit with active/upcoming + no `confirm` re-renders warning (names affected owner), does not save
-- [x] 3.3 Resubmit with `confirm=1` saves
-- [x] 3.4 Badge present for pre-existing reservation, absent for one created after the edit
-- [x] 3.5 `mypy` + `ruff` clean
+- [x] 3.1 Edit with no active/upcoming reservation saves one-step — a8ab0f8
+- [x] 3.2 Edit with active/upcoming + no `confirm` re-renders warning (names affected owner), does not save — a8ab0f8
+- [x] 3.3 Resubmit with `confirm=1` saves — a8ab0f8
+- [x] 3.4 Badge present for pre-existing reservation, absent for one created after the edit — a8ab0f8
+- [x] 3.5 `mypy` + `ruff` clean — a8ab0f8
 
 #### Manual
-- [x] 3.6 Warning lists correct reservations; badge visible to owner in My reservations
+- [x] 3.6 Warning lists correct reservations; badge visible to owner in My reservations — a8ab0f8
 
 ### Phase 4: Delete guard with cascade (FR-007)
 
 #### Automated
-- [ ] 4.1 Delete blocked (env preserved) when active/upcoming exists
-- [ ] 4.2 Delete cascades past reservations when only past exist
-- [ ] 4.3 Delete succeeds when no reservations exist
-- [ ] 4.4 Non-staff → 403
-- [ ] 4.5 `mypy` + `ruff` clean
+- [x] 4.1 Delete blocked (env preserved) when active/upcoming exists
+- [x] 4.2 Delete cascades past reservations when only past exist
+- [x] 4.3 Delete succeeds when no reservations exist
+- [x] 4.4 Non-staff → 403
+- [x] 4.5 `mypy` + `ruff` clean
 
 #### Manual
-- [ ] 4.6 Confirm page shows blocking list; successful delete removes env
+- [x] 4.6 Confirm page shows blocking list; successful delete removes env

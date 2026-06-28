@@ -8,7 +8,12 @@ from psycopg.types.range import Range
 
 from accounts.models import User
 from catalog.models import Environment
-from catalog.services import build_row_context, filter_environments, filter_options
+from catalog.services import (
+    build_row_context,
+    delete_environment,
+    filter_environments,
+    filter_options,
+)
 from reservations.models import Reservation
 from reservations.services import active_or_upcoming_reservations
 
@@ -593,3 +598,103 @@ class EnvironmentEditTest(TestCase):
         self.assertRedirects(response, reverse("env_manage"))
         self.env.refresh_from_db()
         self.assertEqual(self.env.version, "9.9")
+
+
+class DeleteEnvironmentServiceTest(TestCase):
+    """S-05 FR-007: delete_environment guard + past-reservation cascade."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email="del@example.com", password="pass")
+        self.env = Environment.objects.create(
+            name="del-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.user,
+        )
+
+    def _reserve(self, lower, upper):
+        return Reservation.objects.create(
+            owner=self.user,
+            environment=self.env,
+            during=Range(lower=lower, upper=upper, bounds="[)"),
+        )
+
+    def test_blocked_when_upcoming_exists(self):
+        now = timezone.now()
+        res = self._reserve(now + timedelta(hours=1), now + timedelta(hours=2))
+        outcome = delete_environment(self.env, now=now)
+        self.assertEqual(outcome, "BLOCKED")
+        self.assertTrue(Environment.objects.filter(pk=self.env.pk).exists())
+        self.assertTrue(Reservation.objects.filter(pk=res.pk).exists())
+
+    def test_blocked_when_active_exists(self):
+        now = timezone.now()
+        self._reserve(now - timedelta(hours=1), now + timedelta(hours=1))
+        outcome = delete_environment(self.env, now=now)
+        self.assertEqual(outcome, "BLOCKED")
+        self.assertTrue(Environment.objects.filter(pk=self.env.pk).exists())
+
+    def test_cascade_past_reservations(self):
+        now = timezone.now()
+        past = self._reserve(now - timedelta(hours=3), now - timedelta(hours=1))
+        outcome = delete_environment(self.env, now=now)
+        self.assertEqual(outcome, "DELETED")
+        self.assertFalse(Environment.objects.filter(pk=self.env.pk).exists())
+        self.assertFalse(Reservation.objects.filter(pk=past.pk).exists())
+
+    def test_delete_when_no_reservations(self):
+        now = timezone.now()
+        outcome = delete_environment(self.env, now=now)
+        self.assertEqual(outcome, "DELETED")
+        self.assertFalse(Environment.objects.filter(pk=self.env.pk).exists())
+
+
+class EnvironmentDeleteViewTest(TestCase):
+    """S-05 FR-007: staff-gated delete confirm + perform."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            email="staff@example.com", password="pass", is_staff=True
+        )
+        self.plain = User.objects.create_user(
+            email="plain@example.com", password="pass"
+        )
+        self.env = Environment.objects.create(
+            name="dv-env",
+            version="1.0",
+            purpose="test",
+            project="proj",
+            use_case_tag="ci",
+            owner=self.staff,
+        )
+        self.url = reverse("env_delete", args=[self.env.pk])
+
+    def test_non_staff_forbidden(self):
+        self.client.login(username="plain@example.com", password="pass")
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertEqual(self.client.post(self.url).status_code, 403)
+
+    def test_post_deletes_and_redirects(self):
+        self.client.login(username="staff@example.com", password="pass")
+        response = self.client.post(self.url)
+        self.assertRedirects(response, reverse("env_manage"))
+        self.assertFalse(Environment.objects.filter(pk=self.env.pk).exists())
+
+    def test_post_blocked_re_renders_with_blocking_list(self):
+        now = timezone.now()
+        Reservation.objects.create(
+            owner=self.plain,
+            environment=self.env,
+            during=Range(
+                lower=now + timedelta(hours=1),
+                upper=now + timedelta(hours=2),
+                bounds="[)",
+            ),
+        )
+        self.client.login(username="staff@example.com", password="pass")
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["is_blocked"])
+        self.assertTrue(Environment.objects.filter(pk=self.env.pk).exists())

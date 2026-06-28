@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}EnvBooker — Delete {{ env.name }}{% endblock %}
+
+{% block content %}
+<h1>Delete environment</h1>
+
+{% if is_blocked %}
+  <p><strong>“{{ env.name }}” cannot be deleted.</strong>
+     It has active or upcoming reservations:</p>
+  <ul>
+    {% for reservation in blocking %}
+      <li>
+        {{ reservation.owner.get_full_name|default:reservation.owner.email }}
+        &mdash; {{ reservation.during.lower|date:"Y-m-d H:i" }}
+        to {{ reservation.during.upper|date:"Y-m-d H:i" }}
+      </li>
+    {% endfor %}
+  </ul>
+  <p><a href="{% url 'env_manage' %}">Back to environments</a></p>
+{% else %}
+  <p>Permanently delete “{{ env.name }}”? Any past reservations for it will also
+     be removed. This cannot be undone.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Delete</button>
+    <a href="{% url 'env_manage' %}">Cancel</a>
+  </form>
+{% endif %}
+{% endblock %}

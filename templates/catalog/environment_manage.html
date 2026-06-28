@@ -29,7 +29,10 @@
       <td>{{ env.project }}</td>
       <td>{{ env.use_case_tag }}</td>
       <td>{{ env.owner.get_full_name|default:env.owner.email }}</td>
-      <td><a href="{% url 'env_edit' env.pk %}">Edit</a></td>
+      <td>
+        <a href="{% url 'env_edit' env.pk %}">Edit</a>
+        <a href="{% url 'env_delete' env.pk %}">Delete</a>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
