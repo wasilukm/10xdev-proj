@@ -736,7 +736,11 @@ p {
   margin: 0;
 }
 .reservation-card__forms .form input {
-  max-width: 7rem;
+  /* pin the duration field so it stays legible inside a narrow table cell
+     instead of collapsing under flex shrink */
+  width: 5.5rem;
+  min-width: 5.5rem;
+  flex: 0 0 auto;
 }
 
 /* --- auth card --------------------------------------------------------- */
