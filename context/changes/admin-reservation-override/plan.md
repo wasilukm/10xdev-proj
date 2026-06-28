@@ -277,13 +277,13 @@ None — no model or schema changes.
 
 #### Automated
 
-- [x] 3.1 Type checking passes (mypy)
-- [x] 3.2 Linting passes (ruff check + format --check)
-- [x] 3.3 View/template tests pass (whole-row re-render + My Reservations regression)
-- [x] 3.4 Full test suite passes
+- [x] 3.1 Type checking passes (mypy) — acce77b
+- [x] 3.2 Linting passes (ruff check + format --check) — acce77b
+- [x] 3.3 View/template tests pass (whole-row re-render + My Reservations regression) — acce77b
+- [x] 3.4 Full test suite passes — acce77b
 
 #### Manual
 
-- [x] 3.5 Inline admin cancel updates badge + owner/time in place (no stale row)
-- [x] 3.6 Inline admin edit updates displayed times + badge in place
-- [x] 3.7 My Reservations edit/cancel unchanged (no regression)
+- [x] 3.5 Inline admin cancel updates badge + owner/time in place (no stale row) — acce77b
+- [x] 3.6 Inline admin edit updates displayed times + badge in place — acce77b
+- [x] 3.7 My Reservations edit/cancel unchanged (no regression) — acce77b
