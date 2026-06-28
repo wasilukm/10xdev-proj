@@ -319,11 +319,11 @@ to `env_manage` with a success note.
 ### Phase 4: Delete guard with cascade (FR-007)
 
 #### Automated
-- [x] 4.1 Delete blocked (env preserved) when active/upcoming exists
-- [x] 4.2 Delete cascades past reservations when only past exist
-- [x] 4.3 Delete succeeds when no reservations exist
-- [x] 4.4 Non-staff → 403
-- [x] 4.5 `mypy` + `ruff` clean
+- [x] 4.1 Delete blocked (env preserved) when active/upcoming exists — 984a39d
+- [x] 4.2 Delete cascades past reservations when only past exist — 984a39d
+- [x] 4.3 Delete succeeds when no reservations exist — 984a39d
+- [x] 4.4 Non-staff → 403 — 984a39d
+- [x] 4.5 `mypy` + `ruff` clean — 984a39d
 
 #### Manual
-- [x] 4.6 Confirm page shows blocking list; successful delete removes env
+- [x] 4.6 Confirm page shows blocking list; successful delete removes env — 984a39d

@@ -1,9 +1,9 @@
 ---
 change_id: admin-env-catalog
 title: Admin env catalog
-status: implementing
+status: implemented
 created: 2026-06-24
-updated: 2026-06-25
+updated: 2026-06-28
 archived_at: null
 ---
 
