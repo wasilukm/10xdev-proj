@@ -2,8 +2,8 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.6.1",
   "manifestVersion": 2,
-  "lastApplied": "2026-06-14T13:26:01.559Z",
-  "lessonId": "m3l4",
+  "lastApplied": "2026-06-28T14:21:42.794Z",
+  "lessonId": "m3l5",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
@@ -87,6 +87,7 @@
       },
       "10x-new": {
         "files": [
+          "references/change-md.md",
           "SKILL.md"
         ]
       },
