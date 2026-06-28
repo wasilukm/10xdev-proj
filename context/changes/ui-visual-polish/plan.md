@@ -192,25 +192,25 @@ start command already runs it).
 
 ### Phase 1: Stylesheet foundation
 #### Automated
-- [x] 1.1 Stylesheet served 200 and referenced in HTML
-- [x] 1.2 collectstatic post-processes app.css into the manifest
+- [x] 1.1 Stylesheet served 200 and referenced in HTML — 74ae95c
+- [x] 1.2 collectstatic post-processes app.css into the manifest — 74ae95c
 #### Manual
-- [ ] 1.3 Nav renders as console header bar; centered content column
+- [x] 1.3 Nav renders as console header bar; centered content column — 74ae95c
 
 ### Phase 2: Component classes applied across all surfaces
 #### Automated
-- [x] 2.1 Badges render as discrete elements; tables well-formed (a11y snapshot)
-- [x] 2.2 Computed styles match token values (badges, spine, button, headers)
-- [x] 2.3 HTMX swap preserves badge + status-spine styling
+- [x] 2.1 Badges render as discrete elements; tables well-formed (a11y snapshot) — 74ae95c
+- [x] 2.2 Computed styles match token values (badges, spine, button, headers) — 74ae95c
+- [x] 2.3 HTMX swap preserves badge + status-spine styling — 74ae95c
 #### Manual
-- [ ] 2.4 Free/busy rows distinguishable at a glance; status spine scannable
-- [ ] 2.5 Forms/buttons/alerts consistent across all surfaces
+- [x] 2.4 Free/busy rows distinguishable at a glance; status spine scannable — 74ae95c, b166d76
+- [x] 2.5 Forms/buttons/alerts consistent across all surfaces — 74ae95c, d607838
 
 ### Phase 3: Verification & visual review
 #### Automated
-- [x] 3.1 Full Django suite green (132 tests)
-- [x] 3.2 mypy + ruff gates clean
+- [x] 3.1 Full Django suite green (132 tests) — 74ae95c
+- [x] 3.2 mypy + ruff gates clean — 74ae95c
 #### Manual
-- [ ] 3.3 State matrix walked (conflict, warning, blocked delete, changed badge)
-- [ ] 3.4 Dark mode legible; free/busy distinct in both themes
-- [ ] 3.5 Chrome + Firefox spot-check
+- [x] 3.3 State matrix walked (conflict, warning, blocked delete, changed badge) — 74ae95c
+- [x] 3.4 Dark mode legible; free/busy distinct in both themes — 74ae95c, d607838
+- [x] 3.5 Chrome + Firefox spot-check — 74ae95c
