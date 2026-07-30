@@ -2,15 +2,16 @@
   "package": "@przeprogramowani/10x-cli",
   "version": "1.6.1",
   "manifestVersion": 2,
-  "lastApplied": "2026-07-07T21:27:49.006Z",
-  "lessonId": "m4l3",
+  "lastApplied": "2026-07-30T03:30:38.327Z",
+  "lessonId": "m4l4",
   "course": "10xdevs3",
   "tool": "claude-code",
   "files": {
     "skills": {},
     "prompts": [
-      "m4l3-1-research-with-map.md",
-      "m4l3-2-ast-grep-verification.md"
+      "m4l4-1-new-change-intention.md",
+      "m4l4-2-refactor-opportunities-research.md",
+      "m4l4-3-ranking-ast-grep-verification.md"
     ],
     "configs": []
   }
