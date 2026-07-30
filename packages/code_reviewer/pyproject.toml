@@ -1,0 +1,20 @@
+[project]
+name = "code-reviewer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mariusz Wasiluk", email = "w.mariusz@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "claude-agent-sdk>=0.2.128",
+    "pydantic>=2.13.4",
+]
+
+[project.scripts]
+code-reviewer = "code_reviewer.main:main"
+
+[build-system]
+requires = ["uv_build>=0.11.15,<0.12.0"]
+build-backend = "uv_build"

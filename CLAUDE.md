@@ -103,6 +103,10 @@ Global templates live in `templates/` (configured in `TEMPLATES[0]["DIRS"]`). `w
 
 `htmx.min.js` is vendored at `static/vendor/` and powers the filter→pick→reserve partial-rendering flow (no full page reload). HTMX requests hit the same Django views; partial-template responses are distinguished by the `HX-Request` header or separate URL patterns.
 
+### packages/code_reviewer
+
+An **independent** uv project (own `pyproject.toml`, `uv.lock`, `.venv`) wrapping the [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview) for a future automated code-review agent. It is **not** a uv workspace member and is not a dependency of the root `envbooker` project — this keeps `claude-agent-sdk` out of the Django app's Railway deploy image. Root `pyproject.toml`'s `[tool.mypy]` excludes `^packages/` accordingly (its own dependencies aren't installed in the root `.venv` that the repo-wide mypy gate runs against). See `packages/code_reviewer/README.md` for install/run/auth. Ruff still applies repo-wide: the subpackage has no `[tool.ruff]` table of its own, so ruff's config discovery walks up to root's.
+
 ### Project-specific tripwires
 
 - **The uv-managed `.venv` has no `pip`**, so `pip-audit` cannot use `PIPAPI_PYTHON_LOCATION`. Audit via:
