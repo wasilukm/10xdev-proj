@@ -14,6 +14,7 @@ pr_number="${1:?usage: sticky-comment.sh <pr-number> <body-file>}"
 body_file="${2:?usage: sticky-comment.sh <pr-number> <body-file>}"
 
 if [ ! -f "$body_file" ]; then
+  # Fail fast: an empty or missing body would otherwise post a blank comment.
   echo "sticky-comment: body file not found: $body_file" >&2
   exit 1
 fi
