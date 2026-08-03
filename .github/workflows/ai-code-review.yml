@@ -41,10 +41,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          .github/scripts/sticky-comment.sh \
-            "${{ github.event.pull_request.number }}" \
-            "${{ steps.review.outputs.comment-path }}"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMENT_PATH: ${{ steps.review.outputs.comment-path }}
+        run: .github/scripts/sticky-comment.sh "$PR_NUMBER" "$COMMENT_PATH"
 
       # Exactly one outcome label at a time: pass -> ai-cr:passed, everything
       # else (fail/error/skipped) -> ai-cr:failed. The stale opposite label is
