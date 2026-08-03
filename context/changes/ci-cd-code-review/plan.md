@@ -829,16 +829,16 @@ interface is updated in the same phase.
 
 #### Automated
 
-- [ ] 3.1 Sticky script is executable and shellcheck-clean
-- [ ] 3.2 Test-PR workflow run completes and reports a `verdict` output
-- [ ] 3.3 No `issues: write` granted anywhere in `.github/`
+- [x] 3.1 Sticky script is executable and shellcheck-clean
+- [x] 3.2 Test-PR workflow run completes and reports a `verdict` output
+- [x] 3.3 No `issues: write` granted anywhere in `.github/`
 
 #### Manual
 
-- [ ] 3.4 Opening a PR posts exactly one marked comment with the score table
-- [ ] 3.5 Pushing a second commit updates the same comment in place
-- [ ] 3.6 Label transitions are correct in both directions; stale label removed
-- [ ] 3.7 `ai-cr:review` re-runs the review and is removed afterwards, including on failure
-- [ ] 3.8 Forced error path yields `ai-cr:failed` with a malfunction comment and no score table
-- [ ] 3.9 Branch protection confirms the review job is **not** a required check
-- [ ] 3.10 No 403s in the logs — labels never need creating by the workflow
+- [x] 3.4 Opening a PR posts exactly one marked comment with the score table
+- [x] 3.5 Pushing a second commit updates the same comment in place
+- [x] 3.6 Label transitions are correct in both directions; stale label removed
+- [x] 3.7 `ai-cr:review` re-runs the review and is removed afterwards, including on failure
+- [x] 3.8 Forced error path yields `ai-cr:failed` with a malfunction comment and no score table
+- [x] 3.9 Branch protection confirms the review job is **not** a required check
+- [x] 3.10 No 403s in the logs — labels never need creating by the workflow
