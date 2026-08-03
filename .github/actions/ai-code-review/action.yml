@@ -74,7 +74,7 @@ runs:
       with:
         working-directory: packages/code_reviewer
         enable-cache: true
-        cache-dependency-glob: packages/code_reviewer/uv.lock
+        cache-dependency-glob: uv.lock
 
     - name: Sync reviewer dependencies
       shell: bash
