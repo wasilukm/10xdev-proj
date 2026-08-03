@@ -1,0 +1,36 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+permissions: {}
+
+jobs:
+  review:
+    # Fork guard: fork PRs get no secrets and a read-only token, so skip rather than
+    # run a review that can never work. Label filter: only re-run on `labeled` when the
+    # label is `ai-cr:review` — without the fork-guard half of this OR, `opened` and
+    # `synchronize` runs would also be filtered out, since `github.event.label` is null
+    # on those events.
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'labeled' || github.event.label.name == 'ai-cr:review')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run AI code review (dry run)
+        uses: ./.github/actions/ai-code-review
+        with:
+          api-credential: ${{ secrets.ANTHROPIC_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+          pr-title: ${{ github.event.pull_request.title }}
+          pr-body: ${{ github.event.pull_request.body }}

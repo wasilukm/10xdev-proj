@@ -1,0 +1,155 @@
+name: AI Code Review
+description: >-
+  Runs the diff-only agentic PR reviewer (packages/code_reviewer) against a pull
+  request's diff and reports a verdict. Phase 2: dry-run only — writes to the job
+  summary and a build artifact, never to the PR itself.
+
+inputs:
+  api-credential:
+    description: >-
+      Anthropic API key or Claude Code OAuth token. A composite action cannot read
+      the `secrets` context, so the caller must pass this explicitly.
+    required: true
+  credential-kind:
+    description: >-
+      Which env var `api-credential` populates: `api-key` (ANTHROPIC_API_KEY) or
+      `oauth-token` (CLAUDE_CODE_OAUTH_TOKEN).
+    required: false
+    default: api-key
+  github-token:
+    description: Token used for `gh pr diff`.
+    required: true
+  pr-number:
+    description: Pull request number to review.
+    required: true
+  pr-title:
+    description: Pull request title (untrusted; passed through env, never interpolated).
+    required: true
+  pr-body:
+    description: Pull request description (untrusted; passed through env, never interpolated).
+    required: false
+    default: ""
+  model:
+    description: Full model ID (never the "sonnet"/"opus" alias).
+    required: false
+    default: claude-sonnet-5
+  max-turns:
+    required: false
+    default: "5"
+  max-budget-usd:
+    required: false
+    default: "0.50"
+  max-diff-bytes:
+    required: false
+    default: "200000"
+
+outputs:
+  verdict:
+    description: One of pass, fail, error, skipped.
+    value: ${{ steps.review.outputs.verdict }}
+  comment-path:
+    description: Path to the rendered comment markdown.
+    value: ${{ steps.review.outputs.comment-path }}
+  result-json-path:
+    description: Path to the raw validated ReviewResult JSON.
+    value: ${{ steps.review.outputs.result-json-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Verify gh supports pr diff --exclude (>= 2.63)
+      shell: bash
+      run: |
+        gh --version
+        ver=$(gh --version | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+        major=$(echo "$ver" | cut -d. -f1)
+        minor=$(echo "$ver" | cut -d. -f2)
+        if [ "$major" -lt 2 ] || { [ "$major" -eq 2 ] && [ "$minor" -lt 63 ]; }; then
+          echo "gh $ver does not support 'pr diff --exclude' (needs >= 2.63)" >&2
+          exit 1
+        fi
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v9.0.0
+      with:
+        working-directory: packages/code_reviewer
+        enable-cache: true
+        cache-dependency-glob: uv.lock
+
+    - name: Sync reviewer dependencies
+      shell: bash
+      working-directory: packages/code_reviewer
+      run: uv sync --frozen
+
+    - name: Fetch PR diff
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+      run: |
+        gh pr diff "$PR_NUMBER" --patch \
+          --exclude '**/migrations/**' \
+          --exclude 'uv.lock' \
+          --exclude 'packages/code_reviewer/uv.lock' \
+          --exclude 'static/vendor/**' \
+          --exclude 'staticfiles/**' \
+          > "$RUNNER_TEMP/pr.diff"
+
+    - name: Run reviewer
+      id: review
+      shell: bash
+      env:
+        PR_TITLE: ${{ inputs.pr-title }}
+        PR_BODY: ${{ inputs.pr-body }}
+        CREDENTIAL_KIND: ${{ inputs.credential-kind }}
+        API_CREDENTIAL: ${{ inputs.api-credential }}
+      working-directory: packages/code_reviewer
+      run: |
+        if [ "$CREDENTIAL_KIND" = "oauth-token" ]; then
+          export CLAUDE_CODE_OAUTH_TOKEN="$API_CREDENTIAL"
+        else
+          export ANTHROPIC_API_KEY="$API_CREDENTIAL"
+        fi
+
+        set +e
+        uv run code-reviewer "$RUNNER_TEMP/pr.diff" \
+          --comment-path "$RUNNER_TEMP/comment.md" \
+          --result-json-path "$RUNNER_TEMP/result.json" \
+          --max-diff-bytes "${{ inputs.max-diff-bytes }}" \
+          --model "${{ inputs.model }}" \
+          --max-turns "${{ inputs.max-turns }}" \
+          --max-budget-usd "${{ inputs.max-budget-usd }}"
+        rc=$?
+        set -e
+
+        case "$rc" in
+          0) verdict=pass ;;
+          1) verdict=fail ;;
+          2) verdict=error ;;
+          3) verdict=skipped ;;
+          *) verdict=error ;;
+        esac
+
+        echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+        echo "comment-path=$RUNNER_TEMP/comment.md" >> "$GITHUB_OUTPUT"
+        echo "result-json-path=$RUNNER_TEMP/result.json" >> "$GITHUB_OUTPUT"
+
+    # Phase 2 is dry-run only: no write token is granted to this job, so the result
+    # is surfaced in the job summary and as a build artifact rather than posted to
+    # the PR. This step must not fail the job on a `fail` verdict (rc 1) — Phase 2's
+    # purpose is calibrating the rubric against real diffs, and a failing job during
+    # calibration is noise. Do not enable Actions debug mode on this workflow.
+    - name: Write dry-run summary
+      shell: bash
+      run: |
+        {
+          echo "## AI Code Review (dry run) — verdict: \`${{ steps.review.outputs.verdict }}\`"
+          echo
+          cat "${{ steps.review.outputs.comment-path }}"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload result JSON
+      uses: actions/upload-artifact@v7
+      with:
+        name: ai-code-review-result
+        path: ${{ steps.review.outputs.result-json-path }}

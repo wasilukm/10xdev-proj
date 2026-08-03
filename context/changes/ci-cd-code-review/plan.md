@@ -790,39 +790,39 @@ interface is updated in the same phase.
 
 #### Automated
 
-- [x] 1.1 Package installs: `cd packages/code_reviewer && uv sync`
-- [x] 1.2 Unit tests pass: `cd packages/code_reviewer && uv run pytest`
-- [x] 1.3 Subpackage type check passes: `cd packages/code_reviewer && uv run mypy .`
-- [x] 1.4 Root type check still passes
-- [x] 1.5 Lint and format clean: `uv run ruff check . && uv run ruff format --check .`
-- [x] 1.6 Django suite unaffected: `uv run python manage.py test`
-- [x] 1.7 Pre-commit gate passes end to end: `uv run lefthook run pre-commit`
+- [x] 1.1 Package installs: `cd packages/code_reviewer && uv sync` — 2258fb2
+- [x] 1.2 Unit tests pass: `cd packages/code_reviewer && uv run pytest` — 2258fb2
+- [x] 1.3 Subpackage type check passes: `cd packages/code_reviewer && uv run mypy .` — 2258fb2
+- [x] 1.4 Root type check still passes — 2258fb2
+- [x] 1.5 Lint and format clean: `uv run ruff check . && uv run ruff format --check .` — 2258fb2
+- [x] 1.6 Django suite unaffected: `uv run python manage.py test` — 2258fb2
+- [x] 1.7 Pre-commit gate passes end to end: `uv run lefthook run pre-commit` — 2258fb2
 
 #### Manual
 
-- [x] 1.8 Real review against a saved diff returns six scored criteria with rationales
-- [x] 1.9 Deliberately weak diff scores low on `test_coverage` and exits 1
-- [x] 1.10 Injection attempt in the body lowers `review_integrity` and raises nothing
-- [x] 1.11 Cost per review is in the expected $0.10–0.15 band
-- [x] 1.12 Invalid API key exits 2, not 1, with an auth-specific message
+- [x] 1.8 Real review against a saved diff returns six scored criteria with rationales — 2258fb2
+- [x] 1.9 Deliberately weak diff scores low on `test_coverage` and exits 1 — 2258fb2
+- [x] 1.10 Injection attempt in the body lowers `review_integrity` and raises nothing — 2258fb2
+- [x] 1.11 Cost per review is in the expected $0.10–0.15 band — 2258fb2
+- [x] 1.12 Invalid API key exits 2, not 1, with an auth-specific message — 2258fb2
 
 ### Phase 2: Workflow and composite action — dry-run
 
 #### Automated
 
-- [ ] 2.1 Workflow file parses and appears in `gh workflow list`
-- [ ] 2.2 Action metadata is valid YAML
-- [ ] 2.3 Test-PR workflow run completes with conclusion `success`
-- [ ] 2.4 Runner `gh` version supports `--exclude` (≥ 2.63)
+- [x] 2.1 Workflow file parses and appears in `gh workflow list`
+- [x] 2.2 Action metadata is valid YAML
+- [x] 2.3 Test-PR workflow run completes with conclusion `success`
+- [x] 2.4 Runner `gh` version supports `--exclude` (≥ 2.63)
 
 #### Manual
 
-- [ ] 2.5 Test PR triggers the workflow; job summary shows six scores and a summary
-- [ ] 2.6 Wall-clock within timeout; uv cache hits on the second run
+- [x] 2.5 Test PR triggers the workflow; job summary shows six scores and a summary
+- [x] 2.6 Wall-clock within timeout; uv cache hits on the second run
 - [ ] 2.7 Fork PRs report **skipped**, not failed
-- [ ] 2.8 Unrelated label does not trigger; `ai-cr:review` does
-- [ ] 2.9 Pushing a new commit (`synchronize`) triggers a fresh run
-- [ ] 2.10 Reported cost matches the Phase 1 local figure
+- [x] 2.8 Unrelated label does not trigger; `ai-cr:review` does
+- [x] 2.9 Pushing a new commit (`synchronize`) triggers a fresh run
+- [x] 2.10 Reported cost matches the Phase 1 local figure
 - [ ] 2.11 Rubric calibrated across several real PRs; threshold settled
 
 ### Phase 3: Write-back — sticky comment, labels, retry
