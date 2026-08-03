@@ -842,3 +842,55 @@ interface is updated in the same phase.
 - [x] 3.8 Forced error path yields `ai-cr:failed` with a malfunction comment and no score table — 9c199b6
 - [x] 3.9 Branch protection confirms the review job is **not** a required check — 9c199b6
 - [x] 3.10 No 403s in the logs — labels never need creating by the workflow — 9c199b6
+
+## Post-Implementation Amendments
+
+### Amendment 1: `gh pr diff --patch` leaked commit messages into the reviewer's input
+
+**Found**: 2026-08-04, live on test PR #3 (merged as `9c199b6`). The composite action's
+"Fetch PR diff" step (`.github/actions/ai-code-review/action.yml`) called
+`gh pr diff "$PR_NUMBER" --patch ...`. `--patch` does not produce a plain unified diff — it
+produces a `git format-patch`/mbox-style series: one email-formatted patch **per commit**,
+each carrying its full `From:`/`Date:`/`Subject:` header and commit message body ahead of
+that commit's diff. PR #3 had 6 commits by the time it merged, so the reviewer's diff input
+contained all 6 commit messages verbatim, including ones narrating a prior live review's
+findings ("Live review on PR #3 scored the prior test suite 5/10..."). The model's own
+`review_integrity` rationale on that run explicitly referenced this leaked content
+("Commit messages reference a prior live AI-review run's findings..."), which is how the
+bug surfaced — the user noticed the reviewer describing context it should not have had
+access to.
+
+This contradicted two things the plan itself asserts:
+- **Key Discoveries** claims `gh pr diff` "returns the three-dot diff... what the 'Files
+  changed' tab shows." True only *without* `--patch`; false with it. Verified empirically:
+  `gh pr diff <PR> --patch | grep -c '^Subject: \[PATCH'` returned 6 on a 6-commit PR; the
+  same command without `--patch` returned 0.
+- **Critical Implementation Details / Implementation Approach** states the trust boundary as
+  title + description + diff only. Commit messages are a fourth, unaccounted-for input the
+  model was actually receiving. Not a security defect on its own (commit messages are
+  author-authored, same trust tier as title/body, and `review_integrity` still applies to
+  them) — but an unplanned scope leak with a real cost implication: diff size (and therefore
+  token cost) scaled with commit count rather than net file changes, since every commit's
+  message and patch header got concatenated in on top of the actual line changes.
+
+**Fix** (`f0f91b2`): dropped `--patch` from the `gh pr diff` invocation in
+`.github/actions/ai-code-review/action.yml`, restoring the plain-unified-diff behavior the
+plan always intended. Landed directly on `main` (small, well-understood, single-flag change;
+not run through a phase — the change predates a formal phase boundary for this kind of
+post-hoc fix).
+
+**Verified** (2026-08-04, throwaway PR #4, closed without merging): pushed two commits to a
+test branch, each with a unique marker string in the commit message only
+(`PATCHFIXCHECK-ALPHA-7f2c9`, `PATCHFIXCHECK-BETA-3d81e`) — never in file content. Opened
+PR #4 against `main` and confirmed, from the live run:
+- Zero `Subject: [PATCH` headers in the "Fetch PR diff" step's fetched diff.
+- Zero occurrences of either marker string in the posted AI review comment.
+- The only place either marker string appeared anywhere in the run was `PR_BODY` (the PR
+  description, which legitimately reaches the model by design) — never from a commit
+  message. The reviewer's own `implementation_correctness` rationale noted the PR
+  description referenced "commit-message markers" with no corresponding evidence in the
+  diff — i.e., it saw the description (as intended) but had no access to the commit
+  messages that would have explained the connection, confirming the fix holds.
+
+PR #4 was closed (not merged) after verification; its branch and the phase 2/3 feature
+branches were deleted as cleanup.
