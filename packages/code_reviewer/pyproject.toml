@@ -1,7 +1,7 @@
 [project]
 name = "code-reviewer"
 version = "0.1.0"
-description = "Add your description here"
+description = "Diff-only agentic PR reviewer for EnvBooker, wired into GitHub Actions"
 readme = "README.md"
 authors = [
     { name = "Mariusz Wasiluk", email = "w.mariusz@gmail.com" }
@@ -12,9 +12,26 @@ dependencies = [
     "pydantic>=2.13.4",
 ]
 
+[dependency-groups]
+dev = [
+    "mypy>=1.19.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.3.0",
+]
+
 [project.scripts]
 code-reviewer = "code_reviewer.main:main"
 
 [build-system]
 requires = ["uv_build>=0.11.15,<0.12.0"]
 build-backend = "uv_build"
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
