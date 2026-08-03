@@ -88,3 +88,20 @@ files automatically).
 `ai-cr:passed` must never become a required status check, and the label may only
 subtract, never grant merge rights — the reviewed party authors 100% of the PR
 content, so a pass is a statistical quality signal, not an authorization decision.
+
+## CI setup
+
+The workflow applies `ai-cr:passed` / `ai-cr:failed` and reacts to `ai-cr:review`,
+but it never creates labels — that needs `issues: write`, a repo-wide permission not
+worth granting permanently to a job that processes attacker-controlled PR content for
+a one-time setup step. Create the three labels once, by hand, after cloning:
+
+```bash
+gh label create "ai-cr:passed" --color "2EA44F" --description "AI code review: verdict pass (advisory only, grants nothing)"
+gh label create "ai-cr:failed" --color "D73A4A" --description "AI code review: verdict fail or malfunction (advisory only)"
+gh label create "ai-cr:review" --color "758AD6" --description "Re-run the AI code review; removed automatically once the run finishes"
+```
+
+Also provision an `ANTHROPIC_API_KEY` repo secret scoped to a dedicated Console
+workspace with a monthly spend limit (see `max-budget-usd` above for the per-run
+ceiling).

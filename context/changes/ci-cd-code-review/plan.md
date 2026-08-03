@@ -829,9 +829,9 @@ interface is updated in the same phase.
 
 #### Automated
 
-- [ ] 3.1 Sticky script is executable and shellcheck-clean
+- [x] 3.1 Sticky script is executable and shellcheck-clean
 - [ ] 3.2 Test-PR workflow run completes and reports a `verdict` output
-- [ ] 3.3 No `issues: write` granted anywhere in `.github/`
+- [x] 3.3 No `issues: write` granted anywhere in `.github/`
 
 #### Manual
 

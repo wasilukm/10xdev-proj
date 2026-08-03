@@ -1,8 +1,10 @@
 name: AI Code Review
 description: >-
   Runs the diff-only agentic PR reviewer (packages/code_reviewer) against a pull
-  request's diff and reports a verdict. Phase 2: dry-run only — writes to the job
-  summary and a build artifact, never to the PR itself.
+  request's diff and reports a verdict, comment markdown, and result JSON as step
+  outputs. Always writes the job summary and a build artifact; posting the comment
+  and applying labels on the PR itself is the calling workflow's job, not this
+  action's.
 
 inputs:
   api-credential:
@@ -134,16 +136,15 @@ runs:
         echo "comment-path=$RUNNER_TEMP/comment.md" >> "$GITHUB_OUTPUT"
         echo "result-json-path=$RUNNER_TEMP/result.json" >> "$GITHUB_OUTPUT"
 
-    # Phase 2 is dry-run only: no write token is granted to this job, so the result
-    # is surfaced in the job summary and as a build artifact rather than posted to
-    # the PR. This step must not fail the job on a `fail` verdict (rc 1) — Phase 2's
-    # purpose is calibrating the rubric against real diffs, and a failing job during
-    # calibration is noise. Do not enable Actions debug mode on this workflow.
-    - name: Write dry-run summary
+    # This step must not fail the job on a `fail` verdict (rc 1) — the job summary
+    # is diagnostic output, not the outcome signal. The calling workflow's own
+    # verdict step decides the job's conclusion. Do not enable Actions debug mode
+    # on this workflow: it would expose file contents on a public repo.
+    - name: Write job summary
       shell: bash
       run: |
         {
-          echo "## AI Code Review (dry run) — verdict: \`${{ steps.review.outputs.verdict }}\`"
+          echo "## AI Code Review — verdict: \`${{ steps.review.outputs.verdict }}\`"
           echo
           cat "${{ steps.review.outputs.comment-path }}"
         } >> "$GITHUB_STEP_SUMMARY"

@@ -21,12 +21,13 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Run AI code review (dry run)
+      - name: Run AI code review
+        id: review
         uses: ./.github/actions/ai-code-review
         with:
           api-credential: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -34,3 +35,43 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
           pr-title: ${{ github.event.pull_request.title }}
           pr-body: ${{ github.event.pull_request.body }}
+
+      - name: Post sticky comment
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          .github/scripts/sticky-comment.sh \
+            "${{ github.event.pull_request.number }}" \
+            "${{ steps.review.outputs.comment-path }}"
+
+      # Exactly one outcome label at a time: pass -> ai-cr:passed, everything
+      # else (fail/error/skipped) -> ai-cr:failed. The stale opposite label is
+      # removed on every run so a PR never carries both.
+      - name: Apply outcome label
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERDICT: ${{ steps.review.outputs.verdict }}
+        run: |
+          if [ "$VERDICT" = "pass" ]; then
+            gh pr edit "$PR_NUMBER" --add-label ai-cr:passed --remove-label ai-cr:failed
+          else
+            gh pr edit "$PR_NUMBER" --add-label ai-cr:failed --remove-label ai-cr:passed
+          fi
+
+      # Runs even when the review step failed, so a re-triggered `ai-cr:review`
+      # label never gets stuck on a failed run.
+      - name: Remove retry label
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --remove-label ai-cr:review
+
+      - name: Fail job on non-pass verdict
+        if: steps.review.outputs.verdict != 'pass'
+        run: exit 1
