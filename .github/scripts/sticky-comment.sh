@@ -7,6 +7,7 @@
 # Usage: sticky-comment.sh <pr-number> <body-file>
 # Requires: gh authenticated (GH_TOKEN/GITHUB_TOKEN), GITHUB_REPOSITORY set
 # (both are ambient in GitHub Actions).
+# Idempotent: safe to call repeatedly for the same PR.
 set -euo pipefail
 
 pr_number="${1:?usage: sticky-comment.sh <pr-number> <body-file>}"
