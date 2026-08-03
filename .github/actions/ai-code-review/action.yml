@@ -88,8 +88,16 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.github-token }}
         PR_NUMBER: ${{ inputs.pr-number }}
+      # No --patch: that flag switches gh into a git-format-patch/mbox series
+      # (one email-formatted patch per commit, each carrying its full commit
+      # message) rather than a plain unified diff. Live testing on a
+      # many-commit PR showed the reviewer reading every commit message
+      # verbatim — content outside the title/description/diff trust
+      # boundary, and unbounded by commit count (more commits, more tokens,
+      # more cost). Plain `gh pr diff` matches the "Files changed" tab: file
+      # content changes only, no commit metadata.
       run: |
-        gh pr diff "$PR_NUMBER" --patch \
+        gh pr diff "$PR_NUMBER" \
           --exclude '**/migrations/**' \
           --exclude 'uv.lock' \
           --exclude 'packages/code_reviewer/uv.lock' \
