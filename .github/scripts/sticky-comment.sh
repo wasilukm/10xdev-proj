@@ -24,11 +24,11 @@ comment_id=$(gh api --paginate \
 if [ -n "$comment_id" ]; then
   gh api --method PATCH \
     "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
-    -f body=@"${body_file}" \
+    -F body=@"${body_file}" \
     --silent
 else
   gh api --method POST \
     "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" \
-    -f body=@"${body_file}" \
+    -F body=@"${body_file}" \
     --silent
 fi
