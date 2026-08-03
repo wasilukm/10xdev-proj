@@ -810,19 +810,19 @@ interface is updated in the same phase.
 
 #### Automated
 
-- [ ] 2.1 Workflow file parses and appears in `gh workflow list`
+- [x] 2.1 Workflow file parses and appears in `gh workflow list`
 - [x] 2.2 Action metadata is valid YAML
-- [ ] 2.3 Test-PR workflow run completes with conclusion `success`
-- [ ] 2.4 Runner `gh` version supports `--exclude` (≥ 2.63)
+- [x] 2.3 Test-PR workflow run completes with conclusion `success`
+- [x] 2.4 Runner `gh` version supports `--exclude` (≥ 2.63)
 
 #### Manual
 
-- [ ] 2.5 Test PR triggers the workflow; job summary shows six scores and a summary
-- [ ] 2.6 Wall-clock within timeout; uv cache hits on the second run
+- [x] 2.5 Test PR triggers the workflow; job summary shows six scores and a summary
+- [x] 2.6 Wall-clock within timeout; uv cache hits on the second run
 - [ ] 2.7 Fork PRs report **skipped**, not failed
-- [ ] 2.8 Unrelated label does not trigger; `ai-cr:review` does
-- [ ] 2.9 Pushing a new commit (`synchronize`) triggers a fresh run
-- [ ] 2.10 Reported cost matches the Phase 1 local figure
+- [x] 2.8 Unrelated label does not trigger; `ai-cr:review` does
+- [x] 2.9 Pushing a new commit (`synchronize`) triggers a fresh run
+- [x] 2.10 Reported cost matches the Phase 1 local figure
 - [ ] 2.11 Rubric calibrated across several real PRs; threshold settled
 
 ### Phase 3: Write-back — sticky comment, labels, retry
