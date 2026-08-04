@@ -1,10 +1,10 @@
 ---
 change_id: ci-cd-code-review
 title: Add GitHub Actions CI/CD code reviewer based on packages/code_reviewer
-status: impl_reviewed
+status: archived
 created: 2026-08-02
 updated: 2026-08-04
-archived_at: null
+archived_at: 2026-08-04T19:30:08Z
 ---
 
 ## Notes
